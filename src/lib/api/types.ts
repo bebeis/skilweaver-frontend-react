@@ -12,7 +12,7 @@ export type GoalPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
 export type LearningPlanStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
 export type StepDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
-export type AgentRunStatus = 'RUNNING' | 'COMPLETED' | 'FAILED';
+export type AgentRunStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
 export type KnowledgeSource = 'COMMUNITY' | 'AI_IMPORTED';
 export type RelationType = 'PREREQUISITE' | 'NEXT_STEP' | 'ALTERNATIVE';
 export type ResourceType = 'DOC' | 'VIDEO' | 'BLOG' | 'COURSE' | 'REPO';
@@ -21,7 +21,7 @@ export type ResourceType = 'DOC' | 'VIDEO' | 'BLOG' | 'COURSE' | 'REPO';
 export interface LearningPreference {
   dailyMinutes: number;
   preferKorean: boolean;
-  style: LearningStyle;
+  learningStyle: LearningStyle;
   weekendBoost: boolean;
 }
 
@@ -143,7 +143,8 @@ export interface DailySchedule {
 
 export interface BackgroundAnalysis {
   existingRelevantSkills: string[];
-  missingPrerequisites: string[];
+  knowledgeGaps: string[];
+  recommendations: string[];
   riskFactors: string[];
 }
 
@@ -160,12 +161,13 @@ export interface LearningPlan {
   backgroundAnalysis: BackgroundAnalysis;
   createdAt: string;
   updatedAt: string;
+  startedAt?: string;
 }
 
 export interface CreateLearningPlanRequest {
   targetTechName: string;
-  motivation: string;
-  timeFrameWeeks?: number;
+  targetCompletionWeeks?: number;
+  focusAreas?: string[];
   dailyMinutesOverride?: number;
 }
 

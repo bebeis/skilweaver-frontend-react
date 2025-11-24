@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
@@ -16,61 +16,77 @@ import {
   GitBranch,
   ArrowLeft,
   GraduationCap,
-  Edit
+  Edit,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// Mock data
-const mockTechnology = {
-  id: '1',
-  displayName: 'Kubernetes',
-  category: 'DEVOPS',
-  ecosystem: 'CLOUD_NATIVE',
-  summary: 'Kubernetes는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼입니다.',
-  learningTips: '먼저 Docker를 충분히 이해한 후 Kubernetes를 학습하세요. 로컬 환경에서 Minikube로 시작하고, 점진적으로 클라우드 환경으로 확장하는 것을 추천합니다.',
-  officialSite: 'https://kubernetes.io',
-  prerequisites: ['Docker', 'Linux 기초', '네트워킹 기초'],
-  useCases: [
-    '마이크로서비스 배포 및 관리',
-    '자동 확장 및 로드 밸런싱',
-    '무중단 배포 (Rolling Updates)',
-    '서비스 디스커버리 및 로드 밸런싱'
-  ]
-};
-
-const mockRelationships = {
-  PREREQUISITE: [
-    { id: '5', name: 'Docker', category: 'DEVOPS' },
-    { id: '6', name: 'Linux', category: 'OPERATING_SYSTEM' }
-  ],
-  NEXT_STEP: [
-    { id: '7', name: 'Helm', category: 'DEVOPS' },
-    { id: '8', name: 'Istio', category: 'DEVOPS' }
-  ],
-  ALTERNATIVE: [
-    { id: '9', name: 'Docker Swarm', category: 'DEVOPS' },
-    { id: '10', name: 'Nomad', category: 'DEVOPS' }
-  ]
-};
+import { technologiesApi } from '../../src/lib/api';
 
 const categoryColors = {
   LANGUAGE: 'bg-red-50 text-red-700 border-red-200',
   FRAMEWORK: 'bg-blue-50 text-blue-700 border-blue-200',
-  DATABASE: 'bg-green-50 text-green-700 border-green-200',
-  DEVOPS: 'bg-purple-50 text-purple-700 border-purple-200',
-  PLATFORM: 'bg-orange-50 text-orange-700 border-orange-200',
-  OPERATING_SYSTEM: 'bg-gray-50 text-gray-700 border-gray-200'
+  LIBRARY: 'bg-teal-50 text-teal-700 border-teal-200',
+  TOOL: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  DB: 'bg-green-50 text-green-700 border-green-200',
+  PLATFORM: 'bg-purple-50 text-purple-700 border-purple-200',
+  ETC: 'bg-gray-50 text-gray-700 border-gray-200'
 };
 
 export function TechnologyDetail() {
   const { technologyId } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [technology, setTechnology] = useState<any>(null);
+  const [relationships, setRelationships] = useState<any>({});
   const [showEditForm, setShowEditForm] = useState(false);
   const [editForm, setEditForm] = useState({
     proposedSummary: '',
     proposedLearningTips: '',
     proposedPrerequisites: ''
   });
+
+  // Load technology details from API
+  useEffect(() => {
+    if (!technologyId) return;
+    
+    const loadTechnology = async () => {
+      try {
+        setLoading(true);
+        const response = await technologiesApi.getTechnology(Number(technologyId));
+        
+        if (response.success) {
+          setTechnology(response.data);
+          
+          // Load relationships
+          try {
+            const relationshipsResponse = await technologiesApi.getTechnologyRelationships(
+              Number(technologyId)
+            );
+            if (relationshipsResponse.success) {
+              // Group relationships by type
+              const grouped: any = {};
+              relationshipsResponse.data.relationships.forEach((rel: any) => {
+                if (!grouped[rel.relationType]) {
+                  grouped[rel.relationType] = [];
+                }
+                grouped[rel.relationType].push(rel.toTechnology);
+              });
+              setRelationships(grouped);
+            }
+          } catch (error) {
+            // Ignore relationship errors
+          }
+        }
+      } catch (error: any) {
+        toast.error(error.message || '기술 정보를 불러오는데 실패했습니다.');
+        navigate('/technologies');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadTechnology();
+  }, [technologyId, navigate]);
 
   const handleSubmitEdit = () => {
     if (!editForm.proposedSummary && !editForm.proposedLearningTips && !editForm.proposedPrerequisites) {
@@ -89,7 +105,7 @@ export function TechnologyDetail() {
   };
 
   const handleCreateLearningPlan = () => {
-    navigate(`/learning-plans/new?target=${mockTechnology.displayName}`);
+    navigate(`/learning-plans/new?target=${technology.displayName}`);
   };
 
   return (
@@ -109,21 +125,21 @@ export function TechnologyDetail() {
                 <Database className="size-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">{mockTechnology.displayName}</h1>
+                <h1 className="text-3xl font-bold text-foreground mb-2">{technology.displayName}</h1>
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge 
                     variant="outline" 
-                    className={categoryColors[mockTechnology.category as keyof typeof categoryColors]}
+                    className={categoryColors[technology.category as keyof typeof categoryColors]}
                   >
-                    {mockTechnology.category}
+                    {technology.category}
                   </Badge>
                   <Badge variant="outline" className="bg-secondary/50 text-muted-foreground border-border">
-                    {mockTechnology.ecosystem}
+                    {technology.ecosystem}
                   </Badge>
                 </div>
-                {mockTechnology.officialSite && (
+                {technology.officialSite && (
                   <a 
-                    href={mockTechnology.officialSite} 
+                    href={technology.officialSite} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-primary hover:underline font-medium"
@@ -151,7 +167,7 @@ export function TechnologyDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground font-medium">{mockTechnology.summary}</p>
+          <p className="text-muted-foreground font-medium">{technology.summary}</p>
         </CardContent>
       </Card>
 
@@ -164,7 +180,7 @@ export function TechnologyDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground font-medium">{mockTechnology.learningTips}</p>
+          <p className="text-muted-foreground font-medium">{technology.learningTips}</p>
         </CardContent>
       </Card>
 
@@ -179,7 +195,7 @@ export function TechnologyDetail() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {mockTechnology.prerequisites.map((prereq, index) => (
+              {technology.prerequisites.map((prereq, index) => (
                 <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
                   <div className="size-2 bg-primary rounded-full" />
                   {prereq}
@@ -198,7 +214,7 @@ export function TechnologyDetail() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              {mockTechnology.useCases.map((useCase, index) => (
+              {technology.useCases.map((useCase, index) => (
                 <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
                   <div className="size-2 bg-success rounded-full" />
                   {useCase}
@@ -216,14 +232,14 @@ export function TechnologyDetail() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Prerequisites */}
-          {mockRelationships.PREREQUISITE.length > 0 && (
+          {relationships.PREREQUISITE.length > 0 && (
             <div>
               <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
                 <ArrowLeft className="size-4 text-primary" />
                 먼저 학습하면 좋은 기술
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {mockRelationships.PREREQUISITE.map((tech) => (
+                {relationships.PREREQUISITE.map((tech) => (
                   <Link key={tech.id} to={`/technologies/${tech.id}`}>
                     <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                       <div className="flex items-center justify-between">
@@ -243,14 +259,14 @@ export function TechnologyDetail() {
           )}
 
           {/* Next Steps */}
-          {mockRelationships.NEXT_STEP.length > 0 && (
+          {relationships.NEXT_STEP.length > 0 && (
             <div>
               <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
                 <ArrowRight className="size-4 text-accent" />
                 다음 단계로 학습할 기술
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {mockRelationships.NEXT_STEP.map((tech) => (
+                {relationships.NEXT_STEP.map((tech) => (
                   <Link key={tech.id} to={`/technologies/${tech.id}`}>
                     <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                       <div className="flex items-center justify-between">
@@ -270,14 +286,14 @@ export function TechnologyDetail() {
           )}
 
           {/* Alternatives */}
-          {mockRelationships.ALTERNATIVE.length > 0 && (
+          {relationships.ALTERNATIVE.length > 0 && (
             <div>
               <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
                 <GitBranch className="size-4 text-success" />
                 대안 기술
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {mockRelationships.ALTERNATIVE.map((tech) => (
+                {relationships.ALTERNATIVE.map((tech) => (
                   <Link key={tech.id} to={`/technologies/${tech.id}`}>
                     <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                       <div className="flex items-center justify-between">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -7,8 +7,10 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Plus, Edit, Trash2, Target, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, Target, Calendar, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { goalsApi } from '../../src/lib/api';
+import { useAuth } from '../../hooks/useAuth';
 
 interface Goal {
   id: string;
@@ -20,45 +22,6 @@ interface Goal {
   createdAt: string;
 }
 
-const mockGoals: Goal[] = [
-  {
-    id: '1',
-    title: 'Kubernetes 마스터하기',
-    description: '쿠버네티스 기본 개념부터 실전 배포까지 학습',
-    priority: 'HIGH',
-    status: 'ACTIVE',
-    dueDate: '2025-12-31',
-    createdAt: '2025-11-01'
-  },
-  {
-    id: '2',
-    title: 'AWS 자격증 취득',
-    description: 'AWS Solutions Architect Associate 자격증 취득',
-    priority: 'MEDIUM',
-    status: 'ACTIVE',
-    dueDate: '2025-06-30',
-    createdAt: '2025-10-15'
-  },
-  {
-    id: '3',
-    title: 'Go 언어 학습',
-    description: 'Go 언어 기초 문법 및 동시성 프로그래밍 학습',
-    priority: 'LOW',
-    status: 'PLANNING',
-    dueDate: '2026-03-31',
-    createdAt: '2025-11-10'
-  },
-  {
-    id: '4',
-    title: 'MSA 아키텍처 이해',
-    description: '마이크로서비스 아키텍처 설계 및 구현 경험',
-    priority: 'HIGH',
-    status: 'ACTIVE',
-    dueDate: '2025-09-30',
-    createdAt: '2025-09-01'
-  }
-];
-
 const priorityColors = {
   HIGH: 'bg-red-100 text-red-800',
   MEDIUM: 'bg-yellow-100 text-yellow-800',
@@ -69,11 +32,13 @@ const statusColors = {
   PLANNING: 'bg-blue-100 text-blue-800',
   ACTIVE: 'bg-green-100 text-green-800',
   COMPLETED: 'bg-purple-100 text-purple-800',
-  ON_HOLD: 'bg-orange-100 text-orange-800'
+  ABANDONED: 'bg-gray-100 text-gray-800'
 };
 
 export function Goals() {
-  const [goals, setGoals] = useState(mockGoals);
+  const { user } = useAuth();
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [loading, setLoading] = useState(true);
   const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -82,9 +47,43 @@ export function Goals() {
     title: '',
     description: '',
     priority: 'MEDIUM',
-    status: 'PLANNING',
+    status: 'ACTIVE',
     dueDate: ''
   });
+
+  // Load goals from API
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadGoals = async () => {
+      try {
+        setLoading(true);
+        const response = await goalsApi.getGoals(Number(user.id), {
+          priority: priorityFilter !== 'ALL' ? priorityFilter : undefined,
+          status: statusFilter !== 'ALL' ? statusFilter : undefined,
+        });
+        
+        if (response.success) {
+          const mappedGoals: Goal[] = response.data.goals.map((g: any) => ({
+            id: String(g.learningGoalId),
+            title: g.title,
+            description: g.description,
+            priority: g.priority,
+            status: g.status,
+            dueDate: g.dueDate || '',
+            createdAt: g.createdAt.split('T')[0],
+          }));
+          setGoals(mappedGoals);
+        }
+      } catch (error: any) {
+        toast.error(error.message || '목표를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadGoals();
+  }, [user, priorityFilter, statusFilter]);
 
   const filteredGoals = goals.filter(goal => {
     if (priorityFilter !== 'ALL' && goal.priority !== priorityFilter) return false;
@@ -108,47 +107,108 @@ export function Goals() {
         title: '',
         description: '',
         priority: 'MEDIUM',
-        status: 'PLANNING',
+        status: 'ACTIVE',
         dueDate: ''
       });
     }
     setDialogOpen(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.title || !formData.dueDate) {
       toast.error('제목과 목표일을 입력해주세요.');
       return;
     }
 
-    if (editingGoal) {
-      // Update existing goal
-      setGoals(goals.map(g => 
-        g.id === editingGoal.id 
-          ? { ...g, ...formData }
-          : g
-      ));
-      toast.success('목표가 수정되었습니다.');
-    } else {
-      // Create new goal
-      const newGoal: Goal = {
-        id: Date.now().toString(),
-        ...formData,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      setGoals([newGoal, ...goals]);
-      toast.success('새 목표가 추가되었습니다.');
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      return;
     }
 
-    setDialogOpen(false);
+    try {
+      if (editingGoal) {
+        // Update existing goal
+        const response = await goalsApi.updateGoal(
+          Number(user.id),
+          Number(editingGoal.id),
+          {
+            title: formData.title,
+            description: formData.description,
+            dueDate: formData.dueDate,
+            priority: formData.priority as any,
+            status: formData.status as any,
+          }
+        );
+        
+        if (response.success) {
+          setGoals(goals.map(g => 
+            g.id === editingGoal.id 
+              ? {
+                  ...g,
+                  title: formData.title,
+                  description: formData.description,
+                  priority: formData.priority,
+                  status: formData.status,
+                  dueDate: formData.dueDate,
+                }
+              : g
+          ));
+          toast.success(response.message || '목표가 수정되었습니다.');
+        }
+      } else {
+        // Create new goal
+        const response = await goalsApi.createGoal(Number(user.id), {
+          title: formData.title,
+          description: formData.description,
+          dueDate: formData.dueDate,
+          priority: formData.priority as any,
+        });
+        
+        if (response.success) {
+          const newGoal: Goal = {
+            id: String(response.data.learningGoalId),
+            title: response.data.title,
+            description: response.data.description,
+            priority: response.data.priority,
+            status: response.data.status,
+            dueDate: response.data.dueDate || '',
+            createdAt: response.data.createdAt.split('T')[0],
+          };
+          setGoals([newGoal, ...goals]);
+          toast.success(response.message || '새 목표가 추가되었습니다.');
+        }
+      }
+
+      setDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || '작업을 처리하는데 실패했습니다.');
+    }
   };
 
-  const handleDelete = (goalId: string) => {
-    if (confirm('이 목표를 삭제하시겠습니까?')) {
+  const handleDelete = async (goalId: string) => {
+    if (!confirm('이 목표를 삭제하시겠습니까?')) return;
+    
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      await goalsApi.deleteGoal(Number(user.id), Number(goalId));
       setGoals(goals.filter(g => g.id !== goalId));
       toast.success('목표가 삭제되었습니다.');
+    } catch (error: any) {
+      toast.error(error.message || '삭제에 실패했습니다.');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -193,10 +253,9 @@ export function Goals() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">전체</SelectItem>
-                  <SelectItem value="PLANNING">계획중</SelectItem>
                   <SelectItem value="ACTIVE">진행중</SelectItem>
                   <SelectItem value="COMPLETED">완료</SelectItem>
-                  <SelectItem value="ON_HOLD">보류</SelectItem>
+                  <SelectItem value="ABANDONED">중단</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -343,10 +402,9 @@ export function Goals() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PLANNING">계획중</SelectItem>
                     <SelectItem value="ACTIVE">진행중</SelectItem>
                     <SelectItem value="COMPLETED">완료</SelectItem>
-                    <SelectItem value="ON_HOLD">보류</SelectItem>
+                    <SelectItem value="ABANDONED">중단</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

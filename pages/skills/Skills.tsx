@@ -1,60 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Plus, Edit, Trash2, BookOpen, Calendar, Sparkles, Filter, ArrowRight, Award } from 'lucide-react';
+import { Plus, Edit, Trash2, BookOpen, Calendar, Sparkles, Filter, ArrowRight, Award, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { skillsApi } from '../../src/lib/api';
+import { useAuth } from '../../hooks/useAuth';
 
-// Mock data
-const mockSkills = [
-  {
-    id: '1',
-    technologyName: 'Java',
-    level: 'ADVANCED',
-    category: 'LANGUAGE',
-    yearsOfUse: 3,
-    lastUsedAt: '2025-11-20',
-    note: 'Spring Boot 프로젝트 경험 다수'
-  },
-  {
-    id: '2',
-    technologyName: 'Spring Boot',
-    level: 'INTERMEDIATE',
-    category: 'FRAMEWORK',
-    yearsOfUse: 2,
-    lastUsedAt: '2025-11-22',
-    note: 'REST API 개발 경험'
-  },
-  {
-    id: '3',
-    technologyName: 'Docker',
-    level: 'BEGINNER',
-    category: 'DEVOPS',
-    yearsOfUse: 0.5,
-    lastUsedAt: '2025-11-15',
-    note: '기본 컨테이너 배포 경험'
-  },
-  {
-    id: '4',
-    technologyName: 'PostgreSQL',
-    level: 'INTERMEDIATE',
-    category: 'DATABASE',
-    yearsOfUse: 2,
-    lastUsedAt: '2025-11-23',
-    note: '쿼리 최적화 학습 중'
-  },
-  {
-    id: '5',
-    technologyName: 'React',
-    level: 'BEGINNER',
-    category: 'FRAMEWORK',
-    yearsOfUse: 0.3,
-    lastUsedAt: '2025-11-10',
-    note: '기본 컴포넌트 작성 가능'
-  }
-];
+interface Skill {
+  id: string;
+  technologyName: string;
+  level: string;
+  category: string;
+  yearsOfUse: number;
+  lastUsedAt?: string;
+  note?: string;
+}
 
 const levelColors = {
   BEGINNER: 'bg-green-100 text-green-800',
@@ -66,20 +29,68 @@ const levelColors = {
 const categoryColors = {
   LANGUAGE: 'bg-red-50 text-red-700',
   FRAMEWORK: 'bg-blue-50 text-blue-700',
-  DATABASE: 'bg-green-50 text-green-700',
-  DEVOPS: 'bg-purple-50 text-purple-700',
-  TOOL: 'bg-yellow-50 text-yellow-700'
+  LIBRARY: 'bg-teal-50 text-teal-700',
+  TOOL: 'bg-yellow-50 text-yellow-700',
+  DB: 'bg-green-50 text-green-700',
+  PLATFORM: 'bg-purple-50 text-purple-700',
+  ETC: 'bg-gray-50 text-gray-700'
 };
 
 export function Skills() {
-  const [skills, setSkills] = useState(mockSkills);
+  const { user } = useAuth();
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [levelFilter, setLevelFilter] = useState('ALL');
 
-  const handleDelete = (skillId: string) => {
-    if (confirm('이 기술을 삭제하시겠습니까?')) {
+  // Load skills from API
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadSkills = async () => {
+      try {
+        setLoading(true);
+        const response = await skillsApi.getSkills(Number(user.id), {
+          category: categoryFilter !== 'ALL' ? categoryFilter : undefined,
+          level: levelFilter !== 'ALL' ? levelFilter : undefined,
+        });
+        
+        if (response.success) {
+          const mappedSkills: Skill[] = response.data.skills.map((s: any) => ({
+            id: String(s.memberSkillId),
+            technologyName: s.displayName || s.customName || 'Unknown',
+            level: s.level,
+            category: 'ETC', // API doesn't return category, so we'll use ETC as default
+            yearsOfUse: s.yearsOfUse,
+            lastUsedAt: s.lastUsedAt,
+            note: s.note,
+          }));
+          setSkills(mappedSkills);
+        }
+      } catch (error: any) {
+        toast.error(error.message || '기술 스택을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadSkills();
+  }, [user, categoryFilter, levelFilter]);
+
+  const handleDelete = async (skillId: string) => {
+    if (!confirm('이 기술을 삭제하시겠습니까?')) return;
+    
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      await skillsApi.deleteSkill(Number(user.id), Number(skillId));
       setSkills(skills.filter(s => s.id !== skillId));
       toast.success('기술이 삭제되었습니다.');
+    } catch (error: any) {
+      toast.error(error.message || '삭제에 실패했습니다.');
     }
   };
 
@@ -88,6 +99,14 @@ export function Skills() {
     if (levelFilter !== 'ALL' && skill.level !== levelFilter) return false;
     return true;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

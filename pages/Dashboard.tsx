@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -15,30 +16,11 @@ import {
   Sparkles,
   ArrowRight,
   Zap,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
-
-// Mock data
-const mockSkills = [
-  { id: '1', name: 'Java', level: 'ADVANCED', category: 'LANGUAGE' },
-  { id: '2', name: 'Spring Boot', level: 'INTERMEDIATE', category: 'FRAMEWORK' },
-  { id: '3', name: 'Docker', level: 'BEGINNER', category: 'DEVOPS' },
-];
-
-const mockGoals = [
-  { id: '1', title: 'Kubernetes 마스터하기', priority: 'HIGH', dueDate: '2025-12-31', status: 'ACTIVE' },
-  { id: '2', title: 'AWS 자격증 취득', priority: 'MEDIUM', dueDate: '2025-06-30', status: 'ACTIVE' },
-];
-
-const mockActivePlan = {
-  id: '1',
-  targetTechnology: 'Kubernetes',
-  totalWeeks: 8,
-  totalHours: 56,
-  progress: 35,
-  currentWeek: 3,
-  todayTask: 'Pod와 Deployment 개념 이해 및 실습'
-};
+import { skillsApi, goalsApi, learningPlansApi } from '../src/lib/api';
+import { toast } from 'sonner';
 
 const levelColors = {
   BEGINNER: 'bg-success/20 text-success border-success/30',
@@ -54,6 +36,74 @@ const priorityColors = {
 
 export function Dashboard() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [skills, setSkills] = useState<any[]>([]);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [activePlan, setActivePlan] = useState<any>(null);
+  const [plansCount, setPlansCount] = useState(0);
+
+  // Load dashboard data from APIs
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load all data in parallel
+        const [skillsResponse, goalsResponse, plansResponse] = await Promise.all([
+          skillsApi.getSkills(Number(user.id)),
+          goalsApi.getGoals(Number(user.id), { status: 'ACTIVE' }),
+          learningPlansApi.getPlans(Number(user.id), { status: 'ACTIVE', page: 0, size: 1 }),
+        ]);
+        
+        if (skillsResponse.success) {
+          setSkills(skillsResponse.data.skills.slice(0, 5)); // Top 5 skills
+        }
+        
+        if (goalsResponse.success) {
+          setGoals(goalsResponse.data.goals.slice(0, 3)); // Top 3 goals
+        }
+        
+        if (plansResponse.success) {
+          setPlansCount(plansResponse.data.pagination.totalElements);
+          if (plansResponse.data.plans.length > 0) {
+            // Get the first active plan details
+            const firstPlan = plansResponse.data.plans[0];
+            try {
+              const planDetailResponse = await learningPlansApi.getPlan(Number(user.id), firstPlan.learningPlanId);
+              if (planDetailResponse.success) {
+                setActivePlan({
+                  id: planDetailResponse.data.learningPlanId,
+                  targetTechnology: planDetailResponse.data.targetTechnology,
+                  totalWeeks: planDetailResponse.data.totalWeeks,
+                  totalHours: planDetailResponse.data.totalHours,
+                  progress: planDetailResponse.data.progress,
+                  currentWeek: Math.floor((planDetailResponse.data.progress / 100) * planDetailResponse.data.totalWeeks),
+                });
+              }
+            } catch (error) {
+              // Ignore if plan details fail
+            }
+          }
+        }
+      } catch (error: any) {
+        toast.error(error.message || '대시보드 데이터를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadDashboardData();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="content-spacing">
@@ -92,7 +142,7 @@ export function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground font-semibold mb-2">내 기술 스택</p>
-                <p className="text-5xl font-bold text-foreground">{mockSkills.length}</p>
+                <p className="text-5xl font-bold text-foreground">{skills.length}</p>
                 <p className="text-sm text-muted-foreground font-medium mt-1">개</p>
               </div>
               <div className="relative">
@@ -110,7 +160,7 @@ export function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground font-semibold mb-2">활성 목표</p>
-                <p className="text-5xl font-bold text-foreground">{mockGoals.length}</p>
+                <p className="text-5xl font-bold text-foreground">{goals.length}</p>
                 <p className="text-sm text-muted-foreground font-medium mt-1">개</p>
               </div>
               <div className="relative">
@@ -242,15 +292,15 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {mockSkills.map((skill) => (
-                <Link key={skill.id} to={`/skills/${skill.id}`} className="flex items-center justify-between p-4 glass-card rounded-lg border-tech hover-glow-primary">
+              {skills.map((skill: any) => (
+                <Link key={skill.memberSkillId} to={`/skills/${skill.memberSkillId}`} className="flex items-center justify-between p-4 glass-card rounded-lg border-tech hover-glow-primary">
                   <div className="flex items-center gap-3">
                     <div className="bg-primary/20 rounded-lg p-2.5 border border-primary/30">
                       <BookOpen className="size-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{skill.name}</p>
-                      <p className="text-sm text-muted-foreground">{skill.category}</p>
+                      <p className="font-semibold text-foreground">{skill.displayName || skill.customName}</p>
+                      <p className="text-sm text-muted-foreground">{skill.level}</p>
                     </div>
                   </div>
                   <Badge className={levelColors[skill.level as keyof typeof levelColors] + ' px-3 py-1 font-medium border'}>
@@ -291,7 +341,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {mockGoals.map((goal) => (
+              {goals.map((goal) => (
                 <Link key={goal.id} to={`/goals/${goal.id}`} className="block p-4 glass-card rounded-lg border-tech hover-glow-primary">
                   <div className="flex items-start justify-between mb-3">
                     <p className="font-semibold text-foreground flex-1">{goal.title}</p>

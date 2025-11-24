@@ -1,71 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Plus, GraduationCap, Clock, Calendar, TrendingUp, Sparkles, ArrowRight, Filter } from 'lucide-react';
+import { Plus, GraduationCap, Clock, Calendar, TrendingUp, Sparkles, ArrowRight, Filter, Loader2 } from 'lucide-react';
+import { learningPlansApi } from '../../src/lib/api';
+import { useAuth } from '../../hooks/useAuth';
+import { toast } from 'sonner';
 
-// Mock data
-const mockPlans = [
-  {
-    id: '1',
-    targetTechnology: 'Kubernetes',
-    totalWeeks: 8,
-    totalHours: 56,
-    progress: 35,
-    status: 'ACTIVE',
-    createdAt: '2025-11-01',
-    currentWeek: 3
-  },
-  {
-    id: '2',
-    targetTechnology: 'GraphQL',
-    totalWeeks: 4,
-    totalHours: 28,
-    progress: 75,
-    status: 'ACTIVE',
-    createdAt: '2025-10-15',
-    currentWeek: 3
-  },
-  {
-    id: '3',
-    targetTechnology: 'Redis',
-    totalWeeks: 3,
-    totalHours: 21,
-    progress: 100,
-    status: 'COMPLETED',
-    createdAt: '2025-09-20',
-    currentWeek: 3
-  },
-  {
-    id: '4',
-    targetTechnology: 'TypeScript',
-    totalWeeks: 6,
-    totalHours: 42,
-    progress: 0,
-    status: 'DRAFT',
-    createdAt: '2025-11-20',
-    currentWeek: 0
-  }
-];
+interface Plan {
+  id: string;
+  targetTechnology: string;
+  totalWeeks: number;
+  totalHours: number;
+  progress: number;
+  status: string;
+  createdAt: string;
+}
 
 const statusColors = {
-  DRAFT: 'bg-gray-100 text-gray-800',
   ACTIVE: 'bg-green-100 text-green-800',
-  PAUSED: 'bg-yellow-100 text-yellow-800',
   COMPLETED: 'bg-blue-100 text-blue-800',
-  CANCELLED: 'bg-red-100 text-red-800'
+  ABANDONED: 'bg-red-100 text-red-800'
 };
 
 export function LearningPlans() {
+  const { user } = useAuth();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  const filteredPlans = mockPlans.filter(plan => {
+  // Load plans from API
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadPlans = async () => {
+      try {
+        setLoading(true);
+        const response = await learningPlansApi.getPlans(Number(user.id), {
+          status: statusFilter !== 'ALL' ? statusFilter : undefined,
+          page: 0,
+          size: 20,
+        });
+        
+        if (response.success) {
+          const mappedPlans: Plan[] = response.data.plans.map((p: any) => ({
+            id: String(p.learningPlanId),
+            targetTechnology: p.targetTechnology,
+            totalWeeks: p.totalWeeks,
+            totalHours: p.totalHours,
+            progress: p.progress,
+            status: p.status,
+            createdAt: p.createdAt.split('T')[0],
+          }));
+          setPlans(mappedPlans);
+        }
+      } catch (error: any) {
+        toast.error(error.message || '학습 플랜을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPlans();
+  }, [user, statusFilter]);
+
+  const filteredPlans = plans.filter(plan => {
     if (statusFilter !== 'ALL' && plan.status !== statusFilter) return false;
     return true;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -110,11 +123,9 @@ export function LearningPlans() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">전체</SelectItem>
-                  <SelectItem value="DRAFT">초안</SelectItem>
                   <SelectItem value="ACTIVE">진행중</SelectItem>
-                  <SelectItem value="PAUSED">일시중지</SelectItem>
                   <SelectItem value="COMPLETED">완료</SelectItem>
-                  <SelectItem value="CANCELLED">취소</SelectItem>
+                  <SelectItem value="ABANDONED">중단</SelectItem>
                 </SelectContent>
               </Select>
             </div>

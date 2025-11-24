@@ -2,6 +2,24 @@
 
 ## 변경 이력
 
+### v1.2 (2025-11-24)
+주요 변경사항:
+1. **AI 에이전트 실시간 스트리밍 API 추가**
+   - SSE 기반 학습 플랜 생성 스트리밍 API (`POST /agents/learning-plan/stream`)
+   - 6가지 이벤트 타입 지원: agent_started, planning_started, action_executed, progress, agent_completed, error
+   - GOAP 동적 경로 계획 실시간 모니터링
+   - 각 Action 실행 과정 실시간 추적
+
+2. **AgentRun 생명주기 관리 API 추가**
+   - AgentRun 생성, 조회, 목록 조회 API
+   - AgentRun 시작, 완료, 실패 처리 API
+   - 4-state 생명주기: PENDING → RUNNING → COMPLETED/FAILED
+
+3. **GOAP 동작 원리 문서화**
+   - Quick/Standard/Detailed 3가지 학습 경로 설명
+   - 동적 재계획(Replanning) 메커니즘 설명
+   - 각 경로별 특징 및 예상 비용 명시
+
 ### v1.1 (2025-11-24)
 주요 변경사항:
 1. **인증 API 개선**
@@ -81,7 +99,7 @@ POST /api/v1/auth/signup/email
   "learningPreference": {
     "dailyMinutes": 60,
     "preferKorean": true,
-    "style": "PROJECT_BASED",
+    "learningStyle": "PROJECT_BASED",
     "weekendBoost": true
   }
 }
@@ -183,7 +201,7 @@ GET /api/v1/members/me
     "learningPreference": {
       "dailyMinutes": 60,
       "preferKorean": true,
-      "style": "PROJECT_BASED",
+      "learningStyle": "PROJECT_BASED",
       "weekendBoost": true
     },
     "createdAt": "2025-11-24T12:00:00",
@@ -211,7 +229,7 @@ GET /api/v1/members/{memberId}
     "learningPreference": {
       "dailyMinutes": 60,
       "preferKorean": true,
-      "style": "PROJECT_BASED",
+      "learningStyle": "PROJECT_BASED",
       "weekendBoost": true
     },
     "createdAt": "2025-11-24T12:00:00",
@@ -235,7 +253,7 @@ PUT /api/v1/members/{memberId}
   "learningPreference": {
     "dailyMinutes": 90,
     "preferKorean": true,
-    "style": "DOC_FIRST",
+    "learningStyle": "DOC_FIRST",
     "weekendBoost": true
   }
 }
@@ -807,8 +825,8 @@ POST /api/v1/agent-runs
   "agentType": "LEARNING_PLAN",
   "parameters": {
     "targetTechName": "Kotlin Coroutines",
-    "motivation": "우테코 미션을 코틀린으로 구현하고 싶어서",
-    "timeFrameWeeks": 4,
+    "targetCompletionWeeks": 4,
+    "focusAreas": ["비동기 프로그래밍", "동시성 제어"],
     "dailyMinutesOverride": 90
   }
 }
@@ -898,8 +916,8 @@ POST /api/v1/members/{memberId}/learning-plans
 ```json
 {
   "targetTechName": "Kotlin Coroutines",
-  "motivation": "우테코 미션을 코틀린으로 구현하고 싶어서",
-  "timeFrameWeeks": 4,
+  "targetCompletionWeeks": 4,
+  "focusAreas": ["비동기 프로그래밍", "동시성 제어"],
   "dailyMinutesOverride": 90
 }
 ```
@@ -993,7 +1011,11 @@ POST /api/v1/members/{memberId}/learning-plans
     ],
     "backgroundAnalysis": {
       "existingRelevantSkills": ["Kotlin", "Java", "멀티스레딩 기초"],
-      "missingPrerequisites": ["비동기 프로그래밍", "코루틴 개념"],
+      "knowledgeGaps": ["비동기 프로그래밍", "코루틴 개념"],
+      "recommendations": [
+        "Kotlin 기초가 탄탄하므로 코루틴 학습에 유리합니다",
+        "Java의 Thread 경험을 바탕으로 비교하며 학습하면 좋습니다"
+      ],
       "riskFactors": [
         "비동기 프로그래밍 경험이 없어 초반에 어려움이 있을 수 있습니다"
       ]
@@ -1230,9 +1252,13 @@ PATCH /api/v1/technologies/{technologyId}/edits/{editId}
 - `HARD`
 
 ### AgentRunStatus
-- `RUNNING`
-- `COMPLETED`
-- `FAILED`
+- `PENDING` - 대기 중
+- `RUNNING` - 실행 중
+- `COMPLETED` - 완료
+- `FAILED` - 실패
+
+### AgentType
+- `LEARNING_PLAN` - 학습 플랜 생성 에이전트
 
 ### KnowledgeSource
 - `COMMUNITY`
@@ -1254,3 +1280,329 @@ PATCH /api/v1/technologies/{technologyId}/edits/{editId}
 - `PENDING`
 - `APPROVED`
 - `REJECTED`
+
+---
+
+## 7. AI 에이전트 API
+
+### 7.1. 학습 플랜 생성 (SSE 스트리밍)
+
+AI 에이전트를 실행하여 실시간으로 학습 플랜 생성 과정을 스트리밍합니다.
+
+```http
+POST /api/v1/agents/learning-plan/stream
+```
+
+**Query Parameters**
+- `memberId` (required): 회원 ID
+- `targetTechnology` (required): 학습할 기술명 (예: "Kotlin Coroutines")
+- `prefersFastPlan` (optional, default=false): 빠른 플랜 선호 여부
+
+**Response**
+- Content-Type: `text/event-stream`
+- 실시간 SSE 이벤트 스트림
+
+**SSE 이벤트 타입**
+
+1. **agent_started** - 에이전트 실행 시작
+```json
+{
+  "type": "AGENT_STARTED",
+  "agentRunId": 1,
+  "message": "Agent 실행 시작",
+  "timestamp": 1700000000000
+}
+```
+
+2. **planning_started** - GOAP 경로 계획 시작
+```json
+{
+  "type": "PLANNING_STARTED",
+  "agentRunId": 1,
+  "message": "GOAP 경로 계획 중...",
+  "timestamp": 1700000001000
+}
+```
+
+3. **action_executed** - Action 실행 완료
+```json
+{
+  "type": "ACTION_EXECUTED",
+  "agentRunId": 1,
+  "actionName": "extractMemberProfile",
+  "message": "extractMemberProfile 실행 완료 (1234ms)",
+  "timestamp": 1700000002000
+}
+```
+
+4. **progress** - 진행 상황 업데이트
+```json
+{
+  "type": "PROGRESS",
+  "agentRunId": 1,
+  "message": "진행 중... (3개 액션 완료)",
+  "timestamp": 1700000003000
+}
+```
+
+5. **agent_completed** - 에이전트 실행 완료
+```json
+{
+  "type": "AGENT_COMPLETED",
+  "agentRunId": 1,
+  "message": "Agent 실행 완료",
+  "result": {
+    "path": "QUICK",
+    "curriculum": [...],
+    "estimatedCost": 0.05,
+    "generationTimeSeconds": 180
+  },
+  "timestamp": 1700000180000
+}
+```
+
+6. **error** - 오류 발생
+```json
+{
+  "type": "ERROR",
+  "message": "오류 발생: Invalid member ID",
+  "timestamp": 1700000005000
+}
+```
+
+**사용 예시 (JavaScript)**
+```javascript
+const eventSource = new EventSource(
+  '/api/v1/agents/learning-plan/stream?memberId=1&targetTechnology=kotlin'
+);
+
+eventSource.addEventListener('agent_started', (e) => {
+  const data = JSON.parse(e.data);
+  console.log('Agent 시작:', data.agentRunId);
+});
+
+eventSource.addEventListener('action_executed', (e) => {
+  const data = JSON.parse(e.data);
+  console.log(`${data.actionName} 완료`);
+});
+
+eventSource.addEventListener('agent_completed', (e) => {
+  const data = JSON.parse(e.data);
+  console.log('최종 결과:', data.result);
+  eventSource.close();
+});
+
+eventSource.addEventListener('error', (e) => {
+  const data = JSON.parse(e.data);
+  console.error('오류:', data.message);
+  eventSource.close();
+});
+```
+
+**특징**
+- **GOAP 동적 경로 설정**: Agent가 회원 프로필에 따라 Quick/Standard/Detailed 경로를 동적으로 선택
+- **실시간 모니터링**: 각 Action 실행을 실시간으로 추적
+- **비동기 처리**: 서버에서 CompletableFuture를 사용한 non-blocking 처리
+- **자동 재계획**: 각 Action 실행 후 GOAP가 자동으로 재계획(replanning) 수행
+
+---
+
+### 7.2. AgentRun 관리 API
+
+#### 7.2.1. AgentRun 생성
+
+```http
+POST /api/v1/agent-runs?memberId={memberId}
+```
+
+**Request Body**
+```json
+{
+  "agentType": "LEARNING_PLAN",
+  "parameters": "{\"targetTechnology\":\"kotlin\",\"prefersFastPlan\":false}"
+}
+```
+
+**Response (201 Created)**
+```json
+{
+  "success": true,
+  "data": {
+    "agentRunId": 1,
+    "memberId": 1,
+    "agentType": "LEARNING_PLAN",
+    "status": "PENDING",
+    "parameters": "{\"targetTechnology\":\"kotlin\"}",
+    "result": null,
+    "learningPlanId": null,
+    "errorMessage": null,
+    "startedAt": null,
+    "completedAt": null,
+    "executionTimeMs": null,
+    "estimatedCost": null,
+    "createdAt": "2025-11-24T12:00:00",
+    "updatedAt": "2025-11-24T12:00:00"
+  },
+  "message": "Agent run created successfully"
+}
+```
+
+#### 7.2.2. AgentRun 조회
+
+```http
+GET /api/v1/agent-runs/{agentRunId}?memberId={memberId}
+```
+
+**Response (200 OK)**
+```json
+{
+  "success": true,
+  "data": {
+    "agentRunId": 1,
+    "memberId": 1,
+    "agentType": "LEARNING_PLAN",
+    "status": "COMPLETED",
+    "parameters": "{\"targetTechnology\":\"kotlin\"}",
+    "result": "{\"path\":\"QUICK\",\"curriculum\":[...]}",
+    "learningPlanId": 5,
+    "errorMessage": null,
+    "startedAt": "2025-11-24T12:00:00",
+    "completedAt": "2025-11-24T12:03:00",
+    "executionTimeMs": 180000,
+    "estimatedCost": 0.05,
+    "createdAt": "2025-11-24T12:00:00",
+    "updatedAt": "2025-11-24T12:03:00"
+  },
+  "message": "Agent run retrieved successfully"
+}
+```
+
+#### 7.2.3. AgentRun 목록 조회
+
+```http
+GET /api/v1/agent-runs?memberId={memberId}&status={status}
+```
+
+**Query Parameters**
+- `memberId` (required): 회원 ID
+- `status` (optional): AgentRunStatus 필터 (PENDING, RUNNING, COMPLETED, FAILED)
+
+**Response (200 OK)**
+```json
+{
+  "success": true,
+  "data": {
+    "runs": [
+      {
+        "agentRunId": 1,
+        "memberId": 1,
+        "agentType": "LEARNING_PLAN",
+        "status": "COMPLETED",
+        "createdAt": "2025-11-24T12:00:00"
+      }
+    ],
+    "total": 1
+  },
+  "message": "Agent runs retrieved successfully"
+}
+```
+
+#### 7.2.4. AgentRun 시작
+
+```http
+POST /api/v1/agent-runs/{agentRunId}/start
+```
+
+**Response (200 OK)**
+```json
+{
+  "success": true,
+  "data": {
+    "agentRunId": 1,
+    "status": "RUNNING",
+    "startedAt": "2025-11-24T12:00:00"
+  },
+  "message": "Agent run started successfully"
+}
+```
+
+#### 7.2.5. AgentRun 완료 처리
+
+```http
+POST /api/v1/agent-runs/{agentRunId}/complete
+```
+
+**Query Parameters**
+- `result` (optional): 결과 JSON
+- `learningPlanId` (optional): 생성된 학습 플랜 ID
+- `cost` (optional): 예상 비용
+- `executionTimeMs` (optional): 실행 시간(ms)
+
+**Response (200 OK)**
+```json
+{
+  "success": true,
+  "data": {
+    "agentRunId": 1,
+    "status": "COMPLETED",
+    "result": "{...}",
+    "completedAt": "2025-11-24T12:03:00"
+  },
+  "message": "Agent run completed successfully"
+}
+```
+
+#### 7.2.6. AgentRun 실패 처리
+
+```http
+POST /api/v1/agent-runs/{agentRunId}/fail?errorMessage={message}
+```
+
+**Response (200 OK)**
+```json
+{
+  "success": true,
+  "data": {
+    "agentRunId": 1,
+    "status": "FAILED",
+    "errorMessage": "LLM API timeout",
+    "completedAt": "2025-11-24T12:01:00"
+  },
+  "message": "Agent run failed"
+}
+```
+
+---
+
+## 8. GOAP 동작 원리
+
+SkillWeaver의 AI 에이전트는 **GOAP(Goal-Oriented Action Planning)** 알고리즘을 사용하여 회원의 상황에 맞는 최적의 학습 경로를 동적으로 결정합니다.
+
+### 8.1. 3가지 학습 경로
+
+1. **Quick Path (빠른 경로)**
+   - 대상: ADVANCED 레벨 + PROJECT_BASED + 충분한 스킬 보유
+   - 특징: 3-4단계, 3-5분, 약 $0.05
+   - Actions: extractMemberProfile → quickAnalysis → skipGapAnalysis → generateQuickCurriculum → finalizeQuickPlan
+
+2. **Standard Path (표준 경로)**
+   - 대상: INTERMEDIATE 레벨
+   - 특징: 5-7단계, 8-12분, 약 $0.15
+   - Actions: extractMemberProfile → deepAnalysis → quickGapCheck → generateStandardCurriculum → finalizeStandardPlan
+
+3. **Detailed Path (상세 경로)**
+   - 대상: BEGINNER 레벨 또는 선행 지식 부족
+   - 특징: 8-12단계 (리소스 포함), 15-20분, 약 $0.30
+   - Actions: extractMemberProfile → deepAnalysis → detailedGapAnalysis → generateDetailedCurriculum → enrichWithResources → finalizeDetailedPlan
+
+### 8.2. 동적 재계획 (Replanning)
+
+각 Action 실행 후 GOAP는 다음을 수행합니다:
+1. **현재 상태 분석**: Blackboard와 World 상태 확인
+2. **실행 가능한 Action 탐색**: Precondition 평가
+3. **최적 경로 탐색**: A* 알고리즘으로 Goal까지의 최적 시퀀스 계산
+4. **다음 Action 실행**: 선택된 Action 실행 후 다시 1번으로
+
+이를 통해 예상치 못한 상황(예: LLM 응답 결과에 따른 조건 변경)에도 유연하게 대응할 수 있습니다.
+
+---

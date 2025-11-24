@@ -10,4 +10,5 @@ export * from './skills';
 export * from './goals';
 export * from './learning-plans';
 export * from './agent-runs';
+export * from './technologies';
 
