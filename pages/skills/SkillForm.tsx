@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../comp
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../../components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Mock technologies for search
 const mockTechnologies = [

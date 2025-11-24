@@ -4,8 +4,8 @@ import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Plus, Edit, Trash2, BookOpen, Calendar } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { Plus, Edit, Trash2, BookOpen, Calendar, Sparkles, Filter, ArrowRight, Award } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Mock data
 const mockSkills = [
@@ -90,31 +90,44 @@ export function Skills() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-gray-900">내 기술 스택</h1>
-          <p className="text-gray-600 mt-1">
-            보유한 기술을 관리하고 새로운 기술을 추가하세요
-          </p>
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-3xl blur-3xl opacity-30"></div>
+        <div className="relative bg-gradient-to-br from-white to-blue-50/50 rounded-2xl p-8 border border-blue-100 shadow-soft">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-4 shadow-glow-accent animate-float">
+                <BookOpen className="size-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 mb-1">내 기술 스택</h1>
+                <p className="text-lg text-slate-600">
+                  보유한 기술을 관리하고 새로운 기술을 추가하세요
+                </p>
+              </div>
+            </div>
+            <Link to="/skills/new">
+              <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-glow-accent btn-glow h-12 px-6">
+                <Plus className="size-5 mr-2" />
+                기술 추가
+              </Button>
+            </Link>
+          </div>
         </div>
-        <Link to="/skills/new">
-          <Button>
-            <Plus className="size-4 mr-2" />
-            기술 추가
-          </Button>
-        </Link>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="border-0 shadow-soft">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-gray-700">카테고리</label>
+              <label className="text-slate-700 font-medium flex items-center gap-2">
+                <Filter className="size-4 text-blue-600" />
+                카테고리
+              </label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -129,9 +142,12 @@ export function Skills() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-gray-700">레벨</label>
+              <label className="text-slate-700 font-medium flex items-center gap-2">
+                <Award className="size-4 text-blue-600" />
+                레벨
+              </label>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -147,7 +163,7 @@ export function Skills() {
             <div className="flex items-end">
               <Button 
                 variant="outline" 
-                className="w-full"
+                className="w-full h-11 hover:bg-blue-50 hover:border-blue-300"
                 onClick={() => {
                   setCategoryFilter('ALL');
                   setLevelFilter('ALL');
@@ -161,15 +177,17 @@ export function Skills() {
       </Card>
 
       {/* Skills List */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filteredSkills.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <BookOpen className="size-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">조건에 맞는 기술이 없습니다.</p>
+          <Card className="border-0 shadow-soft">
+            <CardContent className="py-16 text-center">
+              <div className="bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <BookOpen className="size-12 text-blue-600" />
+              </div>
+              <p className="text-lg text-slate-600 mb-4">조건에 맞는 기술이 없습니다.</p>
               <Link to="/skills/new">
-                <Button variant="outline" className="mt-4">
-                  <Plus className="size-4 mr-2" />
+                <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-glow-accent btn-glow">
+                  <Plus className="size-5 mr-2" />
                   첫 기술 추가하기
                 </Button>
               </Link>
@@ -177,53 +195,52 @@ export function Skills() {
           </Card>
         ) : (
           filteredSkills.map((skill) => (
-            <Card key={skill.id}>
+            <Card key={skill.id} className="card-hover border-0 shadow-soft bg-gradient-to-r from-white to-blue-50/30">
               <CardContent className="pt-6">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-blue-100 rounded-full p-2">
-                        <BookOpen className="size-5 text-blue-600" />
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-3 shadow-lg">
+                        <BookOpen className="size-6 text-white" />
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-gray-900">{skill.technologyName}</h3>
-                          <Badge className={levelColors[skill.level as keyof typeof levelColors]}>
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <h3 className="text-xl font-bold text-slate-900">{skill.technologyName}</h3>
+                          <Badge className={levelColors[skill.level as keyof typeof levelColors] + ' px-3 py-1 font-medium shadow-sm'}>
                             {skill.level}
                           </Badge>
-                          <Badge variant="outline" className={categoryColors[skill.category as keyof typeof categoryColors]}>
+                          <Badge variant="outline" className={categoryColors[skill.category as keyof typeof categoryColors] + ' px-3 py-1 font-medium'}>
                             {skill.category}
                           </Badge>
                         </div>
                         {skill.note && (
-                          <p className="text-gray-600 mt-2">{skill.note}</p>
+                          <p className="text-slate-600 leading-relaxed">{skill.note}</p>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="size-4" />
-                        <span>경력: {skill.yearsOfUse}년</span>
+                    <div className="flex flex-wrap gap-3">
+                      <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
+                        <Award className="size-4 text-blue-600" />
+                        <span className="text-sm text-slate-600">경력: {skill.yearsOfUse}년</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="size-4" />
-                        <span>최근 사용: {skill.lastUsedAt}</span>
+                      <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
+                        <Calendar className="size-4 text-cyan-600" />
+                        <span className="text-sm text-slate-600">최근: {skill.lastUsedAt}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex md:flex-col gap-2">
                     <Link to={`/skills/${skill.id}/edit`} className="flex-1 md:flex-initial">
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" className="w-full h-10 hover:bg-blue-50 hover:border-blue-300">
                         <Edit className="size-4 mr-2" />
                         수정
                       </Button>
                     </Link>
                     <Button 
                       variant="outline" 
-                      size="sm" 
-                      className="flex-1 md:flex-initial text-red-600 hover:text-red-700"
+                      className="flex-1 md:flex-initial h-10 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
                       onClick={() => handleDelete(skill.id)}
                     >
                       <Trash2 className="size-4 mr-2" />
@@ -239,30 +256,30 @@ export function Skills() {
 
       {/* Stats */}
       {filteredSkills.length > 0 && (
-        <Card>
+        <Card className="border-0 shadow-soft bg-gradient-to-br from-slate-50 to-slate-100">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <p className="text-gray-900">{filteredSkills.length}</p>
-                <p className="text-gray-600">총 기술</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div className="p-4 bg-white rounded-xl shadow-sm">
+                <p className="text-4xl font-bold text-slate-900 mb-1">{filteredSkills.length}</p>
+                <p className="text-slate-600 font-medium">총 기술</p>
               </div>
-              <div>
-                <p className="text-gray-900">
+              <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-sm border border-purple-200">
+                <p className="text-4xl font-bold text-purple-700 mb-1">
                   {filteredSkills.filter(s => s.level === 'ADVANCED' || s.level === 'EXPERT').length}
                 </p>
-                <p className="text-gray-600">고급 이상</p>
+                <p className="text-purple-700 font-medium">고급 이상</p>
               </div>
-              <div>
-                <p className="text-gray-900">
+              <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-sm border border-blue-200">
+                <p className="text-4xl font-bold text-blue-700 mb-1">
                   {filteredSkills.filter(s => s.level === 'INTERMEDIATE').length}
                 </p>
-                <p className="text-gray-600">중급</p>
+                <p className="text-blue-700 font-medium">중급</p>
               </div>
-              <div>
-                <p className="text-gray-900">
+              <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-sm border border-green-200">
+                <p className="text-4xl font-bold text-green-700 mb-1">
                   {filteredSkills.filter(s => s.level === 'BEGINNER').length}
                 </p>
-                <p className="text-gray-600">입문</p>
+                <p className="text-green-700 font-medium">입문</p>
               </div>
             </div>
           </CardContent>

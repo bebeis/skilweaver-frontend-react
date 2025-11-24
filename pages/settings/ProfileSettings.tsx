@@ -10,7 +10,7 @@ import { Switch } from '../../components/ui/switch';
 import { Separator } from '../../components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../../components/ui/alert-dialog';
 import { User, Settings, Trash2 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function ProfileSettings() {
   const { user, updateUser, logout } = useAuth();

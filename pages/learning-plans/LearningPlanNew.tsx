@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../comp
 import { Badge } from '../../components/ui/badge';
 import { Checkbox } from '../../components/ui/checkbox';
 import { GraduationCap, Loader2, Sparkles } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { GOAPVisualization } from '../../components/learning-plans/GOAPVisualization';
 
 export function LearningPlanNew() {
