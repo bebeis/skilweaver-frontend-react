@@ -8,34 +8,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/card';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../../components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { skillsApi, technologiesApi } from '../../src/lib/api';
+import { useAuth } from '../../hooks/useAuth';
 
-// Mock technologies for search
-const mockTechnologies = [
-  { id: '1', name: 'Java' },
-  { id: '2', name: 'JavaScript' },
-  { id: '3', name: 'TypeScript' },
-  { id: '4', name: 'Python' },
-  { id: '5', name: 'Go' },
-  { id: '6', name: 'React' },
-  { id: '7', name: 'Vue.js' },
-  { id: '8', name: 'Spring Boot' },
-  { id: '9', name: 'Django' },
-  { id: '10', name: 'Docker' },
-  { id: '11', name: 'Kubernetes' },
-  { id: '12', name: 'PostgreSQL' },
-  { id: '13', name: 'MongoDB' },
-  { id: '14', name: 'Redis' },
-];
+interface Technology {
+  technologyId: number;
+  displayName: string;
+}
 
 export function SkillForm() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { skillId } = useParams();
   const isEdit = !!skillId;
 
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingTechnologies, setLoadingTechnologies] = useState(false);
+  const [technologies, setTechnologies] = useState<Technology[]>([]);
   const [formData, setFormData] = useState({
     technologyId: '',
     technologyName: '',
@@ -46,10 +39,36 @@ export function SkillForm() {
     note: ''
   });
 
+  // Load technologies on component mount
+  useEffect(() => {
+    const loadTechnologies = async () => {
+      try {
+        setLoadingTechnologies(true);
+        const response = await technologiesApi.getTechnologies({ size: 100 });
+        if (response.success) {
+          // Handle both response formats:
+          // 1. { technologies: [...] } - from API spec
+          // 2. [...] - direct array from actual API
+          const techList = Array.isArray(response.data)
+            ? response.data
+            : response.data?.technologies || [];
+          setTechnologies(techList);
+        }
+      } catch (error) {
+        console.error('Failed to load technologies:', error);
+        toast.error('기술 목록을 불러오는데 실패했습니다.');
+      } finally {
+        setLoadingTechnologies(false);
+      }
+    };
+
+    loadTechnologies();
+  }, []);
+
   useEffect(() => {
     // If editing, load existing skill data
     if (isEdit) {
-      // Mock loading existing skill
+      // Mock loading existing skill - TODO: fetch actual skill data from API
       setFormData({
         technologyId: '1',
         technologyName: 'Java',
@@ -62,7 +81,7 @@ export function SkillForm() {
     }
   }, [isEdit]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.technologyName && !formData.customName) {
@@ -70,20 +89,53 @@ export function SkillForm() {
       return;
     }
 
-    // Mock API call
-    toast.success(isEdit ? '기술이 수정되었습니다.' : '기술이 추가되었습니다.');
-    navigate('/skills');
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      // API 스펙: technologyId 또는 customName 중 하나는 반드시 값이 있어야 함
+      const skillData = {
+        technologyId: formData.technologyId ? Number(formData.technologyId) : null,
+        customName: formData.customName || null,
+        level: formData.level,
+        yearsOfUse: formData.yearsOfUse,
+        lastUsedAt: formData.lastUsedAt,
+        note: formData.note
+      };
+
+      if (isEdit) {
+        await skillsApi.updateSkill(Number(user.id), Number(skillId), skillData);
+        toast.success('기술이 수정되었습니다.');
+      } else {
+        await skillsApi.addSkill(Number(user.id), skillData);
+        toast.success('기술이 추가되었습니다.');
+      }
+
+      navigate('/skills');
+    } catch (error: any) {
+      toast.error(error.message || '요청 처리에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleTechnologySelect = (techId: string, techName: string) => {
+  const handleTechnologySelect = (techId: number, techName: string) => {
     setFormData({
       ...formData,
-      technologyId: techId,
+      technologyId: String(techId),
       technologyName: techName,
       customName: ''
     });
+    setSearchValue('');
     setOpen(false);
   };
+
+  const filteredTechnologies = technologies.filter(tech =>
+    tech.displayName.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -117,33 +169,42 @@ export function SkillForm() {
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                   <Command>
-                    <CommandInput 
-                      placeholder="기술 검색..." 
+                    <CommandInput
+                      placeholder="기술 검색..."
                       value={searchValue}
                       onValueChange={setSearchValue}
                       className="text-foreground"
+                      disabled={loadingTechnologies}
                     />
-                    <CommandEmpty className="text-muted-foreground">검색 결과가 없습니다.</CommandEmpty>
-                    <CommandGroup>
-                      {mockTechnologies
-                        .filter(tech => 
-                          tech.name.toLowerCase().includes(searchValue.toLowerCase())
-                        )
-                        .map((tech) => (
+                    {loadingTechnologies && (
+                      <div className="p-2 text-center text-sm text-muted-foreground">
+                        <Loader2 className="inline size-4 animate-spin mr-2" />
+                        로딩 중...
+                      </div>
+                    )}
+                    {!loadingTechnologies && filteredTechnologies.length === 0 && (
+                      <CommandEmpty className="text-muted-foreground">
+                        {technologies.length === 0 ? '기술을 불러올 수 없습니다.' : '검색 결과가 없습니다.'}
+                      </CommandEmpty>
+                    )}
+                    {!loadingTechnologies && (
+                      <CommandGroup>
+                        {filteredTechnologies.map((tech) => (
                           <CommandItem
-                            key={tech.id}
-                            value={tech.name}
-                            onSelect={() => handleTechnologySelect(tech.id, tech.name)}
+                            key={tech.technologyId}
+                            value={tech.displayName}
+                            onSelect={() => handleTechnologySelect(tech.technologyId, tech.displayName)}
                           >
                             <Check
                               className={`mr-2 size-4 ${
-                                formData.technologyId === tech.id ? "opacity-100" : "opacity-0"
+                                formData.technologyId === String(tech.technologyId) ? "opacity-100" : "opacity-0"
                               }`}
                             />
-                            {tech.name}
+                            {tech.displayName}
                           </CommandItem>
                         ))}
-                    </CommandGroup>
+                      </CommandGroup>
+                    )}
                   </Command>
                 </PopoverContent>
               </Popover>
@@ -223,14 +284,26 @@ export function SkillForm() {
             </div>
           </CardContent>
           <CardFooter className="flex gap-3">
-            <Button type="submit" className="flex-1 relative z-10">
-              {isEdit ? '수정 완료' : '추가하기'}
+            <Button
+              type="submit"
+              className="flex-1 relative z-10"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  처리 중...
+                </>
+              ) : (
+                isEdit ? '수정 완료' : '추가하기'
+              )}
             </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               className="flex-1 relative z-10"
               onClick={() => navigate('/skills')}
+              disabled={submitting}
             >
               취소
             </Button>

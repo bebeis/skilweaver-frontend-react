@@ -2,6 +2,26 @@
 
 ## 변경 이력
 
+### v1.3 (2025-11-25)
+주요 변경사항:
+1. **Enum 정의 통합 및 확장**
+   - 프론트엔드 실제 사용과 API 명세 일치성 확보
+   - `TargetTrack`에 `DEVOPS` 추가 (기존 코드에서 사용)
+   - `LearningStyle`에 `HANDS_ON`, `THEORY_FIRST` 추가 (대체 표현)
+   - `SkillLevel`에 `EXPERT` 추가 (전문가 레벨 지원)
+   - `SkillCategory`에 `DEVOPS`, `API`, `DATABASE` 추가
+   - `GoalStatus`에 `PLANNING` 추가 (계획 중 상태)
+   - `LearningPlanStatus`에 `DRAFT` 추가 (초안 상태)
+
+2. **신규 Enum 타입 정의**
+   - `LearningPathType`: `QUICK`, `STANDARD`, `DETAILED` (GOAP 경로 구분)
+   - `ResourceType`: `DOC`, `VIDEO`, `BLOG`, `COURSE`, `REPO` 및 대체 표현
+   - `SseEventType`: SSE 이벤트 6가지 타입 정의
+
+3. **호환성 개선**
+   - 기존 코드의 대체 표현(예: DATABASE ↔ DB)을 명시적으로 문서화
+   - 점진적 마이그레이션을 위해 기본 값과 대체 값 병행 지원
+
 ### v1.2 (2025-11-24)
 주요 변경사항:
 1. **AI 에이전트 실시간 스트리밍 API 추가**
@@ -1201,56 +1221,65 @@ PATCH /api/v1/technologies/{technologyId}/edits/{editId}
 ## 주요 도메인 Enum
 
 ### TargetTrack
-- `BACKEND`
-- `FRONTEND`
-- `FULLSTACK`
-- `MOBILE`
-- `DATA`
+- `BACKEND` - 백엔드
+- `FRONTEND` - 프론트엔드
+- `FULLSTACK` - 풀스택
+- `MOBILE` - 모바일
+- `DATA` - 데이터
+- `DEVOPS` - 데브옵스
 
 ### ExperienceLevel
-- `BEGINNER`
-- `INTERMEDIATE`
-- `ADVANCED`
+- `BEGINNER` - 입문
+- `INTERMEDIATE` - 중급
+- `ADVANCED` - 고급
 
 ### LearningStyle
-- `DOC_FIRST`
-- `VIDEO_FIRST`
-- `PROJECT_BASED`
-- `BALANCED`
+- `DOC_FIRST` - 문서 우선
+- `VIDEO_FIRST` - 영상 우선
+- `PROJECT_BASED` - 프로젝트 중심
+- `BALANCED` - 균형잡힌
+- `HANDS_ON` - 실습 중심 (대체 표현)
+- `THEORY_FIRST` - 이론 우선 (대체 표현)
 
 ### SkillCategory
-- `LANGUAGE`
-- `FRAMEWORK`
-- `LIBRARY`
-- `TOOL`
-- `DB`
-- `PLATFORM`
-- `ETC`
+- `LANGUAGE` - 언어
+- `FRAMEWORK` - 프레임워크
+- `LIBRARY` - 라이브러리
+- `TOOL` - 도구
+- `DB` - 데이터베이스
+- `PLATFORM` - 플랫폼
+- `ETC` - 기타
+- `DEVOPS` - DevOps (추가)
+- `API` - API (추가)
+- `DATABASE` - 데이터베이스 (DB의 대체 표현)
 
 ### SkillLevel
-- `BEGINNER`
-- `INTERMEDIATE`
-- `ADVANCED`
+- `BEGINNER` - 입문
+- `INTERMEDIATE` - 중급
+- `ADVANCED` - 고급
+- `EXPERT` - 전문가
 
 ### GoalPriority
-- `LOW`
-- `MEDIUM`
-- `HIGH`
+- `LOW` - 낮음
+- `MEDIUM` - 중간
+- `HIGH` - 높음
 
 ### GoalStatus
-- `ACTIVE`
-- `COMPLETED`
-- `ABANDONED`
+- `ACTIVE` - 진행 중
+- `COMPLETED` - 완료
+- `ABANDONED` - 중단
+- `PLANNING` - 계획 중 (추가)
 
 ### LearningPlanStatus
-- `ACTIVE`
-- `COMPLETED`
-- `ABANDONED`
+- `ACTIVE` - 진행 중
+- `COMPLETED` - 완료
+- `ABANDONED` - 중단
+- `DRAFT` - 초안 (추가)
 
 ### StepDifficulty
-- `EASY`
-- `MEDIUM`
-- `HARD`
+- `EASY` - 쉬움
+- `MEDIUM` - 중간
+- `HARD` - 어려움
 
 ### AgentRunStatus
 - `PENDING` - 대기 중
@@ -1262,18 +1291,42 @@ PATCH /api/v1/technologies/{technologyId}/edits/{editId}
 - `LEARNING_PLAN` - 학습 플랜 생성 에이전트
 
 ### KnowledgeSource
-- `COMMUNITY`
-- `AI_IMPORTED`
+- `COMMUNITY` - 커뮤니티
+- `AI_IMPORTED` - AI 자동 생성
 
 ### RelationType
-- `PREREQUISITE`
-- `NEXT_STEP`
-- `ALTERNATIVE`
+- `PREREQUISITE` - 선행 지식
+- `NEXT_STEP` - 다음 단계
+- `ALTERNATIVE` - 대체 기술
 
 ### EditStatus (v1.1)
-- `PENDING`
-- `APPROVED`
-- `REJECTED`
+- `PENDING` - 검토 대기
+- `APPROVED` - 승인
+- `REJECTED` - 거부
+
+### LearningPathType
+- `QUICK` - 빠른 경로 (3-4단계)
+- `STANDARD` - 표준 경로 (5-7단계)
+- `DETAILED` - 상세 경로 (8-12단계)
+
+### ResourceType
+- `DOC` - 문서
+- `VIDEO` - 영상
+- `BLOG` - 블로그
+- `COURSE` - 강의
+- `REPO` - 저장소
+- `DOCUMENTATION` - 공식 문서 (DOC의 대체 표현)
+- `TUTORIAL` - 튜토리얼 (BLOG의 대체 표현)
+- `ARTICLE` - 글 (BLOG의 대체 표현)
+- `PROJECT` - 프로젝트 (REPO의 대체 표현)
+
+### SseEventType
+- `AGENT_STARTED` - 에이전트 실행 시작
+- `PLANNING_STARTED` - GOAP 계획 시작
+- `ACTION_EXECUTED` - 액션 실행 완료
+- `PROGRESS` - 진행 상황 업데이트
+- `AGENT_COMPLETED` - 에이전트 실행 완료
+- `ERROR` - 오류 발생
 
 ---
 

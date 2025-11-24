@@ -3,19 +3,19 @@
  */
 
 // Enums
-export type TargetTrack = 'BACKEND' | 'FRONTEND' | 'FULLSTACK' | 'MOBILE' | 'DATA';
+export type TargetTrack = 'BACKEND' | 'FRONTEND' | 'FULLSTACK' | 'MOBILE' | 'DATA' | 'DEVOPS';
 export type ExperienceLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-export type LearningStyle = 'DOC_FIRST' | 'VIDEO_FIRST' | 'PROJECT_BASED';
-export type SkillCategory = 'LANGUAGE' | 'FRAMEWORK' | 'LIBRARY' | 'TOOL' | 'DB' | 'PLATFORM' | 'ETC';
-export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+export type LearningStyle = 'DOC_FIRST' | 'VIDEO_FIRST' | 'PROJECT_BASED' | 'BALANCED' | 'HANDS_ON' | 'THEORY_FIRST';
+export type SkillCategory = 'LANGUAGE' | 'FRAMEWORK' | 'LIBRARY' | 'TOOL' | 'DB' | 'PLATFORM' | 'ETC' | 'DEVOPS' | 'API' | 'DATABASE';
+export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
 export type GoalPriority = 'LOW' | 'MEDIUM' | 'HIGH';
-export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
-export type LearningPlanStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED';
+export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED' | 'PLANNING';
+export type LearningPlanStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED' | 'DRAFT';
 export type StepDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export type AgentRunStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
 export type KnowledgeSource = 'COMMUNITY' | 'AI_IMPORTED';
 export type RelationType = 'PREREQUISITE' | 'NEXT_STEP' | 'ALTERNATIVE';
-export type ResourceType = 'DOC' | 'VIDEO' | 'BLOG' | 'COURSE' | 'REPO';
+export type ResourceType = 'DOC' | 'VIDEO' | 'BLOG' | 'COURSE' | 'REPO' | 'DOCUMENTATION' | 'TUTORIAL' | 'ARTICLE' | 'PROJECT';
 
 // 회원
 export interface LearningPreference {
@@ -165,7 +165,7 @@ export interface LearningPlan {
 }
 
 export interface CreateLearningPlanRequest {
-  targetTechName: string;
+  targetTechnology: string;
   targetCompletionWeeks?: number;
   focusAreas?: string[];
   dailyMinutesOverride?: number;

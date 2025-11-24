@@ -14,6 +14,7 @@ import {
 
 interface GOAPVisualizationProps {
   targetTech: string;
+  onPhaseUpdate?: (phase: string, status: 'pending' | 'running' | 'completed') => void;
 }
 
 interface GOAPPhase {

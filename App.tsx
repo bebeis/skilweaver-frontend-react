@@ -17,12 +17,24 @@ import { LearningPlanNew } from './pages/learning-plans/LearningPlanNew';
 import { LearningPlanDetail } from './pages/learning-plans/LearningPlanDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  
+  const { isAuthenticated, isInitializing } = useAuth();
+
+  // Show nothing while initializing (prevents flashing login page)
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return <>{children}</>;
 }
 

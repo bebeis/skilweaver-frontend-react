@@ -13,7 +13,11 @@ export const skillsApi = {
     memberId: number,
     params?: { category?: string; level?: string }
   ): Promise<ApiResponse<{ skills: MemberSkill[]; totalCount: number }>> {
-    const queryParams = new URLSearchParams(params as any).toString();
+    // Filter out undefined values to avoid sending "undefined" as string in query params
+    const filteredParams = Object.fromEntries(
+      Object.entries(params || {}).filter(([, value]) => value !== undefined)
+    );
+    const queryParams = new URLSearchParams(filteredParams as any).toString();
     const endpoint = `/members/${memberId}/skills${queryParams ? `?${queryParams}` : ''}`;
     return apiClient.get(endpoint);
   },

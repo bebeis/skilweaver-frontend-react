@@ -18,6 +18,7 @@ export type SSEEventType =
   | 'PLANNING_STARTED'
   | 'ACTION_EXECUTED'
   | 'PROGRESS'
+  | 'PATH_UPDATED'
   | 'AGENT_COMPLETED'
   | 'ERROR';
 
@@ -80,6 +81,20 @@ export interface ProgressEvent extends SSEBaseEvent {
   type: 'PROGRESS';
 }
 
+export type ActionStatus = 'PLANNED' | 'EXECUTING' | 'COMPLETED' | 'FAILED';
+
+export interface ActionExecutionDetail {
+  name: string;
+  status: ActionStatus;
+  durationMs: number | null;
+}
+
+export interface PathUpdatedEvent extends SSEBaseEvent {
+  type: 'PATH_UPDATED';
+  executedPath: string[];
+  executedActions: ActionExecutionDetail[];
+}
+
 export interface AgentCompletedEvent extends SSEBaseEvent {
   type: 'AGENT_COMPLETED';
   result: {
@@ -101,6 +116,7 @@ export type SSEEvent =
   | PlanningStartedEvent
   | ActionExecutedEvent
   | ProgressEvent
+  | PathUpdatedEvent
   | AgentCompletedEvent
   | ErrorEvent;
 
@@ -110,6 +126,7 @@ export interface SSECallbacks {
   onPlanningStarted?: (data: PlanningStartedEvent) => void;
   onActionExecuted?: (data: ActionExecutedEvent) => void;
   onProgress?: (data: ProgressEvent) => void;
+  onPathUpdated?: (data: PathUpdatedEvent) => void;
   onAgentCompleted?: (data: AgentCompletedEvent) => void;
   onError?: (data: ErrorEvent) => void;
   onClose?: () => void;
@@ -239,17 +256,26 @@ export function streamLearningPlanGeneration(
   callbacks: SSECallbacks
 ): EventSource {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+  const accessToken = localStorage.getItem('accessToken');
+
   const params = new URLSearchParams({
     memberId: memberId.toString(),
     targetTechnology,
     prefersFastPlan: prefersFastPlan.toString(),
   });
 
+  // EventSource는 헤더를 보낼 수 없으므로 쿼리 파라미터로 토큰 전달
+  if (accessToken) {
+    params.append('accessToken', accessToken);
+  }
+
   const url = `${baseUrl}/agents/learning-plan/stream?${params.toString()}`;
 
   const eventSource = new EventSource(url);
+  let isStreamClosed = false;
 
-  // Event listeners
+  // Event listeners - 백엔드에서 보내는 이벤트 이름과 정확히 일치해야 함
+  // 백엔드: event:agent_started, event:planning_started 등 (소문자)
   eventSource.addEventListener('agent_started', (event) => {
     if (callbacks.onAgentStarted) {
       const data = JSON.parse(event.data) as AgentStartedEvent;
@@ -278,11 +304,19 @@ export function streamLearningPlanGeneration(
     }
   });
 
+  eventSource.addEventListener('path_updated', (event) => {
+    if (callbacks.onPathUpdated) {
+      const data = JSON.parse(event.data) as PathUpdatedEvent;
+      callbacks.onPathUpdated(data);
+    }
+  });
+
   eventSource.addEventListener('agent_completed', (event) => {
     if (callbacks.onAgentCompleted) {
       const data = JSON.parse(event.data) as AgentCompletedEvent;
       callbacks.onAgentCompleted(data);
     }
+    isStreamClosed = true;
     eventSource.close();
     if (callbacks.onClose) {
       callbacks.onClose();
@@ -294,6 +328,7 @@ export function streamLearningPlanGeneration(
     if (callbacks.onError) {
       callbacks.onError(data);
     }
+    isStreamClosed = true;
     eventSource.close();
     if (callbacks.onClose) {
       callbacks.onClose();
@@ -301,17 +336,29 @@ export function streamLearningPlanGeneration(
   });
 
   // Generic error handler (network errors, etc.)
+  // Only trigger if the stream hasn't been properly closed
   eventSource.onerror = () => {
-    if (callbacks.onError) {
-      callbacks.onError({
-        type: 'ERROR',
-        message: '네트워크 오류가 발생했습니다.',
-        timestamp: Date.now(),
-      });
-    }
-    eventSource.close();
-    if (callbacks.onClose) {
-      callbacks.onClose();
+    // ReadyState: 0=CONNECTING, 1=OPEN, 2=CLOSED
+    // Only handle errors if the connection is still open
+    if (eventSource.readyState === EventSource.OPEN && !isStreamClosed) {
+      if (callbacks.onError) {
+        callbacks.onError({
+          type: 'ERROR',
+          message: '네트워크 오류가 발생했습니다.',
+          timestamp: Date.now(),
+        });
+      }
+      eventSource.close();
+      if (callbacks.onClose) {
+        callbacks.onClose();
+      }
+    } else if (!isStreamClosed) {
+      // Connection closed unexpectedly
+      isStreamClosed = true;
+      eventSource.close();
+      if (callbacks.onClose) {
+        callbacks.onClose();
+      }
     }
   };
 

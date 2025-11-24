@@ -56,9 +56,16 @@ export function Skills() {
         });
         
         if (response.success) {
-          const mappedSkills: Skill[] = response.data.skills.map((s: any) => ({
+          // Handle both response formats:
+          // 1. { skills: [...] } - from API spec
+          // 2. [...] - direct array from actual API
+          const skillsArray = Array.isArray(response.data)
+            ? response.data
+            : response.data?.skills || [];
+
+          const mappedSkills: Skill[] = skillsArray.map((s: any) => ({
             id: String(s.memberSkillId),
-            technologyName: s.displayName || s.customName || 'Unknown',
+            technologyName: s.displayName || s.skillName || s.customName || 'Unknown',
             level: s.level,
             category: 'ETC', // API doesn't return category, so we'll use ETC as default
             yearsOfUse: s.yearsOfUse,
@@ -66,6 +73,8 @@ export function Skills() {
             note: s.note,
           }));
           setSkills(mappedSkills);
+        } else {
+          setSkills([]);
         }
       } catch (error: any) {
         toast.error(error.message || '기술 스택을 불러오는데 실패했습니다.');

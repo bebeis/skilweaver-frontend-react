@@ -1,23 +1,28 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { toast } from 'sonner';
-import { 
-  ArrowLeft, 
-  GraduationCap, 
-  Clock, 
-  Target, 
+import {
+  ArrowLeft,
+  GraduationCap,
+  Clock,
+  Target,
   Calendar,
   BookOpen,
   AlertTriangle,
   Lightbulb,
   CheckCircle2,
   ExternalLink,
-  PlayCircle
+  PlayCircle,
+  Loader2
 } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { learningPlansApi } from '../../src/lib/api/learning-plans';
+import type { LearningPlan } from '../../src/lib/api/types';
 
 // Mock data
 const mockPlan = {
@@ -196,10 +201,47 @@ const resourceTypeColors = {
 };
 
 export function LearningPlanDetail() {
-  const { planId } = useParams();
+  const { planId } = useParams<{ planId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [plan, setPlan] = useState<LearningPlan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      if (!user || !planId) {
+        setError('사용자 정보 또는 플랜 ID가 없습니다.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await learningPlansApi.getPlan(
+          user.memberId || Number(user.id),
+          Number(planId)
+        );
+
+        if (response.data) {
+          setPlan(response.data);
+          setError(null);
+        } else {
+          setError('학습 플랜을 찾을 수 없습니다.');
+        }
+      } catch (err) {
+        console.error('학습 플랜 조회 실패:', err);
+        setError('학습 플랜을 불러오는 데 실패했습니다.');
+        toast.error('학습 플랜을 불러오는 데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlan();
+  }, [user, planId]);
 
   const handleEdit = () => {
     navigate(`/learning-plans/${planId}/edit`);
@@ -209,6 +251,39 @@ export function LearningPlanDetail() {
     toast.success('학습을 시작합니다! 📚');
     // Here you would typically update the plan status or navigate to a learning session
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="size-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">학습 플랜을 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !plan) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <AlertTriangle className="size-8 text-destructive" />
+          <div>
+            <h2 className="text-lg font-semibold text-foreground mb-2">
+              {error || '학습 플랜을 불러올 수 없습니다'}
+            </h2>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/learning-plans')}
+            >
+              <ArrowLeft className="size-4 mr-2" />
+              목록으로 돌아가기
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -228,23 +303,23 @@ export function LearningPlanDetail() {
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold text-foreground">{mockPlan.targetTechnology} 학습 플랜</h1>
+                  <h1 className="text-3xl font-bold text-foreground">{plan.targetTechnology} 학습 플랜</h1>
                   <Badge className="bg-success/20 text-success border border-success/30">
-                    {mockPlan.status}
+                    {plan.status}
                   </Badge>
                 </div>
                 <div className="flex flex-wrap gap-4 text-muted-foreground font-medium">
                   <div className="flex items-center gap-2">
                     <Clock className="size-4" />
-                    <span>{mockPlan.totalWeeks}주 · {mockPlan.totalHours}시간</span>
+                    <span>{plan.targetCompletionWeeks || 8}주 · {Math.round((plan.targetCompletionWeeks || 8) * 7 * (plan.dailyMinutes || 60) / 60)}시간</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="size-4" />
-                    <span>시작: {mockPlan.createdAt}</span>
+                    <span>시작: {plan.createdAt?.split('T')[0] || 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Target className="size-4" />
-                    <span>{mockPlan.currentWeek}/{mockPlan.totalWeeks}주차</span>
+                    <span>{Math.ceil((new Date(plan.createdAt || today).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24 * 7)) + 1}/{plan.targetCompletionWeeks || 8}주차</span>
                   </div>
                 </div>
               </div>
@@ -262,9 +337,9 @@ export function LearningPlanDetail() {
           <div className="mt-6 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground font-semibold">전체 진행률</span>
-              <span className="text-foreground font-bold">{mockPlan.progress}%</span>
+              <span className="text-foreground font-bold">{plan.progress || 0}%</span>
             </div>
-            <Progress value={mockPlan.progress} className="h-2" />
+            <Progress value={plan.progress || 0} className="h-2" />
           </div>
         </CardContent>
       </Card>
@@ -292,19 +367,31 @@ export function LearningPlanDetail() {
                   관련 보유 기술
                 </h3>
                 <div className="space-y-2">
-                  {mockPlan.backgroundAnalysis.existingRelevantSkills.map((skill, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border">
-                      <div>
-                        <span className="text-foreground font-semibold">{skill.name}</span>
-                        <span className="text-muted-foreground ml-2">({skill.level})</span>
+                  {plan.backgroundAnalysis && typeof plan.backgroundAnalysis === 'object' && (plan.backgroundAnalysis as any).existingRelevantSkills && (plan.backgroundAnalysis as any).existingRelevantSkills.length > 0 ? (
+                    (plan.backgroundAnalysis as any).existingRelevantSkills.map((skill: any, index: number) => (
+                      <div key={`skill-${index}`} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border">
+                        <div>
+                          {typeof skill === 'string' ? (
+                            <span className="text-foreground font-semibold">{skill}</span>
+                          ) : (
+                            <>
+                              <span className="text-foreground font-semibold">{skill.name}</span>
+                              <span className="text-muted-foreground ml-2">({skill.level})</span>
+                            </>
+                          )}
+                        </div>
+                        {skill.relevance && (
+                          <Badge variant={
+                            skill.relevance === 'HIGH' ? 'default' : 'secondary'
+                          }>
+                            {skill.relevance} 연관성
+                          </Badge>
+                        )}
                       </div>
-                      <Badge variant={
-                        skill.relevance === 'HIGH' ? 'default' : 'secondary'
-                      }>
-                        {skill.relevance} 연관성
-                      </Badge>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">관련 기술 정보 없음</p>
+                  )}
                 </div>
               </div>
 
@@ -315,12 +402,16 @@ export function LearningPlanDetail() {
                   지식 격차
                 </h3>
                 <ul className="space-y-2">
-                  {mockPlan.backgroundAnalysis.knowledgeGaps.map((gap, index) => (
-                    <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
-                      <div className="size-2 bg-warning rounded-full mt-2" />
-                      {gap}
-                    </li>
-                  ))}
+                  {plan.backgroundAnalysis && typeof plan.backgroundAnalysis === 'object' && (plan.backgroundAnalysis as any).knowledgeGaps && (plan.backgroundAnalysis as any).knowledgeGaps.length > 0 ? (
+                    (plan.backgroundAnalysis as any).knowledgeGaps.map((gap: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
+                        <div className="size-2 bg-warning rounded-full mt-2" />
+                        {gap}
+                      </li>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">지식 격차 정보 없음</p>
+                  )}
                 </ul>
               </div>
 
@@ -331,12 +422,16 @@ export function LearningPlanDetail() {
                   고려사항
                 </h3>
                 <ul className="space-y-2">
-                  {mockPlan.backgroundAnalysis.riskFactors.map((risk, index) => (
-                    <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
-                      <div className="size-2 bg-accent rounded-full mt-2" />
-                      {risk}
-                    </li>
-                  ))}
+                  {plan.backgroundAnalysis && typeof plan.backgroundAnalysis === 'object' && (plan.backgroundAnalysis as any).riskFactors && (plan.backgroundAnalysis as any).riskFactors.length > 0 ? (
+                    (plan.backgroundAnalysis as any).riskFactors.map((risk: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
+                        <div className="size-2 bg-accent rounded-full mt-2" />
+                        {risk}
+                      </li>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">고려사항 정보 없음</p>
+                  )}
                 </ul>
               </div>
 
@@ -347,12 +442,16 @@ export function LearningPlanDetail() {
                   추천 학습 방법
                 </h3>
                 <ul className="space-y-2">
-                  {mockPlan.backgroundAnalysis.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
-                      <div className="size-2 bg-primary rounded-full mt-2" />
-                      {rec}
-                    </li>
-                  ))}
+                  {plan.backgroundAnalysis && typeof plan.backgroundAnalysis === 'object' && (plan.backgroundAnalysis as any).recommendations && (plan.backgroundAnalysis as any).recommendations.length > 0 ? (
+                    (plan.backgroundAnalysis as any).recommendations.map((rec: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
+                        <div className="size-2 bg-primary rounded-full mt-2" />
+                        {rec}
+                      </li>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">추천 정보 없음</p>
+                  )}
                 </ul>
               </div>
             </CardContent>
@@ -361,8 +460,8 @@ export function LearningPlanDetail() {
 
         {/* Steps Tab */}
         <TabsContent value="steps" className="space-y-4">
-          {mockPlan.steps.map((step) => (
-            <Card key={step.stepOrder} className="glass-card border-tech">
+          {plan.steps && plan.steps.length > 0 ? plan.steps.map((step: any, stepIndex: number) => (
+            <Card key={`step-${stepIndex}-${step.stepOrder}`} className="glass-card border-tech">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
@@ -385,8 +484,8 @@ export function LearningPlanDetail() {
                 <div>
                   <h4 className="text-foreground font-bold mb-2">학습 목표</h4>
                   <ul className="space-y-1">
-                    {step.objectives.map((obj, index) => (
-                      <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
+                    {step.objectives?.map((obj, objIndex) => (
+                      <li key={`obj-${stepIndex}-${objIndex}`} className="flex items-start gap-2 text-muted-foreground font-medium">
                         <CheckCircle2 className="size-4 text-success mt-1" />
                         {obj}
                       </li>
@@ -398,9 +497,9 @@ export function LearningPlanDetail() {
                 <div>
                   <h4 className="text-foreground font-bold mb-2">추천 학습 자료</h4>
                   <div className="space-y-2">
-                    {step.suggestedResources.map((resource, index) => (
-                      <a 
-                        key={index} 
+                    {step.suggestedResources?.map((resource, resIndex) => (
+                      <a
+                        key={`res-${stepIndex}-${resIndex}`} 
                         href={resource.url}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -425,7 +524,13 @@ export function LearningPlanDetail() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )) : (
+            <Card className="glass-card border-tech">
+              <CardContent className="pt-6">
+                <p className="text-muted-foreground text-center">학습 단계 정보가 없습니다.</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Schedule Tab */}
@@ -436,13 +541,13 @@ export function LearningPlanDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {mockPlan.dailySchedule.map((day, index) => {
+                {plan.dailySchedule && plan.dailySchedule.length > 0 ? plan.dailySchedule.map((day: any, dayIndex: number) => {
                   const isToday = day.date === today;
                   const isPast = new Date(day.date) < new Date(today);
-                  
+
                   return (
-                    <div 
-                      key={index}
+                    <div
+                      key={`day-${day.date || dayIndex}`}
                       className={`p-4 rounded-lg border-2 ${
                         isToday 
                           ? 'bg-primary/10 border-primary/50' 
@@ -474,15 +579,17 @@ export function LearningPlanDetail() {
                         )}
                       </div>
                       <ul className="ml-8 space-y-1">
-                        {day.tasks.map((task, taskIndex) => (
-                          <li key={taskIndex} className="text-muted-foreground font-medium">
+                        {day.tasks?.map((task, taskIndex) => (
+                          <li key={`task-${dayIndex}-${taskIndex}`} className="text-muted-foreground font-medium">
                             • {task}
                           </li>
                         ))}
                       </ul>
                     </div>
                   );
-                })}
+                }) : (
+                  <p className="text-muted-foreground text-center">일정 정보가 없습니다.</p>
+                )}
               </div>
             </CardContent>
           </Card>

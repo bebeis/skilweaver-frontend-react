@@ -8,20 +8,30 @@ import { Badge } from '../../components/ui/badge';
 import { Checkbox } from '../../components/ui/checkbox';
 import { GraduationCap, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { GOAPVisualization } from '../../components/learning-plans/GOAPVisualization';
+import { useAuth } from '../../hooks/useAuth';
+import { LearningPlanStreamGenerator } from '../../components/learning-plans/LearningPlanStreamGenerator';
+import { agentRunsApi } from '../../src/lib/api/agent-runs';
 
 export function LearningPlanNew() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const targetFromUrl = searchParams.get('target');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState({
-    targetTechName: targetFromUrl || '',
+    targetTechnology: targetFromUrl || '',
     targetCompletionWeeks: 8,
     focusAreas: [] as string[],
     dailyMinutesOverride: 60
   });
+
+  // 사용자가 없으면 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   const focusAreaOptions = [
     { id: 'FUNDAMENTALS', label: '기초 개념' },
@@ -43,19 +53,19 @@ export function LearningPlanNew() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.targetTechName) {
+    if (!user) {
+      toast.error('사용자 정보를 찾을 수 없습니다.');
+      navigate('/login');
+      return;
+    }
+
+    if (!formData.targetTechnology) {
       toast.error('학습할 기술을 입력해주세요.');
       return;
     }
 
     setIsGenerating(true);
-    
-    // Simulate AI generation with GOAP process
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    setIsGenerating(false);
-    toast.success('학습 플랜이 생성되었습니다! 🎉');
-    navigate('/learning-plans/1'); // Navigate to the newly created plan
+    // LearningPlanStreamGenerator 컴포넌트에서 자동으로 SSE 스트리밍을 시작합니다
   };
 
   return (
@@ -79,12 +89,12 @@ export function LearningPlanNew() {
             <CardContent className="space-y-6">
               {/* Target Technology */}
               <div className="space-y-2">
-                <Label htmlFor="targetTechName" className="text-foreground font-semibold">학습할 기술</Label>
+                <Label htmlFor="targetTechnology" className="text-foreground font-semibold">학습할 기술</Label>
                 <Input
-                  id="targetTechName"
+                  id="targetTechnology"
                   placeholder="예: Kubernetes, React, PostgreSQL"
-                  value={formData.targetTechName}
-                  onChange={(e) => setFormData({ ...formData, targetTechName: e.target.value })}
+                  value={formData.targetTechnology}
+                  onChange={(e) => setFormData({ ...formData, targetTechnology: e.target.value })}
                   required
                   className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
                 />
@@ -169,7 +179,7 @@ export function LearningPlanNew() {
                   <div className="space-y-1">
                     <p className="text-foreground font-bold">AI 맞춤 생성</p>
                     <p className="text-muted-foreground font-medium">
-                      당신의 기존 기술 스택, 학습 선호도, 경험 레벨을 분석하여 
+                      당신의 기존 기술 스택, 학습 선호도, 경험 레벨을 분석하여
                       가장 효율적인 학습 경로를 생성합니다.
                     </p>
                   </div>
@@ -181,9 +191,9 @@ export function LearningPlanNew() {
                 <Sparkles className="size-4 mr-2" />
                 AI 플랜 생성
               </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 className="flex-1 relative z-10"
                 onClick={() => navigate('/learning-plans')}
               >
@@ -193,7 +203,14 @@ export function LearningPlanNew() {
           </Card>
         </form>
       ) : (
-        <GOAPVisualization targetTech={formData.targetTechName} />
+        <LearningPlanStreamGenerator
+          memberId={user?.memberId || Number(user?.id) || 0}
+          targetTechnology={formData.targetTechnology}
+          prefersFastPlan={false}
+          onComplete={(planId) => {
+            navigate(`/learning-plans/${planId}`);
+          }}
+        />
       )}
     </div>
   );

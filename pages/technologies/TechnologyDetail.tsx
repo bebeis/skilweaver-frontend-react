@@ -37,7 +37,11 @@ export function TechnologyDetail() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [technology, setTechnology] = useState<any>(null);
-  const [relationships, setRelationships] = useState<any>({});
+  const [relationships, setRelationships] = useState<any>({
+    PREREQUISITE: [],
+    NEXT_STEP: [],
+    ALTERNATIVE: []
+  });
   const [showEditForm, setShowEditForm] = useState(false);
   const [editForm, setEditForm] = useState({
     proposedSummary: '',
@@ -108,6 +112,30 @@ export function TechnologyDetail() {
     navigate(`/learning-plans/new?target=${technology.displayName}`);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="size-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (!technology) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={() => navigate('/technologies')}>
+          <ArrowLeft className="size-4 mr-2" />
+          기술 카탈로그로 돌아가기
+        </Button>
+        <Card className="glass-card border-tech">
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground text-center">기술 정보를 불러올 수 없습니다.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -127,8 +155,8 @@ export function TechnologyDetail() {
               <div>
                 <h1 className="text-3xl font-bold text-foreground mb-2">{technology.displayName}</h1>
                 <div className="flex flex-wrap gap-2 mb-3">
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className={categoryColors[technology.category as keyof typeof categoryColors]}
                   >
                     {technology.category}
@@ -138,9 +166,9 @@ export function TechnologyDetail() {
                   </Badge>
                 </div>
                 {technology.officialSite && (
-                  <a 
-                    href={technology.officialSite} 
-                    target="_blank" 
+                  <a
+                    href={technology.officialSite}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-primary hover:underline font-medium"
                   >
@@ -159,160 +187,170 @@ export function TechnologyDetail() {
       </Card>
 
       {/* Summary */}
-      <Card className="glass-card border-tech">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <BookOpen className="size-5 text-primary" />
-            개요
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground font-medium">{technology.summary}</p>
-        </CardContent>
-      </Card>
+      {technology.knowledge?.summary && (
+        <Card className="glass-card border-tech">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <BookOpen className="size-5 text-primary" />
+              개요
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground font-medium">{technology.knowledge.summary}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Learning Tips */}
-      <Card className="glass-card border-tech">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <Lightbulb className="size-5 text-accent" />
-            학습 팁
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground font-medium">{technology.learningTips}</p>
-        </CardContent>
-      </Card>
+      {technology.knowledge?.learningTips && (
+        <Card className="glass-card border-tech">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Lightbulb className="size-5 text-accent" />
+              학습 팁
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground font-medium">{technology.knowledge.learningTips}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Prerequisites & Use Cases */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="glass-card border-tech">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <CheckCircle2 className="size-5 text-success" />
-              선행 학습
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {technology.prerequisites.map((prereq, index) => (
-                <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
-                  <div className="size-2 bg-primary rounded-full" />
-                  {prereq}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        {technology.prerequisites && technology.prerequisites.length > 0 && (
+          <Card className="glass-card border-tech">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <CheckCircle2 className="size-5 text-success" />
+                선행 학습
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {technology.prerequisites.map((prereq: any, index: number) => (
+                  <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
+                    <div className="size-2 bg-primary rounded-full" />
+                    {typeof prereq === 'string' ? prereq : prereq.displayName}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="glass-card border-tech">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <GitBranch className="size-5 text-success" />
-              주요 활용 사례
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {technology.useCases.map((useCase, index) => (
-                <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
-                  <div className="size-2 bg-success rounded-full" />
-                  {useCase}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        {technology.useCases && technology.useCases.length > 0 && (
+          <Card className="glass-card border-tech">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <GitBranch className="size-5 text-success" />
+                주요 활용 사례
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {technology.useCases.map((useCase: string, index: number) => (
+                  <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
+                    <div className="size-2 bg-success rounded-full" />
+                    {useCase}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Relationships */}
-      <Card className="glass-card border-tech">
-        <CardHeader>
-          <CardTitle className="text-foreground">관련 기술</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Prerequisites */}
-          {relationships.PREREQUISITE.length > 0 && (
-            <div>
-              <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
-                <ArrowLeft className="size-4 text-primary" />
-                먼저 학습하면 좋은 기술
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {relationships.PREREQUISITE.map((tech) => (
-                  <Link key={tech.id} to={`/technologies/${tech.id}`}>
-                    <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-foreground font-medium">{tech.name}</span>
-                        <Badge 
-                          variant="outline" 
-                          className={categoryColors[tech.category as keyof typeof categoryColors]}
-                        >
-                          {tech.category}
-                        </Badge>
+      {(relationships.PREREQUISITE?.length > 0 || relationships.NEXT_STEP?.length > 0 || relationships.ALTERNATIVE?.length > 0) && (
+        <Card className="glass-card border-tech">
+          <CardHeader>
+            <CardTitle className="text-foreground">관련 기술</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Prerequisites */}
+            {relationships.PREREQUISITE && relationships.PREREQUISITE.length > 0 && (
+              <div>
+                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                  <ArrowLeft className="size-4 text-primary" />
+                  먼저 학습하면 좋은 기술
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {relationships.PREREQUISITE.map((tech: any) => (
+                    <Link key={tech.technologyId} to={`/technologies/${tech.technologyId}`}>
+                      <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground font-medium">{tech.displayName}</span>
+                          <Badge
+                            variant="outline"
+                            className={categoryColors[tech.category as keyof typeof categoryColors]}
+                          >
+                            {tech.category}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Next Steps */}
-          {relationships.NEXT_STEP.length > 0 && (
-            <div>
-              <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
-                <ArrowRight className="size-4 text-accent" />
-                다음 단계로 학습할 기술
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {relationships.NEXT_STEP.map((tech) => (
-                  <Link key={tech.id} to={`/technologies/${tech.id}`}>
-                    <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-foreground font-medium">{tech.name}</span>
-                        <Badge 
-                          variant="outline" 
-                          className={categoryColors[tech.category as keyof typeof categoryColors]}
-                        >
-                          {tech.category}
-                        </Badge>
+            {/* Next Steps */}
+            {relationships.NEXT_STEP && relationships.NEXT_STEP.length > 0 && (
+              <div>
+                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                  <ArrowRight className="size-4 text-accent" />
+                  다음 단계로 학습할 기술
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {relationships.NEXT_STEP.map((tech: any) => (
+                    <Link key={tech.technologyId} to={`/technologies/${tech.technologyId}`}>
+                      <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground font-medium">{tech.displayName}</span>
+                          <Badge
+                            variant="outline"
+                            className={categoryColors[tech.category as keyof typeof categoryColors]}
+                          >
+                            {tech.category}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Alternatives */}
-          {relationships.ALTERNATIVE.length > 0 && (
-            <div>
-              <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
-                <GitBranch className="size-4 text-success" />
-                대안 기술
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {relationships.ALTERNATIVE.map((tech) => (
-                  <Link key={tech.id} to={`/technologies/${tech.id}`}>
-                    <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-foreground font-medium">{tech.name}</span>
-                        <Badge 
-                          variant="outline" 
-                          className={categoryColors[tech.category as keyof typeof categoryColors]}
-                        >
-                          {tech.category}
-                        </Badge>
+            {/* Alternatives */}
+            {relationships.ALTERNATIVE && relationships.ALTERNATIVE.length > 0 && (
+              <div>
+                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                  <GitBranch className="size-4 text-success" />
+                  대안 기술
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {relationships.ALTERNATIVE.map((tech: any) => (
+                    <Link key={tech.technologyId} to={`/technologies/${tech.technologyId}`}>
+                      <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground font-medium">{tech.displayName}</span>
+                          <Badge
+                            variant="outline"
+                            className={categoryColors[tech.category as keyof typeof categoryColors]}
+                          >
+                            {tech.category}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Community Contribution */}
       <Card className="glass-card border-tech">

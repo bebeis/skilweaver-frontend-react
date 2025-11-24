@@ -236,24 +236,24 @@ export function LearningPlans() {
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               <div className="p-4 bg-white rounded-xl shadow-sm">
-                <p className="text-4xl font-bold text-slate-900 mb-1">{mockPlans.length}</p>
+                <p className="text-4xl font-bold text-slate-900 mb-1">{filteredPlans.length}</p>
                 <p className="text-slate-600 font-medium">총 플랜</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-sm border border-green-200">
                 <p className="text-4xl font-bold text-green-700 mb-1">
-                  {mockPlans.filter(p => p.status === 'ACTIVE').length}
+                  {filteredPlans.filter(p => p.status === 'ACTIVE').length}
                 </p>
                 <p className="text-green-700 font-medium">진행중</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-sm border border-blue-200">
                 <p className="text-4xl font-bold text-blue-700 mb-1">
-                  {mockPlans.filter(p => p.status === 'COMPLETED').length}
+                  {filteredPlans.filter(p => p.status === 'COMPLETED').length}
                 </p>
                 <p className="text-blue-700 font-medium">완료</p>
               </div>
               <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-sm border border-purple-200">
                 <p className="text-4xl font-bold text-purple-700 mb-1">
-                  {mockPlans.reduce((sum, p) => sum + p.totalHours, 0)}
+                  {filteredPlans.reduce((sum, p) => sum + p.totalHours, 0)}
                 </p>
                 <p className="text-purple-700 font-medium">총 학습 시간</p>
               </div>

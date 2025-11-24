@@ -58,16 +58,25 @@ export function Dashboard() {
         ]);
         
         if (skillsResponse.success) {
-          setSkills(skillsResponse.data.skills.slice(0, 5)); // Top 5 skills
+          // Handle both response formats:
+          // 1. { skills: [...] } - from API spec
+          // 2. [...] - direct array from actual API
+          const skillsArray = Array.isArray(skillsResponse.data)
+            ? skillsResponse.data
+            : skillsResponse.data?.skills || [];
+          setSkills(skillsArray.slice(0, 5)); // Top 5 skills
+        }
+
+        if (goalsResponse.success && goalsResponse.data?.goals) {
+          const goalsArray = Array.isArray(goalsResponse.data.goals)
+            ? goalsResponse.data.goals
+            : [];
+          setGoals(goalsArray.slice(0, 3)); // Top 3 goals
         }
         
-        if (goalsResponse.success) {
-          setGoals(goalsResponse.data.goals.slice(0, 3)); // Top 3 goals
-        }
-        
-        if (plansResponse.success) {
+        if (plansResponse.success && plansResponse.data?.pagination) {
           setPlansCount(plansResponse.data.pagination.totalElements);
-          if (plansResponse.data.plans.length > 0) {
+          if (plansResponse.data.plans && plansResponse.data.plans.length > 0) {
             // Get the first active plan details
             const firstPlan = plansResponse.data.plans[0];
             try {
@@ -210,7 +219,7 @@ export function Dashboard() {
       </div>
 
       {/* 활성 학습 플랜 */}
-      {mockActivePlan && (
+      {activePlan && (
         <Card className="glass-card border-tech card-hover-float shadow-neon animate-slide-up-fluid stagger-5">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -223,7 +232,7 @@ export function Dashboard() {
                 </div>
                 <CardTitle className="text-2xl">진행 중인 학습 플랜</CardTitle>
               </div>
-                <Link to={`/learning-plans/${mockActivePlan.id}`}>
+                <Link to={`/learning-plans/${activePlan.id}`}>
                 <Button variant="outline" className="border-primary/30 hover:bg-primary/10 transition-all duration-fluid">
                   상세 보기
                   <ArrowRight className="size-4 ml-2" />
@@ -234,22 +243,22 @@ export function Dashboard() {
           <CardContent className="space-y-6">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-3xl font-bold text-foreground mb-2">{mockActivePlan.targetTechnology}</h3>
+                <h3 className="text-3xl font-bold text-foreground mb-2">{activePlan.targetTechnology}</h3>
                 <p className="text-muted-foreground text-lg font-medium">
-                  {mockActivePlan.currentWeek}주차 / {mockActivePlan.totalWeeks}주 · {mockActivePlan.totalHours}시간
+                  {activePlan.currentWeek}주차 / {activePlan.totalWeeks}주 · {activePlan.totalHours}시간
                 </p>
               </div>
               <Badge className="bg-success/20 text-success border-success/30 px-4 py-2 text-sm shadow-neon-sm">
                 진행중
               </Badge>
             </div>
-            
+
             <div className="space-y-4 glass-card p-5 rounded-xl border border-border/50">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground font-semibold">진행률</span>
-                <span className="text-3xl font-bold text-primary">{mockActivePlan.progress}%</span>
+                <span className="text-3xl font-bold text-primary">{activePlan.progress}%</span>
               </div>
-              <Progress value={mockActivePlan.progress} className="h-3" />
+              <Progress value={activePlan.progress} className="h-3" />
             </div>
 
             <div className="bg-gradient-tech-primary p-6 rounded-xl shadow-neon border border-primary/30">
@@ -259,7 +268,7 @@ export function Dashboard() {
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-white text-lg mb-2">오늘의 학습</p>
-                  <p className="text-white/90 text-base leading-relaxed">{mockActivePlan.todayTask}</p>
+                  <p className="text-white/90 text-base leading-relaxed">학습 플랜을 진행 중입니다</p>
                 </div>
               </div>
             </div>

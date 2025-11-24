@@ -18,6 +18,7 @@ export interface ApiError {
   message: string;
   errorCode: string;
   timestamp: string;
+  status?: number;
 }
 
 class ApiClient {
@@ -67,7 +68,9 @@ class ApiClient {
     const data = await response.json();
 
     if (!response.ok) {
-      throw data as ApiError;
+      const error = data as ApiError;
+      error.status = response.status;
+      throw error;
     }
 
     return data as ApiResponse<T>;

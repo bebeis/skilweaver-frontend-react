@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Database, Search, ExternalLink } from 'lucide-react';
+import { Database, Search, ExternalLink, Loader2, AlertTriangle } from 'lucide-react';
+import { technologiesApi } from '../../src/lib/api/technologies';
+import { toast } from 'sonner';
 
-// Mock data
-const mockTechnologies = [
+// Default technologies (fallback if API fails)
+const defaultTechnologies = [
   {
     id: '1',
     displayName: 'Kubernetes',
@@ -105,15 +107,59 @@ export function Technologies() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [ecosystemFilter, setEcosystemFilter] = useState('ALL');
+  const [technologies, setTechnologies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredTechnologies = mockTechnologies.filter(tech => {
+  // Load technologies from API
+  useEffect(() => {
+    const loadTechnologies = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await technologiesApi.getTechnologies({
+          page: 0,
+          size: 100
+        });
+
+        if (response.success && response.data?.technologies) {
+          setTechnologies(response.data.technologies);
+        } else {
+          setError('기술 목록을 불러올 수 없습니다.');
+          setTechnologies(defaultTechnologies as any);
+        }
+      } catch (err) {
+        console.error('기술 목록 조회 실패:', err);
+        setError('기술 목록을 불러오는 데 실패했습니다.');
+        setTechnologies(defaultTechnologies as any);
+        toast.error('기술 목록을 불러오는 데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTechnologies();
+  }, []);
+
+  const filteredTechnologies = technologies.filter(tech => {
     const matchesSearch = tech.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         tech.summary.toLowerCase().includes(searchQuery.toLowerCase());
+                         tech.summary?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'ALL' || tech.category === categoryFilter;
     const matchesEcosystem = ecosystemFilter === 'ALL' || tech.ecosystem === ecosystemFilter;
-    
+
     return matchesSearch && matchesCategory && matchesEcosystem;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="size-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">기술 목록을 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -124,6 +170,21 @@ export function Technologies() {
           커뮤니티가 함께 만드는 기술 지식 베이스
         </p>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <Card className="border-destructive bg-destructive/10">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="size-5 text-destructive mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-destructive font-medium">{error}</p>
+                <p className="text-sm text-destructive/70 mt-1">기본 데이터를 표시하고 있습니다.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search and Filters */}
       <Card>
@@ -216,7 +277,7 @@ export function Technologies() {
           </div>
         ) : (
           filteredTechnologies.map((tech) => (
-            <Link key={tech.id} to={`/technologies/${tech.id}`}>
+            <Link key={tech.technologyId} to={`/technologies/${tech.technologyId}`}>
               <Card className="h-full glass-card border-tech card-hover-float cursor-pointer">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
