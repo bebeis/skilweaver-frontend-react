@@ -101,15 +101,15 @@ export function TechnologyDetail() {
       </Button>
 
       {/* Header */}
-      <Card>
+      <Card className="glass-card border-tech">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="bg-blue-100 rounded-lg p-3">
-                <Database className="size-8 text-blue-600" />
+              <div className="bg-primary/20 rounded-lg p-3 border border-primary/30">
+                <Database className="size-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-gray-900 mb-2">{mockTechnology.displayName}</h1>
+                <h1 className="text-3xl font-bold text-foreground mb-2">{mockTechnology.displayName}</h1>
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge 
                     variant="outline" 
@@ -117,7 +117,7 @@ export function TechnologyDetail() {
                   >
                     {mockTechnology.category}
                   </Badge>
-                  <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                  <Badge variant="outline" className="bg-secondary/50 text-muted-foreground border-border">
                     {mockTechnology.ecosystem}
                   </Badge>
                 </div>
@@ -126,7 +126,7 @@ export function TechnologyDetail() {
                     href={mockTechnology.officialSite} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-600 hover:underline"
+                    className="flex items-center gap-2 text-primary hover:underline font-medium"
                   >
                     <ExternalLink className="size-4" />
                     <span>공식 사이트 방문</span>
@@ -134,7 +134,7 @@ export function TechnologyDetail() {
                 )}
               </div>
             </div>
-            <Button onClick={handleCreateLearningPlan}>
+            <Button onClick={handleCreateLearningPlan} className="relative z-10">
               <GraduationCap className="size-4 mr-2" />
               학습 플랜 생성
             </Button>
@@ -143,45 +143,45 @@ export function TechnologyDetail() {
       </Card>
 
       {/* Summary */}
-      <Card>
+      <Card className="glass-card border-tech">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="size-5" />
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <BookOpen className="size-5 text-primary" />
             개요
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-700">{mockTechnology.summary}</p>
+          <p className="text-muted-foreground font-medium">{mockTechnology.summary}</p>
         </CardContent>
       </Card>
 
       {/* Learning Tips */}
-      <Card>
+      <Card className="glass-card border-tech">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="size-5" />
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Lightbulb className="size-5 text-accent" />
             학습 팁
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-700">{mockTechnology.learningTips}</p>
+          <p className="text-muted-foreground font-medium">{mockTechnology.learningTips}</p>
         </CardContent>
       </Card>
 
       {/* Prerequisites & Use Cases */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="glass-card border-tech">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="size-5" />
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <CheckCircle2 className="size-5 text-success" />
               선행 학습
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
               {mockTechnology.prerequisites.map((prereq, index) => (
-                <li key={index} className="flex items-center gap-2 text-gray-700">
-                  <div className="size-2 bg-blue-600 rounded-full" />
+                <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
+                  <div className="size-2 bg-primary rounded-full" />
                   {prereq}
                 </li>
               ))}
@@ -189,18 +189,18 @@ export function TechnologyDetail() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="glass-card border-tech">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <GitBranch className="size-5" />
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <GitBranch className="size-5 text-success" />
               주요 활용 사례
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
               {mockTechnology.useCases.map((useCase, index) => (
-                <li key={index} className="flex items-center gap-2 text-gray-700">
-                  <div className="size-2 bg-green-600 rounded-full" />
+                <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
+                  <div className="size-2 bg-success rounded-full" />
                   {useCase}
                 </li>
               ))}
@@ -210,24 +210,24 @@ export function TechnologyDetail() {
       </div>
 
       {/* Relationships */}
-      <Card>
+      <Card className="glass-card border-tech">
         <CardHeader>
-          <CardTitle>관련 기술</CardTitle>
+          <CardTitle className="text-foreground">관련 기술</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Prerequisites */}
           {mockRelationships.PREREQUISITE.length > 0 && (
             <div>
-              <h3 className="text-gray-900 mb-3 flex items-center gap-2">
-                <ArrowLeft className="size-4" />
+              <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                <ArrowLeft className="size-4 text-primary" />
                 먼저 학습하면 좋은 기술
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {mockRelationships.PREREQUISITE.map((tech) => (
                   <Link key={tech.id} to={`/technologies/${tech.id}`}>
-                    <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-900">{tech.name}</span>
+                        <span className="text-foreground font-medium">{tech.name}</span>
                         <Badge 
                           variant="outline" 
                           className={categoryColors[tech.category as keyof typeof categoryColors]}
@@ -245,16 +245,16 @@ export function TechnologyDetail() {
           {/* Next Steps */}
           {mockRelationships.NEXT_STEP.length > 0 && (
             <div>
-              <h3 className="text-gray-900 mb-3 flex items-center gap-2">
-                <ArrowRight className="size-4" />
+              <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                <ArrowRight className="size-4 text-accent" />
                 다음 단계로 학습할 기술
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {mockRelationships.NEXT_STEP.map((tech) => (
                   <Link key={tech.id} to={`/technologies/${tech.id}`}>
-                    <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-900">{tech.name}</span>
+                        <span className="text-foreground font-medium">{tech.name}</span>
                         <Badge 
                           variant="outline" 
                           className={categoryColors[tech.category as keyof typeof categoryColors]}
@@ -272,16 +272,16 @@ export function TechnologyDetail() {
           {/* Alternatives */}
           {mockRelationships.ALTERNATIVE.length > 0 && (
             <div>
-              <h3 className="text-gray-900 mb-3 flex items-center gap-2">
-                <GitBranch className="size-4" />
+              <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                <GitBranch className="size-4 text-success" />
                 대안 기술
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {mockRelationships.ALTERNATIVE.map((tech) => (
                   <Link key={tech.id} to={`/technologies/${tech.id}`}>
-                    <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-900">{tech.name}</span>
+                        <span className="text-foreground font-medium">{tech.name}</span>
                         <Badge 
                           variant="outline" 
                           className={categoryColors[tech.category as keyof typeof categoryColors]}
@@ -299,15 +299,15 @@ export function TechnologyDetail() {
       </Card>
 
       {/* Community Contribution */}
-      <Card>
+      <Card className="glass-card border-tech">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Edit className="size-5" />
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Edit className="size-5 text-primary" />
               커뮤니티 기여
             </CardTitle>
             {!showEditForm && (
-              <Button variant="outline" onClick={() => setShowEditForm(true)}>
+              <Button variant="outline" onClick={() => setShowEditForm(true)} className="relative z-10">
                 수정 제안하기
               </Button>
             )}
@@ -315,44 +315,47 @@ export function TechnologyDetail() {
         </CardHeader>
         {showEditForm ? (
           <CardContent className="space-y-4">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground font-medium">
               이 기술에 대한 정보를 개선하는데 도움을 주세요. 제안하신 내용은 검토 후 반영됩니다.
             </p>
 
             <div className="space-y-2">
-              <Label htmlFor="proposedSummary">개요 수정 제안</Label>
+              <Label htmlFor="proposedSummary" className="text-foreground font-semibold">개요 수정 제안</Label>
               <Textarea
                 id="proposedSummary"
                 placeholder="더 나은 개요를 제안해주세요..."
                 value={editForm.proposedSummary}
                 onChange={(e) => setEditForm({ ...editForm, proposedSummary: e.target.value })}
                 rows={4}
+                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="proposedLearningTips">학습 팁 수정 제안</Label>
+              <Label htmlFor="proposedLearningTips" className="text-foreground font-semibold">학습 팁 수정 제안</Label>
               <Textarea
                 id="proposedLearningTips"
                 placeholder="더 나은 학습 팁을 제안해주세요..."
                 value={editForm.proposedLearningTips}
                 onChange={(e) => setEditForm({ ...editForm, proposedLearningTips: e.target.value })}
                 rows={4}
+                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="proposedPrerequisites">선행 학습 수정 제안</Label>
+              <Label htmlFor="proposedPrerequisites" className="text-foreground font-semibold">선행 학습 수정 제안</Label>
               <Input
                 id="proposedPrerequisites"
                 placeholder="쉼표로 구분하여 입력 (예: Docker, Linux, 네트워킹)"
                 value={editForm.proposedPrerequisites}
                 onChange={(e) => setEditForm({ ...editForm, proposedPrerequisites: e.target.value })}
+                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div className="flex gap-3">
-              <Button onClick={handleSubmitEdit}>
+              <Button onClick={handleSubmitEdit} className="relative z-10">
                 제출하기
               </Button>
               <Button 
@@ -365,6 +368,7 @@ export function TechnologyDetail() {
                     proposedPrerequisites: ''
                   });
                 }}
+                className="relative z-10"
               >
                 취소
               </Button>
@@ -372,7 +376,7 @@ export function TechnologyDetail() {
           </CardContent>
         ) : (
           <CardContent>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground font-medium">
               이 기술에 대한 정보가 부정확하거나 개선이 필요하다면 수정을 제안해주세요.
             </p>
           </CardContent>

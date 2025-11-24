@@ -7,7 +7,7 @@ import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
 import { Switch } from '../../components/ui/switch';
-import { GraduationCap, User, Mail, Lock, Target, TrendingUp, Clock, BookOpen } from 'lucide-react';
+import { Zap, User, Mail, Lock, Target, TrendingUp, Clock, BookOpen, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Signup() {
@@ -59,34 +59,40 @@ export function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-100 to-indigo-200 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* 배경 장식 요소 */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{ animationDelay: '1s' }}></div>
+    <div className="min-h-screen bg-background gradient-mesh flex items-center justify-center p-6 relative overflow-hidden">
+      {/* 배경 애니메이션 효과 */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-20 left-20 w-96 h-96 bg-primary/20 rounded-full filter blur-3xl animate-float-smooth pointer-events-none"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/20 rounded-full filter blur-3xl animate-float-smooth pointer-events-none" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      <Card className="w-full max-w-3xl shadow-2xl border-0 backdrop-blur-sm bg-white/95 relative z-10 animate-slide-in-up">
-        <CardHeader className="text-center space-y-4 pb-6">
+      <div className="w-full max-w-4xl relative z-50">
+        {/* 로고 헤더 */}
+        <div className="text-center mb-8 space-y-4 animate-slide-up-fluid relative z-50">
           <div className="flex justify-center">
-            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-4 shadow-glow-primary animate-float">
-              <GraduationCap className="size-10 text-white" />
+            <div className="relative group">
+              <div className="absolute inset-0 bg-primary rounded-2xl blur-xl opacity-50 animate-glow-pulse pointer-events-none"></div>
+              <div className="relative bg-gradient-tech-primary rounded-2xl p-4 shadow-neon pointer-events-none">
+                <Zap className="size-10 text-white" />
+              </div>
             </div>
           </div>
           <div className="space-y-2">
-            <CardTitle className="text-3xl font-bold">SkillWeaver 회원가입</CardTitle>
-            <CardDescription className="text-base">
-            당신의 학습 여정을 시작하세요
-          </CardDescription>
+            <h1 className="text-4xl font-bold text-foreground">SkillWeaver 회원가입</h1>
+            <p className="text-muted-foreground text-lg">당신의 학습 여정을 시작하세요</p>
           </div>
+        </div>
+
+      <Card className="glass-card border-tech shadow-tech animate-scale-in stagger-2 relative z-50">
+        <CardHeader className="pb-6 relative z-50">
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="card-spacing relative z-50">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Info */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium">
-                  <User className="size-4 text-purple-600" />
+            <div className="space-y-5">
+              <div className="space-y-3">
+                <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium text-foreground">
+                  <User className="size-4 text-primary" />
                   이름
                 </Label>
                 <Input
@@ -95,13 +101,13 @@ export function Signup() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className="h-11"
+                  className="h-12 bg-secondary/50 border-border focus:border-primary transition-all duration-fluid relative z-50"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2 text-base font-medium">
-                  <Mail className="size-4 text-purple-600" />
+              <div className="space-y-3">
+                <Label htmlFor="email" className="flex items-center gap-2 text-base font-medium text-foreground">
+                  <Mail className="size-4 text-primary" />
                   이메일
                 </Label>
                 <Input
@@ -111,13 +117,13 @@ export function Signup() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  className="h-11"
+                  className="h-12 bg-secondary/50 border-border focus:border-primary transition-all duration-fluid relative z-50"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2 text-base font-medium">
-                  <Lock className="size-4 text-purple-600" />
+              <div className="space-y-3">
+                <Label htmlFor="password" className="flex items-center gap-2 text-base font-medium text-foreground">
+                  <Lock className="size-4 text-primary" />
                   비밀번호
                 </Label>
                 <Input
@@ -127,23 +133,23 @@ export function Signup() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
-                  className="h-11"
+                  className="h-12 bg-secondary/50 border-border focus:border-primary transition-all duration-fluid relative z-50"
                 />
               </div>
             </div>
 
             {/* Track & Experience */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-base font-medium">
-                  <Target className="size-4 text-indigo-600" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-base font-medium text-foreground">
+                  <Target className="size-4 text-accent" />
                   목표 트랙
                 </Label>
                 <Select 
                   value={formData.targetTrack}
                   onValueChange={(value) => setFormData({ ...formData, targetTrack: value })}
                 >
-                  <SelectTrigger className="h-11">
+                  <SelectTrigger className="h-12 bg-secondary/50 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -156,16 +162,16 @@ export function Signup() {
                 </Select>
               </div>
               
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 text-base font-medium">
-                  <TrendingUp className="size-4 text-indigo-600" />
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-base font-medium text-foreground">
+                  <TrendingUp className="size-4 text-accent" />
                   경험 레벨
                 </Label>
                 <Select 
                   value={formData.experienceLevel}
                   onValueChange={(value) => setFormData({ ...formData, experienceLevel: value })}
                 >
-                  <SelectTrigger className="h-11">
+                  <SelectTrigger className="h-12 bg-secondary/50 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -178,15 +184,15 @@ export function Signup() {
             </div>
 
             {/* Learning Preferences */}
-            <div className="space-y-4 p-5 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
-              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                <BookOpen className="size-5 text-purple-600" />
+            <div className="space-y-5 p-6 glass-card border-tech rounded-xl">
+              <h3 className="font-semibold text-foreground flex items-center gap-2 text-lg">
+                <BookOpen className="size-5 text-primary" />
                 학습 선호도
               </h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="dailyMinutes" className="flex items-center gap-2">
-                  <Clock className="size-4 text-purple-600" />
+              <div className="space-y-3">
+                <Label htmlFor="dailyMinutes" className="flex items-center gap-2 text-foreground">
+                  <Clock className="size-4 text-primary" />
                   하루 학습 시간 (분)
                 </Label>
                 <Input
@@ -196,17 +202,17 @@ export function Signup() {
                   max="480"
                   value={formData.dailyMinutes}
                   onChange={(e) => setFormData({ ...formData, dailyMinutes: parseInt(e.target.value) })}
-                  className="h-11"
+                  className="h-12 bg-secondary/50 border-border"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label>학습 스타일</Label>
+              <div className="space-y-3">
+                <Label className="text-foreground">학습 스타일</Label>
                 <Select 
                   value={formData.learningStyle}
                   onValueChange={(value) => setFormData({ ...formData, learningStyle: value })}
                 >
-                  <SelectTrigger className="h-11">
+                  <SelectTrigger className="h-12 bg-secondary/50 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -217,8 +223,8 @@ export function Signup() {
                 </Select>
               </div>
               
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                <Label htmlFor="preferKorean" className="cursor-pointer">한국어 자료 선호</Label>
+              <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg transition-all duration-fluid hover:bg-secondary/50">
+                <Label htmlFor="preferKorean" className="cursor-pointer text-foreground">한국어 자료 선호</Label>
                 <Switch
                   id="preferKorean"
                   checked={formData.preferKorean}
@@ -226,8 +232,8 @@ export function Signup() {
                 />
               </div>
               
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                <Label htmlFor="weekendBoost" className="cursor-pointer">주말 학습 강화</Label>
+              <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg transition-all duration-fluid hover:bg-secondary/50">
+                <Label htmlFor="weekendBoost" className="cursor-pointer text-foreground">주말 학습 강화</Label>
                 <Switch
                   id="weekendBoost"
                   checked={formData.weekendBoost}
@@ -238,29 +244,34 @@ export function Signup() {
 
             <Button 
               type="submit" 
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-glow-primary btn-glow" 
+              className="w-full h-13 text-base font-semibold bg-gradient-tech-primary hover-glow-primary btn-ripple shadow-neon relative z-50 cursor-pointer" 
               disabled={loading}
             >
               {loading ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-3">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   가입 중...
                 </span>
               ) : (
-                '회원가입'
+                <span className="flex items-center gap-2">
+                  회원가입
+                  <ArrowRight className="size-5" />
+                </span>
               )}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 pb-6">
-          <div className="text-slate-600 text-center">
+        <CardFooter className="flex flex-col gap-4 pb-8 relative z-50">
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent"></div>
+          <div className="text-muted-foreground text-center">
             이미 계정이 있으신가요?{' '}
-            <Link to="/login" className="text-purple-600 hover:text-purple-700 font-semibold hover:underline">
+            <Link to="/login" className="text-primary hover:text-accent font-semibold transition-colors duration-fluid hover:underline relative z-50 cursor-pointer">
               로그인
             </Link>
           </div>
         </CardFooter>
       </Card>
+      </div>
     </div>
   );
 }

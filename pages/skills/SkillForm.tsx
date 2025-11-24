@@ -88,41 +88,42 @@ export function SkillForm() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-gray-900">{isEdit ? '기술 수정' : '기술 추가'}</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-4xl font-bold text-foreground mb-2">{isEdit ? '기술 수정' : '기술 추가'}</h1>
+        <p className="text-muted-foreground text-lg font-medium mt-1">
           보유한 기술 정보를 입력해주세요
         </p>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Card>
+        <Card className="glass-card border-tech">
           <CardHeader>
-            <CardTitle>기술 정보</CardTitle>
+            <CardTitle className="text-foreground">기술 정보</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Technology Selection */}
             <div className="space-y-2">
-              <Label>기술 선택</Label>
+              <Label className="text-foreground font-semibold">기술 선택</Label>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
+                  <button
+                    type="button"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between"
+                    className="flex w-full items-center justify-between gap-2 rounded-md border border-input bg-secondary/50 text-foreground px-3 py-2 text-sm transition-[color,box-shadow] outline-none hover:bg-secondary/70 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                   >
-                    {formData.technologyName || "기술 검색..."}
+                    <span>{formData.technologyName || "기술 검색..."}</span>
                     <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                  </Button>
+                  </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                   <Command>
                     <CommandInput 
                       placeholder="기술 검색..." 
                       value={searchValue}
                       onValueChange={setSearchValue}
+                      className="text-foreground"
                     />
-                    <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
+                    <CommandEmpty className="text-muted-foreground">검색 결과가 없습니다.</CommandEmpty>
                     <CommandGroup>
                       {mockTechnologies
                         .filter(tech => 
@@ -146,25 +147,26 @@ export function SkillForm() {
                   </Command>
                 </PopoverContent>
               </Popover>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground font-medium">
                 또는 아래에 직접 입력하세요
               </p>
             </div>
 
             {/* Custom Name */}
             <div className="space-y-2">
-              <Label htmlFor="customName">직접 입력 (선택사항)</Label>
+              <Label htmlFor="customName" className="text-foreground font-semibold">직접 입력 (선택사항)</Label>
               <Input
                 id="customName"
                 placeholder="예: 내부 프레임워크 XYZ"
                 value={formData.customName}
                 onChange={(e) => setFormData({ ...formData, customName: e.target.value })}
+                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             {/* Level */}
             <div className="space-y-2">
-              <Label>숙련도</Label>
+              <Label className="text-foreground font-semibold">숙련도</Label>
               <Select 
                 value={formData.level}
                 onValueChange={(value) => setFormData({ ...formData, level: value })}
@@ -183,7 +185,7 @@ export function SkillForm() {
 
             {/* Years of Use */}
             <div className="space-y-2">
-              <Label htmlFor="yearsOfUse">사용 경력 (년)</Label>
+              <Label htmlFor="yearsOfUse" className="text-foreground font-semibold">사용 경력 (년)</Label>
               <Input
                 id="yearsOfUse"
                 type="number"
@@ -191,40 +193,43 @@ export function SkillForm() {
                 step="0.1"
                 value={formData.yearsOfUse}
                 onChange={(e) => setFormData({ ...formData, yearsOfUse: parseFloat(e.target.value) })}
+                className="bg-secondary/50 border-border text-foreground"
               />
             </div>
 
             {/* Last Used At */}
             <div className="space-y-2">
-              <Label htmlFor="lastUsedAt">최근 사용일</Label>
+              <Label htmlFor="lastUsedAt" className="text-foreground font-semibold">최근 사용일</Label>
               <Input
                 id="lastUsedAt"
                 type="date"
                 value={formData.lastUsedAt}
                 onChange={(e) => setFormData({ ...formData, lastUsedAt: e.target.value })}
+                className="bg-secondary/50 border-border text-foreground"
               />
             </div>
 
             {/* Note */}
             <div className="space-y-2">
-              <Label htmlFor="note">메모 (선택사항)</Label>
+              <Label htmlFor="note" className="text-foreground font-semibold">메모 (선택사항)</Label>
               <Textarea
                 id="note"
                 placeholder="이 기술과 관련된 프로젝트 경험, 특이사항 등을 기록하세요"
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                 rows={4}
+                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </CardContent>
           <CardFooter className="flex gap-3">
-            <Button type="submit" className="flex-1">
+            <Button type="submit" className="flex-1 relative z-10">
               {isEdit ? '수정 완료' : '추가하기'}
             </Button>
             <Button 
               type="button" 
               variant="outline" 
-              className="flex-1"
+              className="flex-1 relative z-10"
               onClick={() => navigate('/skills')}
             >
               취소

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Database, Search, ExternalLink } from 'lucide-react';
 
@@ -118,8 +119,8 @@ export function Technologies() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-gray-900">기술 카탈로그</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-4xl font-bold text-foreground mb-2">기술 카탈로그</h1>
+        <p className="text-muted-foreground text-lg font-medium mt-1">
           커뮤니티가 함께 만드는 기술 지식 베이스
         </p>
       </div>
@@ -130,19 +131,19 @@ export function Technologies() {
           <div className="space-y-4">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder="기술 검색..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-secondary/50"
               />
             </div>
 
             {/* Filters */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-gray-700">카테고리</label>
+                <label className="text-foreground font-semibold">카테고리</label>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger>
                     <SelectValue />
@@ -161,7 +162,7 @@ export function Technologies() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-gray-700">에코시스템</label>
+                <label className="text-foreground font-semibold">에코시스템</label>
                 <Select value={ecosystemFilter} onValueChange={setEcosystemFilter}>
                   <SelectTrigger>
                     <SelectValue />
@@ -180,16 +181,17 @@ export function Technologies() {
               </div>
 
               <div className="flex items-end">
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setSearchQuery('');
                     setCategoryFilter('ALL');
                     setEcosystemFilter('ALL');
                   }}
-                  className="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="w-full"
                 >
                   필터 초기화
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -197,7 +199,7 @@ export function Technologies() {
       </Card>
 
       {/* Results */}
-      <div className="text-gray-600">
+      <div className="text-muted-foreground font-medium">
         {filteredTechnologies.length}개의 기술
       </div>
 
@@ -205,27 +207,27 @@ export function Technologies() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredTechnologies.length === 0 ? (
           <div className="col-span-full">
-            <Card>
+            <Card className="glass-card border-tech">
               <CardContent className="py-12 text-center">
-                <Database className="size-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">검색 결과가 없습니다.</p>
+                <Database className="size-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium">검색 결과가 없습니다.</p>
               </CardContent>
             </Card>
           </div>
         ) : (
           filteredTechnologies.map((tech) => (
             <Link key={tech.id} to={`/technologies/${tech.id}`}>
-              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+              <Card className="h-full glass-card border-tech card-hover-float cursor-pointer">
                 <CardContent className="pt-6">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
-                        <div className="bg-blue-100 rounded-lg p-2">
-                          <Database className="size-5 text-blue-600" />
+                        <div className="bg-primary/20 rounded-lg p-2 border border-primary/30">
+                          <Database className="size-5 text-primary" />
                         </div>
                         <div>
-                          <h3 className="text-gray-900">{tech.displayName}</h3>
-                          <p className="text-gray-600 mt-1 line-clamp-2">
+                          <h3 className="text-foreground font-bold">{tech.displayName}</h3>
+                          <p className="text-muted-foreground mt-1 line-clamp-2">
                             {tech.summary}
                           </p>
                         </div>
@@ -245,9 +247,9 @@ export function Technologies() {
                     </div>
 
                     {tech.officialSite && (
-                      <div className="flex items-center gap-2 text-blue-600">
+                      <div className="flex items-center gap-2 text-primary">
                         <ExternalLink className="size-4" />
-                        <span>공식 사이트</span>
+                        <span className="font-medium">공식 사이트</span>
                       </div>
                     )}
                   </div>

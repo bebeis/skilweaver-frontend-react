@@ -95,35 +95,35 @@ export function Skills() {
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-3xl blur-3xl opacity-30"></div>
         <div className="relative bg-gradient-to-br from-white to-blue-50/50 rounded-2xl p-8 border border-blue-100 shadow-soft">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-4">
               <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-4 shadow-glow-accent animate-float">
                 <BookOpen className="size-8 text-white" />
               </div>
-              <div>
+        <div>
                 <h1 className="text-3xl font-bold text-slate-900 mb-1">내 기술 스택</h1>
                 <p className="text-lg text-slate-600">
-                  보유한 기술을 관리하고 새로운 기술을 추가하세요
-                </p>
+            보유한 기술을 관리하고 새로운 기술을 추가하세요
+          </p>
               </div>
-            </div>
-            <Link to="/skills/new">
+        </div>
+        <Link to="/skills/new">
               <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-glow-accent btn-glow h-12 px-6">
                 <Plus className="size-5 mr-2" />
-                기술 추가
-              </Button>
-            </Link>
+            기술 추가
+          </Button>
+        </Link>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <Card className="border-0 shadow-soft">
+      <Card className="glass-card border-tech shadow-tech">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-slate-700 font-medium flex items-center gap-2">
-                <Filter className="size-4 text-blue-600" />
+              <label className="text-foreground font-semibold flex items-center gap-2">
+                <Filter className="size-4 text-primary" />
                 카테고리
               </label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -142,8 +142,8 @@ export function Skills() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-slate-700 font-medium flex items-center gap-2">
-                <Award className="size-4 text-blue-600" />
+              <label className="text-foreground font-semibold flex items-center gap-2">
+                <Award className="size-4 text-primary" />
                 레벨
               </label>
               <Select value={levelFilter} onValueChange={setLevelFilter}>
@@ -163,7 +163,7 @@ export function Skills() {
             <div className="flex items-end">
               <Button 
                 variant="outline" 
-                className="w-full h-11 hover:bg-blue-50 hover:border-blue-300"
+                className="w-full h-11 hover:bg-blue-50 hover:border-blue-300 relative z-10"
                 onClick={() => {
                   setCategoryFilter('ALL');
                   setLevelFilter('ALL');
@@ -232,12 +232,12 @@ export function Skills() {
                   </div>
 
                   <div className="flex md:flex-col gap-2">
-                    <Link to={`/skills/${skill.id}/edit`} className="flex-1 md:flex-initial">
-                      <Button variant="outline" className="w-full h-10 hover:bg-blue-50 hover:border-blue-300">
+                    <Button variant="outline" className="flex-1 md:flex-initial w-full h-10 hover:bg-blue-50 hover:border-blue-300" asChild>
+                      <Link to={`/skills/${skill.id}/edit`}>
                         <Edit className="size-4 mr-2" />
                         수정
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                     <Button 
                       variant="outline" 
                       className="flex-1 md:flex-initial h-10 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300"

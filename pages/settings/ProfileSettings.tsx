@@ -48,47 +48,48 @@ export function ProfileSettings() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-gray-900">프로필 설정</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-4xl font-bold text-foreground mb-2">프로필 설정</h1>
+        <p className="text-muted-foreground text-lg font-medium mt-1">
           계정 정보와 학습 선호도를 관리하세요
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
-        <Card>
+        <Card className="glass-card border-tech">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="size-5" />
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <User className="size-5 text-primary" />
               기본 정보
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">이름</Label>
+              <Label htmlFor="name" className="text-foreground font-semibold">이름</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                className="bg-secondary/50 border-border text-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">이메일</Label>
+              <Label htmlFor="email" className="text-foreground font-semibold">이메일</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 disabled
-                className="bg-gray-50"
+                className="bg-muted/50 text-muted-foreground"
               />
-              <p className="text-gray-600">이메일은 변경할 수 없습니다.</p>
+              <p className="text-muted-foreground font-medium">이메일은 변경할 수 없습니다.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>목표 트랙</Label>
+                <Label className="text-foreground font-semibold">목표 트랙</Label>
                 <Select 
                   value={formData.targetTrack}
                   onValueChange={(value) => setFormData({ ...formData, targetTrack: value })}
@@ -107,7 +108,7 @@ export function ProfileSettings() {
               </div>
 
               <div className="space-y-2">
-                <Label>경험 레벨</Label>
+                <Label className="text-foreground font-semibold">경험 레벨</Label>
                 <Select 
                   value={formData.experienceLevel}
                   onValueChange={(value) => setFormData({ ...formData, experienceLevel: value })}
@@ -127,16 +128,16 @@ export function ProfileSettings() {
         </Card>
 
         {/* Learning Preferences */}
-        <Card>
+        <Card className="glass-card border-tech">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="size-5" />
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Settings className="size-5 text-primary" />
               학습 선호도
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="dailyMinutes">하루 학습 시간 (분)</Label>
+              <Label htmlFor="dailyMinutes" className="text-foreground font-semibold">하루 학습 시간 (분)</Label>
               <Input
                 id="dailyMinutes"
                 type="number"
@@ -144,14 +145,15 @@ export function ProfileSettings() {
                 max="480"
                 value={formData.dailyMinutes}
                 onChange={(e) => setFormData({ ...formData, dailyMinutes: parseInt(e.target.value) })}
+                className="bg-secondary/50 border-border text-foreground"
               />
-              <p className="text-gray-600">
+              <p className="text-muted-foreground font-medium">
                 현재: {formData.dailyMinutes}분 ({Math.floor(formData.dailyMinutes / 60)}시간 {formData.dailyMinutes % 60}분)
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label>학습 스타일</Label>
+              <Label className="text-foreground font-semibold">학습 스타일</Label>
               <Select 
                 value={formData.learningStyle}
                 onValueChange={(value) => setFormData({ ...formData, learningStyle: value })}
@@ -172,8 +174,8 @@ export function ProfileSettings() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="preferKorean">한국어 자료 선호</Label>
-                  <p className="text-gray-600">
+                  <Label htmlFor="preferKorean" className="text-foreground font-semibold">한국어 자료 선호</Label>
+                  <p className="text-muted-foreground font-medium">
                     가능한 한국어 학습 자료를 우선적으로 추천합니다
                   </p>
                 </div>
@@ -186,8 +188,8 @@ export function ProfileSettings() {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="weekendBoost">주말 학습 강화</Label>
-                  <p className="text-gray-600">
+                  <Label htmlFor="weekendBoost" className="text-foreground font-semibold">주말 학습 강화</Label>
+                  <p className="text-muted-foreground font-medium">
                     주말에 더 많은 학습 시간을 할애합니다
                   </p>
                 </div>
@@ -200,27 +202,27 @@ export function ProfileSettings() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full relative z-10">
               변경사항 저장
             </Button>
           </CardFooter>
         </Card>
 
         {/* Danger Zone */}
-        <Card className="border-red-200">
+        <Card className="glass-card border-destructive/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
+            <CardTitle className="flex items-center gap-2 text-destructive">
               <Trash2 className="size-5" />
               계정 삭제
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground font-medium mb-4">
               계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
             </p>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">
+                <Button variant="destructive" className="relative z-10">
                   계정 삭제
                 </Button>
               </AlertDialogTrigger>

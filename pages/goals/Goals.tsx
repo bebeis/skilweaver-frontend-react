@@ -155,8 +155,8 @@ export function Goals() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-gray-900">학습 목표</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-4xl font-bold text-foreground mb-2">학습 목표</h1>
+          <p className="text-muted-foreground text-lg font-medium mt-1">
             학습 목표를 설정하고 진행 상황을 관리하세요
           </p>
         </div>
@@ -167,11 +167,11 @@ export function Goals() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="glass-card border-tech">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-gray-700">우선순위</label>
+              <label className="text-foreground font-semibold">우선순위</label>
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                 <SelectTrigger>
                   <SelectValue />
@@ -186,7 +186,7 @@ export function Goals() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-gray-700">상태</label>
+              <label className="text-foreground font-semibold">상태</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue />
@@ -204,7 +204,7 @@ export function Goals() {
             <div className="flex items-end">
               <Button 
                 variant="outline" 
-                className="w-full"
+                className="w-full relative z-10"
                 onClick={() => {
                   setPriorityFilter('ALL');
                   setStatusFilter('ALL');
@@ -220,10 +220,10 @@ export function Goals() {
       {/* Goals List */}
       <div className="space-y-3">
         {filteredGoals.length === 0 ? (
-          <Card>
+          <Card className="glass-card border-tech">
             <CardContent className="py-12 text-center">
-              <Target className="size-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">조건에 맞는 목표가 없습니다.</p>
+              <Target className="size-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground font-medium">조건에 맞는 목표가 없습니다.</p>
               <Button variant="outline" className="mt-4" onClick={() => handleOpenDialog()}>
                 <Plus className="size-4 mr-2" />
                 첫 목표 추가하기
@@ -232,17 +232,17 @@ export function Goals() {
           </Card>
         ) : (
           filteredGoals.map((goal) => (
-            <Card key={goal.id}>
+            <Card key={goal.id} className="glass-card border-tech card-hover-float">
               <CardContent className="pt-6">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div className="flex-1 space-y-3">
                     <div className="flex items-start gap-3">
-                      <div className="bg-blue-100 rounded-full p-2">
-                        <Target className="size-5 text-blue-600" />
+                      <div className="bg-success/20 rounded-full p-2 border border-success/30">
+                        <Target className="size-5 text-success" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-2">
-                          <h3 className="text-gray-900">{goal.title}</h3>
+                          <h3 className="text-foreground font-bold">{goal.title}</h3>
                           <Badge className={priorityColors[goal.priority as keyof typeof priorityColors]}>
                             {goal.priority}
                           </Badge>
@@ -250,13 +250,13 @@ export function Goals() {
                             {goal.status}
                           </Badge>
                         </div>
-                        <p className="text-gray-600">{goal.description}</p>
+                        <p className="text-muted-foreground">{goal.description}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Calendar className="size-4" />
-                      <span>목표일: {goal.dueDate}</span>
+                      <span className="font-medium">목표일: {goal.dueDate}</span>
                     </div>
                   </div>
 
@@ -264,7 +264,7 @@ export function Goals() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1 md:flex-initial"
+                      className="flex-1 md:flex-initial relative z-10"
                       onClick={() => handleOpenDialog(goal)}
                     >
                       <Edit className="size-4 mr-2" />
@@ -273,7 +273,7 @@ export function Goals() {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1 md:flex-initial text-red-600 hover:text-red-700"
+                      className="flex-1 md:flex-initial text-red-600 hover:text-red-700 relative z-10"
                       onClick={() => handleDelete(goal.id)}
                     >
                       <Trash2 className="size-4 mr-2" />

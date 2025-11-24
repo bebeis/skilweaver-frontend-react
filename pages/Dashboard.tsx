@@ -14,7 +14,8 @@ import {
   Calendar,
   Sparkles,
   ArrowRight,
-  Flame
+  Zap,
+  Activity
 } from 'lucide-react';
 
 // Mock data
@@ -40,40 +41,42 @@ const mockActivePlan = {
 };
 
 const levelColors = {
-  BEGINNER: 'bg-green-100 text-green-800',
-  INTERMEDIATE: 'bg-blue-100 text-blue-800',
-  ADVANCED: 'bg-purple-100 text-purple-800'
+  BEGINNER: 'bg-success/20 text-success border-success/30',
+  INTERMEDIATE: 'bg-primary/20 text-primary border-primary/30',
+  ADVANCED: 'bg-accent/20 text-accent border-accent/30'
 };
 
 const priorityColors = {
-  HIGH: 'bg-red-100 text-red-800',
-  MEDIUM: 'bg-yellow-100 text-yellow-800',
-  LOW: 'bg-gray-100 text-gray-800'
+  HIGH: 'bg-destructive/20 text-destructive border-destructive/30',
+  MEDIUM: 'bg-warning/20 text-warning border-warning/30',
+  LOW: 'bg-muted-foreground/20 text-muted-foreground border-muted-foreground/30'
 };
 
 export function Dashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-3xl blur-3xl opacity-30"></div>
-        <div className="relative bg-gradient-to-br from-white to-purple-50/50 rounded-2xl p-8 border border-purple-100 shadow-soft">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-4 shadow-glow-primary animate-float">
-                <Flame className="size-8 text-white" />
+    <div className="content-spacing">
+      {/* 웰컴 헤더 */}
+      <div className="relative overflow-hidden">
+        <div className="glass-card border-tech card-hover-float p-8 animate-slide-up-fluid">
+          <div className="flex items-center justify-between flex-wrap gap-6">
+            <div className="flex items-center gap-5">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary rounded-2xl blur-xl opacity-50 animate-glow-pulse"></div>
+                <div className="relative bg-gradient-tech-primary rounded-2xl p-4 shadow-neon">
+                  <Activity className="size-10 text-white" />
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900 mb-1">안녕하세요, {user?.name}님! 👋</h1>
-                <p className="text-lg text-slate-600">
-                  오늘도 성장을 위한 여정을 이어가세요
+      <div>
+                <h1 className="text-4xl font-bold text-foreground mb-2">안녕하세요, {user?.name}님</h1>
+                <p className="text-xl text-muted-foreground font-medium">
+                  오늘도 성장을 위한 여정을 이어가세요 🚀
                 </p>
               </div>
             </div>
             <Link to="/learning-plans/new">
-              <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-glow-primary btn-glow h-12 px-6">
+              <Button className="bg-gradient-tech-primary hover-glow-primary btn-ripple shadow-neon h-14 px-8 text-base">
                 <Sparkles className="size-5 mr-2" />
                 새 학습 플랜 만들기
               </Button>
@@ -82,116 +85,130 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Overview */}
+      {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="card-hover border-0 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-soft">
-          <CardContent className="pt-6">
+        <Card className="glass-card border-tech card-hover-float animate-scale-in stagger-1">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-600 font-medium mb-1">내 기술 스택</p>
-                <p className="text-4xl font-bold text-slate-900">{mockSkills.length}</p>
-                <p className="text-sm text-slate-500 mt-1">개</p>
+                <p className="text-muted-foreground font-semibold mb-2">내 기술 스택</p>
+                <p className="text-5xl font-bold text-foreground">{mockSkills.length}</p>
+                <p className="text-sm text-muted-foreground font-medium mt-1">개</p>
               </div>
-              <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-4 shadow-glow-accent">
-                <BookOpen className="size-8 text-white" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary rounded-xl blur-md opacity-30"></div>
+                <div className="relative bg-primary/20 rounded-xl p-4 border border-primary/30">
+                  <BookOpen className="size-8 text-primary" />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="card-hover border-0 bg-gradient-to-br from-green-50 to-emerald-50 shadow-soft">
-          <CardContent className="pt-6">
+        <Card className="glass-card border-tech card-hover-float animate-scale-in stagger-2">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-600 font-medium mb-1">활성 목표</p>
-                <p className="text-4xl font-bold text-slate-900">{mockGoals.length}</p>
-                <p className="text-sm text-slate-500 mt-1">개</p>
+                <p className="text-muted-foreground font-semibold mb-2">활성 목표</p>
+                <p className="text-5xl font-bold text-foreground">{mockGoals.length}</p>
+                <p className="text-sm text-muted-foreground font-medium mt-1">개</p>
               </div>
-              <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl p-4 shadow-lg">
-                <Target className="size-8 text-white" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-success rounded-xl blur-md opacity-30"></div>
+                <div className="relative bg-success/20 rounded-xl p-4 border border-success/30">
+                  <Target className="size-8 text-success" />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="card-hover border-0 bg-gradient-to-br from-purple-50 to-pink-50 shadow-soft">
-          <CardContent className="pt-6">
+        <Card className="glass-card border-tech card-hover-float animate-scale-in stagger-3">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-600 font-medium mb-1">하루 학습 시간</p>
-                <p className="text-4xl font-bold text-slate-900">60</p>
-                <p className="text-sm text-slate-500 mt-1">분</p>
+                <p className="text-muted-foreground font-semibold mb-2">하루 학습 시간</p>
+                <p className="text-5xl font-bold text-foreground">60</p>
+                <p className="text-sm text-muted-foreground font-medium mt-1">분</p>
               </div>
-              <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl p-4 shadow-glow-primary">
-                <Clock className="size-8 text-white" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-accent rounded-xl blur-md opacity-30"></div>
+                <div className="relative bg-accent/20 rounded-xl p-4 border border-accent/30">
+                  <Clock className="size-8 text-accent" />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="card-hover border-0 bg-gradient-to-br from-orange-50 to-red-50 shadow-soft">
-          <CardContent className="pt-6">
+        <Card className="glass-card border-tech card-hover-float animate-scale-in stagger-4">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-600 font-medium mb-1">목표 트랙</p>
-                <p className="text-xl font-bold text-slate-900 mt-2">{user?.targetTrack}</p>
+                <p className="text-muted-foreground font-semibold mb-2">목표 트랙</p>
+                <p className="text-2xl font-bold text-foreground mt-3">{user?.targetTrack}</p>
               </div>
-              <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-4 shadow-lg">
-                <TrendingUp className="size-8 text-white" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-warning rounded-xl blur-md opacity-30"></div>
+                <div className="relative bg-warning/20 rounded-xl p-4 border border-warning/30">
+                  <TrendingUp className="size-8 text-warning" />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Active Learning Plan */}
+      {/* 활성 학습 플랜 */}
       {mockActivePlan && (
-        <Card className="border-0 shadow-soft bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full blur-3xl opacity-20 -mr-32 -mt-32"></div>
-          <CardHeader className="relative">
+        <Card className="glass-card border-tech card-hover-float shadow-neon animate-slide-up-fluid stagger-5">
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-2 shadow-glow-primary">
-                  <Sparkles className="size-6 text-white" />
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary rounded-lg blur-md opacity-50"></div>
+                  <div className="relative bg-primary/20 rounded-lg p-3 border border-primary/30">
+                    <Sparkles className="size-6 text-primary" />
+                  </div>
                 </div>
                 <CardTitle className="text-2xl">진행 중인 학습 플랜</CardTitle>
               </div>
-              <Link to={`/learning-plans/${mockActivePlan.id}`}>
-                <Button variant="outline" className="border-purple-300 hover:bg-purple-100">
-                  자세히 보기
+                <Link to={`/learning-plans/${mockActivePlan.id}`}>
+                <Button variant="outline" className="border-primary/30 hover:bg-primary/10 transition-all duration-fluid">
+                  상세 보기
                   <ArrowRight className="size-4 ml-2" />
                 </Button>
-              </Link>
+                </Link>
             </div>
           </CardHeader>
-          <CardContent className="space-y-5 relative">
+          <CardContent className="space-y-6">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-2xl font-bold text-slate-900">{mockActivePlan.targetTechnology}</h3>
-                <p className="text-slate-600 mt-2 text-lg">
+                <h3 className="text-3xl font-bold text-foreground mb-2">{mockActivePlan.targetTechnology}</h3>
+                <p className="text-muted-foreground text-lg font-medium">
                   {mockActivePlan.currentWeek}주차 / {mockActivePlan.totalWeeks}주 · {mockActivePlan.totalHours}시간
                 </p>
               </div>
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 text-sm shadow-lg">
+              <Badge className="bg-success/20 text-success border-success/30 px-4 py-2 text-sm shadow-neon-sm">
                 진행중
               </Badge>
             </div>
             
-            <div className="space-y-3 bg-white/70 backdrop-blur-sm rounded-xl p-5 shadow-soft">
+            <div className="space-y-4 glass-card p-5 rounded-xl border border-border/50">
               <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-medium">진행률</span>
-                <span className="text-2xl font-bold text-slate-900">{mockActivePlan.progress}%</span>
+                <span className="text-muted-foreground font-semibold">진행률</span>
+                <span className="text-3xl font-bold text-primary">{mockActivePlan.progress}%</span>
               </div>
               <Progress value={mockActivePlan.progress} className="h-3" />
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-glow-primary">
+            <div className="bg-gradient-tech-primary p-6 rounded-xl shadow-neon border border-primary/30">
               <div className="flex items-start gap-4">
-                <div className="bg-white/20 rounded-xl p-3">
-                  <Calendar className="size-6" />
+                <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
+                  <Calendar className="size-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-lg mb-2">오늘의 학습</p>
+                  <p className="font-semibold text-white text-lg mb-2">오늘의 학습</p>
                   <p className="text-white/90 text-base leading-relaxed">{mockActivePlan.todayTask}</p>
                 </div>
               </div>
@@ -200,135 +217,144 @@ export function Dashboard() {
         </Card>
       )}
 
-      {/* Skills & Goals Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Skills */}
-        <Card className="border-0 shadow-soft">
+      {/* 스킬 & 목표 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* 스킬 */}
+        <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-2 shadow-lg">
-                  <BookOpen className="size-5 text-white" />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary rounded-lg blur-md opacity-40"></div>
+                  <div className="relative bg-primary/20 rounded-lg p-2.5 border border-primary/30">
+                    <BookOpen className="size-5 text-primary" />
+                  </div>
                 </div>
                 <CardTitle className="text-xl">내 기술 스택</CardTitle>
               </div>
-              <Link to="/skills">
-                <Button variant="outline" size="sm" className="hover:bg-blue-50 hover:border-blue-300">
+                <Link to="/skills">
+                <Button variant="outline" size="sm" className="border-primary/30 hover:bg-primary/10 transition-fluid">
                   전체 보기
                   <ArrowRight className="size-4 ml-1" />
                 </Button>
-              </Link>
+                </Link>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {mockSkills.map((skill) => (
-                <div key={skill.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl hover:shadow-md transition-all duration-200 border border-slate-100">
+                <Link key={skill.id} to={`/skills/${skill.id}`} className="flex items-center justify-between p-4 glass-card rounded-lg border-tech hover-glow-primary">
                   <div className="flex items-center gap-3">
-                    <div className="bg-white rounded-xl p-2.5 shadow-sm">
-                      <BookOpen className="size-5 text-blue-600" />
+                    <div className="bg-primary/20 rounded-lg p-2.5 border border-primary/30">
+                      <BookOpen className="size-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">{skill.name}</p>
-                      <p className="text-sm text-slate-500">{skill.category}</p>
+                      <p className="font-semibold text-foreground">{skill.name}</p>
+                      <p className="text-sm text-muted-foreground">{skill.category}</p>
                     </div>
                   </div>
-                  <Badge className={levelColors[skill.level as keyof typeof levelColors] + ' px-3 py-1 font-medium'}>
+                  <Badge className={levelColors[skill.level as keyof typeof levelColors] + ' px-3 py-1 font-medium border'}>
                     {skill.level}
                   </Badge>
-                </div>
+                </Link>
               ))}
-              <Link to="/skills/new">
-                <Button variant="outline" className="w-full h-12 border-dashed border-2 border-blue-300 hover:bg-blue-50 hover:border-blue-400">
+                <Link to="/skills/new">
+                <Button variant="outline" className="w-full h-12 border-dashed border-2 border-primary/30 hover:bg-primary/10 transition-fluid">
                   <Plus className="size-5 mr-2" />
                   기술 추가
                 </Button>
-              </Link>
+                </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* Active Goals */}
-        <Card className="border-0 shadow-soft">
+        {/* 목표 */}
+        <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-7">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl p-2 shadow-lg">
-                  <Target className="size-5 text-white" />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-success rounded-lg blur-md opacity-40"></div>
+                  <div className="relative bg-success/20 rounded-lg p-2.5 border border-success/30">
+                    <Target className="size-5 text-success" />
+                  </div>
                 </div>
                 <CardTitle className="text-xl">활성 목표</CardTitle>
               </div>
-              <Link to="/goals">
-                <Button variant="outline" size="sm" className="hover:bg-green-50 hover:border-green-300">
+                <Link to="/goals">
+                <Button variant="outline" size="sm" className="border-success/30 hover:bg-success/10 transition-fluid">
                   전체 보기
                   <ArrowRight className="size-4 ml-1" />
                 </Button>
-              </Link>
+                </Link>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {mockGoals.map((goal) => (
-                <div key={goal.id} className="p-4 bg-gradient-to-r from-slate-50 to-green-50 rounded-xl hover:shadow-md transition-all duration-200 border border-slate-100">
+                <Link key={goal.id} to={`/goals/${goal.id}`} className="block p-4 glass-card rounded-lg border-tech hover-glow-primary">
                   <div className="flex items-start justify-between mb-3">
-                    <p className="font-semibold text-slate-900 flex-1">{goal.title}</p>
-                    <Badge className={priorityColors[goal.priority as keyof typeof priorityColors] + ' px-3 py-1 font-medium'}>
+                    <p className="font-semibold text-foreground flex-1">{goal.title}</p>
+                    <Badge className={priorityColors[goal.priority as keyof typeof priorityColors] + ' px-3 py-1 font-medium border'}>
                       {goal.priority}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="size-4" />
                     <span className="text-sm">~{goal.dueDate}</span>
                   </div>
-                </div>
+                </Link>
               ))}
-              <Link to="/goals">
-                <Button variant="outline" className="w-full h-12 border-dashed border-2 border-green-300 hover:bg-green-50 hover:border-green-400">
+                <Link to="/goals">
+                <Button variant="outline" className="w-full h-12 border-dashed border-2 border-success/30 hover:bg-success/10 transition-fluid">
                   <Plus className="size-5 mr-2" />
                   목표 추가
                 </Button>
-              </Link>
+                </Link>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <Card className="border-0 shadow-soft bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* 빠른 작업 */}
+      <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-8">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-slate-600 to-slate-800 rounded-xl p-2 shadow-lg">
-              <Sparkles className="size-5 text-white" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-accent rounded-lg blur-md opacity-40"></div>
+              <div className="relative bg-accent/20 rounded-lg p-2.5 border border-accent/30">
+                <Zap className="size-5 text-accent" />
+              </div>
             </div>
             <CardTitle className="text-xl">빠른 작업</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/learning-plans/new">
-              <Button variant="outline" className="w-full h-24 justify-start flex-col items-start p-5 hover:shadow-lg transition-all duration-200 bg-white border-2 hover:border-purple-300 hover:bg-purple-50 group">
-                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg p-2 mb-2 group-hover:scale-110 transition-transform">
-                  <Plus className="size-5 text-white" />
+              <Link to="/learning-plans/new">
+              <Button variant="outline" className="w-full h-28 flex-col items-start p-6 hover-glow-primary border-tech transition-fluid group">
+                <div className="bg-gradient-tech-primary rounded-lg p-3 mb-3 group-hover:scale-110 transition-transform shadow-neon-sm">
+                  <Plus className="size-6 text-white" />
                 </div>
-                <span className="font-semibold text-slate-900">새 학습 플랜 만들기</span>
+                <span className="font-semibold text-foreground text-left">새 학습 플랜 만들기</span>
               </Button>
-            </Link>
-            <Link to="/technologies">
-              <Button variant="outline" className="w-full h-24 justify-start flex-col items-start p-5 hover:shadow-lg transition-all duration-200 bg-white border-2 hover:border-blue-300 hover:bg-blue-50 group">
-                <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg p-2 mb-2 group-hover:scale-110 transition-transform">
-                  <BookOpen className="size-5 text-white" />
+              </Link>
+              <Link to="/technologies">
+              <Button variant="outline" className="w-full h-28 flex-col items-start p-6 hover-glow-primary border-tech transition-fluid group">
+                <div className="bg-primary/20 rounded-lg p-3 mb-3 border border-primary/30 group-hover:scale-110 transition-transform">
+                  <BookOpen className="size-6 text-primary" />
                 </div>
-                <span className="font-semibold text-slate-900">기술 카탈로그 둘러보기</span>
+                <span className="font-semibold text-foreground text-left">기술 카탈로그 둘러보기</span>
               </Button>
-            </Link>
-            <Link to="/skills/new">
-              <Button variant="outline" className="w-full h-24 justify-start flex-col items-start p-5 hover:shadow-lg transition-all duration-200 bg-white border-2 hover:border-green-300 hover:bg-green-50 group">
-                <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg p-2 mb-2 group-hover:scale-110 transition-transform">
-                  <CheckCircle2 className="size-5 text-white" />
+              </Link>
+              <Link to="/skills/new">
+              <Button variant="outline" className="w-full h-28 flex-col items-start p-6 hover-glow-primary border-tech transition-fluid group">
+                <div className="bg-success/20 rounded-lg p-3 mb-3 border border-success/30 group-hover:scale-110 transition-transform">
+                  <CheckCircle2 className="size-6 text-success" />
                 </div>
-                <span className="font-semibold text-slate-900">기술 스택 업데이트</span>
+                <span className="font-semibold text-foreground text-left">기술 스택 업데이트</span>
               </Button>
-            </Link>
+              </Link>
           </div>
         </CardContent>
       </Card>

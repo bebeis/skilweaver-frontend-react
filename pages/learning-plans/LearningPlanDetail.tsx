@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/ca
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { toast } from 'sonner';
 import { 
   ArrowLeft, 
   GraduationCap, 
@@ -200,6 +201,15 @@ export function LearningPlanDetail() {
 
   const today = new Date().toISOString().split('T')[0];
 
+  const handleEdit = () => {
+    navigate(`/learning-plans/${planId}/edit`);
+  };
+
+  const handleStartLearning = () => {
+    toast.success('학습을 시작합니다! 📚');
+    // Here you would typically update the plan status or navigate to a learning session
+  };
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -209,21 +219,21 @@ export function LearningPlanDetail() {
       </Button>
 
       {/* Header */}
-      <Card>
+      <Card className="glass-card border-tech">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="bg-blue-100 rounded-lg p-3">
-                <GraduationCap className="size-8 text-blue-600" />
+              <div className="bg-primary/20 rounded-lg p-3 border border-primary/30">
+                <GraduationCap className="size-8 text-primary" />
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-gray-900">{mockPlan.targetTechnology} 학습 플랜</h1>
-                  <Badge className="bg-green-100 text-green-800">
+                  <h1 className="text-3xl font-bold text-foreground">{mockPlan.targetTechnology} 학습 플랜</h1>
+                  <Badge className="bg-success/20 text-success border border-success/30">
                     {mockPlan.status}
                   </Badge>
                 </div>
-                <div className="flex flex-wrap gap-4 text-gray-600">
+                <div className="flex flex-wrap gap-4 text-muted-foreground font-medium">
                   <div className="flex items-center gap-2">
                     <Clock className="size-4" />
                     <span>{mockPlan.totalWeeks}주 · {mockPlan.totalHours}시간</span>
@@ -240,8 +250,8 @@ export function LearningPlanDetail() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">수정</Button>
-              <Button>
+              <Button variant="outline" className="relative z-10" onClick={handleEdit}>수정</Button>
+              <Button className="relative z-10" onClick={handleStartLearning}>
                 <PlayCircle className="size-4 mr-2" />
                 학습 시작
               </Button>
@@ -251,8 +261,8 @@ export function LearningPlanDetail() {
           {/* Progress */}
           <div className="mt-6 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-gray-700">전체 진행률</span>
-              <span className="text-gray-900">{mockPlan.progress}%</span>
+              <span className="text-muted-foreground font-semibold">전체 진행률</span>
+              <span className="text-foreground font-bold">{mockPlan.progress}%</span>
             </div>
             <Progress value={mockPlan.progress} className="h-2" />
           </div>
@@ -270,23 +280,23 @@ export function LearningPlanDetail() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           {/* Background Analysis */}
-          <Card>
+          <Card className="glass-card border-tech">
             <CardHeader>
-              <CardTitle>배경 분석</CardTitle>
+              <CardTitle className="text-foreground">배경 분석</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Existing Skills */}
               <div>
-                <h3 className="text-gray-900 mb-3 flex items-center gap-2">
-                  <CheckCircle2 className="size-5 text-green-600" />
+                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="size-5 text-success" />
                   관련 보유 기술
                 </h3>
                 <div className="space-y-2">
                   {mockPlan.backgroundAnalysis.existingRelevantSkills.map((skill, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border">
                       <div>
-                        <span className="text-gray-900">{skill.name}</span>
-                        <span className="text-gray-600 ml-2">({skill.level})</span>
+                        <span className="text-foreground font-semibold">{skill.name}</span>
+                        <span className="text-muted-foreground ml-2">({skill.level})</span>
                       </div>
                       <Badge variant={
                         skill.relevance === 'HIGH' ? 'default' : 'secondary'
@@ -300,14 +310,14 @@ export function LearningPlanDetail() {
 
               {/* Knowledge Gaps */}
               <div>
-                <h3 className="text-gray-900 mb-3 flex items-center gap-2">
-                  <AlertTriangle className="size-5 text-yellow-600" />
+                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                  <AlertTriangle className="size-5 text-warning" />
                   지식 격차
                 </h3>
                 <ul className="space-y-2">
                   {mockPlan.backgroundAnalysis.knowledgeGaps.map((gap, index) => (
-                    <li key={index} className="flex items-start gap-2 text-gray-700">
-                      <div className="size-2 bg-yellow-600 rounded-full mt-2" />
+                    <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
+                      <div className="size-2 bg-warning rounded-full mt-2" />
                       {gap}
                     </li>
                   ))}
@@ -316,14 +326,14 @@ export function LearningPlanDetail() {
 
               {/* Risk Factors */}
               <div>
-                <h3 className="text-gray-900 mb-3 flex items-center gap-2">
-                  <Target className="size-5 text-orange-600" />
+                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                  <Target className="size-5 text-accent" />
                   고려사항
                 </h3>
                 <ul className="space-y-2">
                   {mockPlan.backgroundAnalysis.riskFactors.map((risk, index) => (
-                    <li key={index} className="flex items-start gap-2 text-gray-700">
-                      <div className="size-2 bg-orange-600 rounded-full mt-2" />
+                    <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
+                      <div className="size-2 bg-accent rounded-full mt-2" />
                       {risk}
                     </li>
                   ))}
@@ -332,14 +342,14 @@ export function LearningPlanDetail() {
 
               {/* Recommendations */}
               <div>
-                <h3 className="text-gray-900 mb-3 flex items-center gap-2">
-                  <Lightbulb className="size-5 text-blue-600" />
+                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                  <Lightbulb className="size-5 text-primary" />
                   추천 학습 방법
                 </h3>
                 <ul className="space-y-2">
                   {mockPlan.backgroundAnalysis.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start gap-2 text-gray-700">
-                      <div className="size-2 bg-blue-600 rounded-full mt-2" />
+                    <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
+                      <div className="size-2 bg-primary rounded-full mt-2" />
                       {rec}
                     </li>
                   ))}
@@ -352,18 +362,18 @@ export function LearningPlanDetail() {
         {/* Steps Tab */}
         <TabsContent value="steps" className="space-y-4">
           {mockPlan.steps.map((step) => (
-            <Card key={step.stepOrder}>
+            <Card key={step.stepOrder} className="glass-card border-tech">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <Badge>Step {step.stepOrder}</Badge>
-                      <CardTitle>{step.title}</CardTitle>
+                      <Badge className="bg-primary/20 text-primary border border-primary/30">Step {step.stepOrder}</Badge>
+                      <CardTitle className="text-foreground">{step.title}</CardTitle>
                     </div>
-                    <p className="text-gray-600">{step.description}</p>
+                    <p className="text-muted-foreground font-medium">{step.description}</p>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-muted-foreground font-medium">
                       <Clock className="size-4" />
                       <span>{step.estimatedHours}시간</span>
                     </div>
@@ -373,11 +383,11 @@ export function LearningPlanDetail() {
               <CardContent className="space-y-4">
                 {/* Objectives */}
                 <div>
-                  <h4 className="text-gray-900 mb-2">학습 목표</h4>
+                  <h4 className="text-foreground font-bold mb-2">학습 목표</h4>
                   <ul className="space-y-1">
                     {step.objectives.map((obj, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-700">
-                        <CheckCircle2 className="size-4 text-green-600 mt-1" />
+                      <li key={index} className="flex items-start gap-2 text-muted-foreground font-medium">
+                        <CheckCircle2 className="size-4 text-success mt-1" />
                         {obj}
                       </li>
                     ))}
@@ -386,7 +396,7 @@ export function LearningPlanDetail() {
 
                 {/* Resources */}
                 <div>
-                  <h4 className="text-gray-900 mb-2">추천 학습 자료</h4>
+                  <h4 className="text-foreground font-bold mb-2">추천 학습 자료</h4>
                   <div className="space-y-2">
                     {step.suggestedResources.map((resource, index) => (
                       <a 
@@ -394,11 +404,11 @@ export function LearningPlanDetail() {
                         href={resource.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50"
                       >
                         <div className="flex items-center gap-3">
-                          <BookOpen className="size-4 text-gray-600" />
-                          <span className="text-gray-900">{resource.title}</span>
+                          <BookOpen className="size-4 text-primary" />
+                          <span className="text-foreground font-medium">{resource.title}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge 
@@ -407,7 +417,7 @@ export function LearningPlanDetail() {
                           >
                             {resource.type}
                           </Badge>
-                          <ExternalLink className="size-4 text-gray-400" />
+                          <ExternalLink className="size-4 text-muted-foreground" />
                         </div>
                       </a>
                     ))}
@@ -420,9 +430,9 @@ export function LearningPlanDetail() {
 
         {/* Schedule Tab */}
         <TabsContent value="schedule" className="space-y-4">
-          <Card>
+          <Card className="glass-card border-tech">
             <CardHeader>
-              <CardTitle>이번 주 학습 일정</CardTitle>
+              <CardTitle className="text-foreground">이번 주 학습 일정</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -435,37 +445,37 @@ export function LearningPlanDetail() {
                       key={index}
                       className={`p-4 rounded-lg border-2 ${
                         isToday 
-                          ? 'bg-blue-50 border-blue-300' 
+                          ? 'bg-primary/10 border-primary/50' 
                           : day.completed
-                          ? 'bg-green-50 border-green-200'
-                          : 'bg-white border-gray-200'
+                          ? 'bg-success/10 border-success/30'
+                          : 'bg-secondary/30 border-border'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-3">
                           {day.completed ? (
-                            <CheckCircle2 className="size-5 text-green-600" />
+                            <CheckCircle2 className="size-5 text-success" />
                           ) : isToday ? (
-                            <PlayCircle className="size-5 text-blue-600" />
+                            <PlayCircle className="size-5 text-primary" />
                           ) : (
-                            <Calendar className="size-5 text-gray-400" />
+                            <Calendar className="size-5 text-muted-foreground" />
                           )}
                           <div>
-                            <p className="text-gray-900">
+                            <p className="text-foreground font-bold">
                               {day.date} {isToday && '(오늘)'}
                             </p>
-                            <p className="text-gray-600">
+                            <p className="text-muted-foreground font-medium">
                               {day.minutesPlanned}분 계획
                             </p>
                           </div>
                         </div>
                         {day.completed && (
-                          <Badge className="bg-green-100 text-green-800">완료</Badge>
+                          <Badge className="bg-success/20 text-success border border-success/30">완료</Badge>
                         )}
                       </div>
                       <ul className="ml-8 space-y-1">
                         {day.tasks.map((task, taskIndex) => (
-                          <li key={taskIndex} className="text-gray-700">
+                          <li key={taskIndex} className="text-muted-foreground font-medium">
                             • {task}
                           </li>
                         ))}

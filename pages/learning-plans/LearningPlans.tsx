@@ -73,35 +73,35 @@ export function LearningPlans() {
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-3xl blur-3xl opacity-30"></div>
         <div className="relative bg-gradient-to-br from-white to-indigo-50/50 rounded-2xl p-8 border border-indigo-100 shadow-soft">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-4">
               <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-glow-primary animate-float">
                 <GraduationCap className="size-8 text-white" />
               </div>
-              <div>
+        <div>
                 <h1 className="text-3xl font-bold text-slate-900 mb-1">학습 플랜</h1>
                 <p className="text-lg text-slate-600">
-                  AI가 생성한 맞춤형 학습 계획을 관리하세요
-                </p>
+            AI가 생성한 맞춤형 학습 계획을 관리하세요
+          </p>
               </div>
-            </div>
-            <Link to="/learning-plans/new">
+        </div>
+        <Link to="/learning-plans/new">
               <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-glow-primary btn-glow h-12 px-6">
                 <Sparkles className="size-5 mr-2" />
-                새 플랜 생성
-              </Button>
-            </Link>
+            새 플랜 생성
+          </Button>
+        </Link>
           </div>
         </div>
       </div>
 
       {/* Filter */}
-      <Card className="border-0 shadow-soft">
+      <Card className="glass-card border-tech shadow-tech">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-slate-700 font-medium flex items-center gap-2">
-                <Filter className="size-4 text-indigo-600" />
+              <label className="text-foreground font-semibold flex items-center gap-2">
+                <Filter className="size-4 text-primary" />
                 상태
               </label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -122,7 +122,7 @@ export function LearningPlans() {
             <div className="flex items-end">
               <Button 
                 variant="outline" 
-                className="w-full h-11 hover:bg-indigo-50 hover:border-indigo-300"
+                className="w-full h-11 hover:bg-indigo-50 hover:border-indigo-300 relative z-10"
                 onClick={() => setStatusFilter('ALL')}
               >
                 필터 초기화

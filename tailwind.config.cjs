@@ -15,6 +15,11 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -63,38 +68,63 @@ module.exports = {
         },
       },
       boxShadow: {
-        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-        'glow-primary': '0 0 20px rgba(99, 102, 241, 0.3)',
-        'glow-accent': '0 0 20px rgba(6, 182, 212, 0.3)',
+        'neon-sm': '0 0 10px hsl(var(--glow-primary) / 0.3)',
+        'neon': '0 0 20px hsl(var(--glow-primary) / 0.4), 0 0 40px hsl(var(--glow-primary) / 0.2)',
+        'neon-lg': '0 0 30px hsl(var(--glow-primary) / 0.5), 0 0 60px hsl(var(--glow-primary) / 0.3)',
+        'neon-accent': '0 0 20px hsl(var(--glow-accent) / 0.4), 0 0 40px hsl(var(--glow-accent) / 0.2)',
+        'tech': '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
       },
       animation: {
-        'float': 'float 3s ease-in-out infinite',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'slide-in-up': 'slideInUp 0.5s ease-out',
-        'fade-in': 'fadeIn 0.6s ease-in',
-        'page-in': 'pageIn 0.4s ease-out',
+        'float-smooth': 'floatSmooth 6s ease-in-out infinite',
+        'glow-pulse': 'glowPulse 3s ease-in-out infinite',
+        'slide-up-fluid': 'slideUpFluid 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+        'fade-in-fluid': 'fadeInFluid 1s cubic-bezier(0.16, 1, 0.3, 1)',
+        'scale-in': 'scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+        'gradient': 'gradientFlow 8s ease infinite',
+        'neon-flicker': 'neonFlicker 4s ease-in-out infinite',
+        'page-fluid': 'pageInFluid 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
       },
       keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
+        floatSmooth: {
+          '0%, 100%': { transform: 'translateY(0px) translateX(0px)' },
+          '33%': { transform: 'translateY(-8px) translateX(4px)' },
+          '66%': { transform: 'translateY(-4px) translateX(-4px)' },
         },
-        slideInUp: {
-          from: { opacity: '0', transform: 'translateY(20px)' },
+        glowPulse: {
+          '0%, 100%': { boxShadow: '0 0 20px hsl(var(--glow-primary) / 0.4)' },
+          '50%': { boxShadow: '0 0 40px hsl(var(--glow-primary) / 0.6)' },
+        },
+        slideUpFluid: {
+          from: { opacity: '0', transform: 'translateY(30px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
-        fadeIn: {
+        fadeInFluid: {
           from: { opacity: '0' },
           to: { opacity: '1' },
         },
-        pageIn: {
-          from: { opacity: '0', transform: 'translateY(10px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
+        scaleIn: {
+          from: { opacity: '0', transform: 'scale(0.95)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
+        gradientFlow: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        neonFlicker: {
+          '0%, 100%': { opacity: '1', filter: 'brightness(1)' },
+          '50%': { opacity: '0.9', filter: 'brightness(1.2)' },
+        },
+        pageInFluid: {
+          from: { opacity: '0', transform: 'translateY(20px) scale(0.98)' },
+          to: { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
+      transitionTimingFunction: {
+        'fluid': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
     },
   },
