@@ -1216,6 +1216,7 @@ PATCH /api/v1/technologies/{technologyId}/edits/{editId}
 - `DOC_FIRST`
 - `VIDEO_FIRST`
 - `PROJECT_BASED`
+- `BALANCED`
 
 ### SkillCategory
 - `LANGUAGE`
@@ -1268,13 +1269,6 @@ PATCH /api/v1/technologies/{technologyId}/edits/{editId}
 - `PREREQUISITE`
 - `NEXT_STEP`
 - `ALTERNATIVE`
-
-### ResourceType
-- `DOC`
-- `VIDEO`
-- `BLOG`
-- `COURSE`
-- `REPO`
 
 ### EditStatus (v1.1)
 - `PENDING`

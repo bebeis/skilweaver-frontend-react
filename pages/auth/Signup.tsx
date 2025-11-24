@@ -22,7 +22,7 @@ export function Signup() {
     experienceLevel: 'BEGINNER',
     dailyMinutes: 60,
     preferKorean: true,
-    learningStyle: 'BALANCED',
+    learningStyle: 'PROJECT_BASED',
     weekendBoost: false
   });
 
@@ -157,7 +157,7 @@ export function Signup() {
                     <SelectItem value="FRONTEND">프론트엔드</SelectItem>
                     <SelectItem value="FULLSTACK">풀스택</SelectItem>
                     <SelectItem value="MOBILE">모바일</SelectItem>
-                    <SelectItem value="DEVOPS">데브옵스</SelectItem>
+                    <SelectItem value="DATA">데이터</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -216,8 +216,9 @@ export function Signup() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="HANDS_ON">실습 중심</SelectItem>
-                    <SelectItem value="THEORY_FIRST">이론 우선</SelectItem>
+                    <SelectItem value="DOC_FIRST">문서 우선</SelectItem>
+                    <SelectItem value="VIDEO_FIRST">영상 우선</SelectItem>
+                    <SelectItem value="PROJECT_BASED">프로젝트 중심</SelectItem>
                     <SelectItem value="BALANCED">균형잡힌</SelectItem>
                   </SelectContent>
                 </Select>
