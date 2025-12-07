@@ -3,7 +3,13 @@
  */
 
 import { apiClient, ApiResponse } from './client';
-import { Technology, TechnologyDetail, Pagination } from './types';
+import {
+  Technology,
+  TechnologyDetail,
+  Pagination,
+  CreateTechnologyRequest,
+  UpdateTechnologyRequest,
+} from './types';
 
 export const technologiesApi = {
   /**
@@ -56,6 +62,29 @@ export const technologiesApi = {
     return apiClient.get(
       `/technologies/${technologyId}/relationships${queryParams}`
     );
+  },
+
+  // ==================== v2 Admin APIs ====================
+
+  /**
+   * 기술 생성 (관리자)
+   * v2: 학습 메타데이터 필드 지원
+   */
+  async createTechnology(
+    request: CreateTechnologyRequest
+  ): Promise<ApiResponse<TechnologyDetail>> {
+    return apiClient.post('/technologies', request);
+  },
+
+  /**
+   * 기술 수정 (관리자)
+   * v2: 학습 메타데이터 필드 지원
+   */
+  async updateTechnology(
+    technologyId: number,
+    request: UpdateTechnologyRequest
+  ): Promise<ApiResponse<TechnologyDetail>> {
+    return apiClient.put(`/technologies/${technologyId}`, request);
   },
 };
 

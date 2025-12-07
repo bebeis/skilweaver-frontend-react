@@ -17,6 +17,16 @@ export type KnowledgeSource = 'COMMUNITY' | 'AI_IMPORTED';
 export type RelationType = 'PREREQUISITE' | 'NEXT_STEP' | 'ALTERNATIVE';
 export type ResourceType = 'DOC' | 'VIDEO' | 'BLOG' | 'COURSE' | 'REPO' | 'DOCUMENTATION' | 'TUTORIAL' | 'ARTICLE' | 'PROJECT';
 
+// v2 Feedback Types
+export type FeedbackType =
+  | 'HELPFUL'
+  | 'TOO_EASY'
+  | 'TOO_HARD'
+  | 'IRRELEVANT'
+  | 'TIME_ISSUE'
+  | 'RESOURCE_ISSUE'
+  | 'GENERAL';
+
 // 회원
 export interface LearningPreference {
   dailyMinutes: number;
@@ -200,6 +210,67 @@ export interface TechnologyDetail extends Technology {
     displayName: string;
   }>;
   useCases: string[];
+  // v2 fields - Learning metadata
+  learningRoadmap?: string;
+  estimatedLearningHours?: number;
+  relatedTechnologies: string[];
+  communityPopularity?: number; // 1-10
+  jobMarketDemand?: number; // 1-10
+}
+
+// v2 - Technology Admin Requests
+export interface CreateTechnologyRequest {
+  key: string;
+  displayName: string;
+  category: SkillCategory;
+  ecosystem?: string;
+  officialSite?: string;
+  // v2 learning metadata
+  learningRoadmap?: string;
+  estimatedLearningHours?: number;
+  prerequisites?: string[];
+  relatedTechnologies?: string[];
+  communityPopularity?: number;
+  jobMarketDemand?: number;
+}
+
+export interface UpdateTechnologyRequest {
+  displayName?: string;
+  ecosystem?: string;
+  officialSite?: string;
+  active?: boolean;
+  // v2 learning metadata
+  learningRoadmap?: string;
+  estimatedLearningHours?: number;
+  prerequisites?: string[];
+  relatedTechnologies?: string[];
+  communityPopularity?: number;
+  jobMarketDemand?: number;
+}
+
+// v2 - Feedback System
+export interface Feedback {
+  id: number;
+  learningPlanId: number;
+  stepId?: number;
+  rating: number; // 1-5
+  feedbackType: FeedbackType;
+  comment?: string;
+}
+
+export interface SubmitFeedbackRequest {
+  learningPlanId: number;
+  stepId?: number;
+  rating: number; // 1-5
+  feedbackType: FeedbackType;
+  comment?: string;
+}
+
+export interface FeedbackSummary {
+  planId: number;
+  averageRating: number;
+  totalFeedbackCount: number;
+  typeBreakdown: Record<FeedbackType, number>;
 }
 
 // Pagination

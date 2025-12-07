@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw';
 
-const BASE_URL = '/api/v1';
+// MSW에서는 절대 경로를 사용해야 합니다
+// 환경 변수와 일치시키거나 패턴으로 처리
+const BASE_URL = 'http://localhost:8080/api/v1';
 
 export const handlers = [
   // 1. 인증 API
@@ -465,6 +467,134 @@ export const handlers = [
           },
         ],
         useCases: ['REST API 서버 개발', '마이크로서비스 아키텍처'],
+        // v2 fields
+        learningRoadmap: '1단계: Spring 기초 → 2단계: Spring Boot 자동 설정 → 3단계: REST API 개발 → 4단계: 데이터 연동',
+        estimatedLearningHours: 60,
+        relatedTechnologies: ['spring-framework', 'java', 'gradle'],
+        communityPopularity: 9,
+        jobMarketDemand: 10,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  // v2: 기술 생성 (관리자)
+  http.post(`${BASE_URL}/technologies`, async ({ request }) => {
+    const body = await request.json() as any;
+    return HttpResponse.json({
+      success: true,
+      data: {
+        technologyId: 100,
+        key: body.key,
+        displayName: body.displayName,
+        category: body.category,
+        ecosystem: body.ecosystem,
+        officialSite: body.officialSite,
+        active: true,
+        knowledge: null,
+        prerequisites: [],
+        useCases: [],
+        learningRoadmap: body.learningRoadmap,
+        estimatedLearningHours: body.estimatedLearningHours,
+        relatedTechnologies: body.relatedTechnologies || [],
+        communityPopularity: body.communityPopularity,
+        jobMarketDemand: body.jobMarketDemand,
+      },
+      message: '기술이 생성되었습니다.',
+      timestamp: new Date().toISOString(),
+    }, { status: 201 });
+  }),
+
+  // v2: 기술 수정 (관리자)
+  http.put(`${BASE_URL}/technologies/:technologyId`, async ({ request, params }) => {
+    const body = await request.json() as any;
+    return HttpResponse.json({
+      success: true,
+      data: {
+        technologyId: Number(params.technologyId),
+        key: 'spring-boot',
+        displayName: body.displayName || 'Spring Boot',
+        category: 'FRAMEWORK',
+        ecosystem: body.ecosystem || 'JVM',
+        officialSite: body.officialSite,
+        active: body.active !== undefined ? body.active : true,
+        knowledge: null,
+        prerequisites: [],
+        useCases: [],
+        learningRoadmap: body.learningRoadmap,
+        estimatedLearningHours: body.estimatedLearningHours,
+        relatedTechnologies: body.relatedTechnologies || [],
+        communityPopularity: body.communityPopularity,
+        jobMarketDemand: body.jobMarketDemand,
+      },
+      message: '기술이 수정되었습니다.',
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  // ==================== v2 Feedback APIs ====================
+
+  // 피드백 제출
+  http.post(`${BASE_URL}/feedback`, async ({ request }) => {
+    const body = await request.json() as any;
+    return HttpResponse.json({
+      success: true,
+      data: {
+        id: 1,
+        learningPlanId: body.learningPlanId,
+        stepId: body.stepId,
+        rating: body.rating,
+        feedbackType: body.feedbackType,
+        comment: body.comment,
+      },
+      message: 'Feedback submitted successfully',
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  // 계획별 피드백 목록 조회
+  http.get(`${BASE_URL}/feedback/plans/:planId`, ({ params }) => {
+    return HttpResponse.json({
+      success: true,
+      data: [
+        {
+          id: 1,
+          learningPlanId: Number(params.planId),
+          stepId: null,
+          rating: 5,
+          feedbackType: 'HELPFUL',
+          comment: '전체적으로 좋았습니다',
+        },
+        {
+          id: 2,
+          learningPlanId: Number(params.planId),
+          stepId: 1,
+          rating: 3,
+          feedbackType: 'TOO_HARD',
+          comment: '이 단계가 조금 어려웠습니다',
+        },
+      ],
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  // 피드백 요약 조회
+  http.get(`${BASE_URL}/feedback/plans/:planId/summary`, ({ params }) => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        planId: Number(params.planId),
+        averageRating: 4.2,
+        totalFeedbackCount: 5,
+        typeBreakdown: {
+          HELPFUL: 3,
+          TOO_HARD: 1,
+          TOO_EASY: 0,
+          IRRELEVANT: 0,
+          TIME_ISSUE: 1,
+          RESOURCE_ISSUE: 0,
+          GENERAL: 0,
+        },
       },
       timestamp: new Date().toISOString(),
     });

@@ -11,4 +11,5 @@ export * from './goals';
 export * from './learning-plans';
 export * from './agent-runs';
 export * from './technologies';
+export * from './feedback';
 

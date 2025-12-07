@@ -18,10 +18,12 @@ import {
   CheckCircle2,
   ExternalLink,
   PlayCircle,
-  Loader2
+  Loader2,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { learningPlansApi } from '../../src/lib/api/learning-plans';
+import { FeedbackModal, FeedbackSummaryCard, FeedbackList } from '../../components/feedback';
 import type { LearningPlan } from '../../src/lib/api/types';
 
 // Mock data
@@ -207,6 +209,8 @@ export function LearningPlanDetail() {
   const [plan, setPlan] = useState<LearningPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackRefreshTrigger, setFeedbackRefreshTrigger] = useState(0);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -325,6 +329,14 @@ export function LearningPlanDetail() {
               </div>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="relative z-10"
+                onClick={() => setFeedbackModalOpen(true)}
+              >
+                <MessageSquare className="size-4 mr-2" />
+                피드백
+              </Button>
               <Button variant="outline" className="relative z-10" onClick={handleEdit}>수정</Button>
               <Button className="relative z-10" onClick={handleStartLearning}>
                 <PlayCircle className="size-4 mr-2" />
@@ -346,10 +358,11 @@ export function LearningPlanDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">개요</TabsTrigger>
           <TabsTrigger value="steps">학습 단계</TabsTrigger>
           <TabsTrigger value="schedule">일일 일정</TabsTrigger>
+          <TabsTrigger value="feedback">피드백</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -594,7 +607,28 @@ export function LearningPlanDetail() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Feedback Tab */}
+        <TabsContent value="feedback" className="space-y-6">
+          <FeedbackSummaryCard
+            planId={plan.learningPlanId}
+            refreshTrigger={feedbackRefreshTrigger}
+          />
+          <FeedbackList
+            planId={plan.learningPlanId}
+            refreshTrigger={feedbackRefreshTrigger}
+          />
+        </TabsContent>
       </Tabs>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        open={feedbackModalOpen}
+        onOpenChange={setFeedbackModalOpen}
+        learningPlanId={plan.learningPlanId}
+        steps={plan.steps}
+        onSuccess={() => setFeedbackRefreshTrigger((prev) => prev + 1)}
+      />
     </div>
   );
 }

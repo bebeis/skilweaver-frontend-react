@@ -6,19 +6,26 @@ import { Badge } from '../../components/ui/badge';
 import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
 import { Input } from '../../components/ui/input';
-import { 
-  Database, 
-  ExternalLink, 
-  BookOpen, 
-  Lightbulb, 
+import {
+  Database,
+  ExternalLink,
+  BookOpen,
+  Lightbulb,
   CheckCircle2,
   ArrowRight,
   GitBranch,
   ArrowLeft,
   GraduationCap,
   Edit,
-  Loader2
+  Loader2,
+  Clock,
+  TrendingUp,
+  Briefcase,
+  Users,
+  Map,
+  Link as LinkIcon
 } from 'lucide-react';
+import { Progress } from '../../components/ui/progress';
 import { toast } from 'sonner';
 import { technologiesApi } from '../../src/lib/api';
 
@@ -164,6 +171,12 @@ export function TechnologyDetail() {
                   <Badge variant="outline" className="bg-secondary/50 text-muted-foreground border-border">
                     {technology.ecosystem}
                   </Badge>
+                  {technology.estimatedLearningHours && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <Clock className="size-3 mr-1" />
+                      {technology.estimatedLearningHours}시간 예상
+                    </Badge>
+                  )}
                 </div>
                 {technology.officialSite && (
                   <a
@@ -212,6 +225,100 @@ export function TechnologyDetail() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground font-medium">{technology.knowledge.learningTips}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* v2: Popularity & Demand Stats */}
+      {(technology.communityPopularity || technology.jobMarketDemand) && (
+        <Card className="glass-card border-tech">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <TrendingUp className="size-5 text-primary" />
+              인기도 및 시장 수요
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {technology.communityPopularity && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-muted-foreground font-medium">
+                      <Users className="size-4" />
+                      커뮤니티 인기도
+                    </span>
+                    <span className="text-foreground font-bold">{technology.communityPopularity}/10</span>
+                  </div>
+                  <Progress value={technology.communityPopularity * 10} className="h-3" />
+                  <p className="text-xs text-muted-foreground">
+                    {technology.communityPopularity >= 8 ? '매우 활발한 커뮤니티' :
+                     technology.communityPopularity >= 6 ? '활발한 커뮤니티' :
+                     technology.communityPopularity >= 4 ? '보통 수준의 커뮤니티' : '성장 중인 커뮤니티'}
+                  </p>
+                </div>
+              )}
+              {technology.jobMarketDemand && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-muted-foreground font-medium">
+                      <Briefcase className="size-4" />
+                      취업 시장 수요
+                    </span>
+                    <span className="text-foreground font-bold">{technology.jobMarketDemand}/10</span>
+                  </div>
+                  <Progress value={technology.jobMarketDemand * 10} className="h-3" />
+                  <p className="text-xs text-muted-foreground">
+                    {technology.jobMarketDemand >= 8 ? '매우 높은 수요' :
+                     technology.jobMarketDemand >= 6 ? '높은 수요' :
+                     technology.jobMarketDemand >= 4 ? '보통 수준의 수요' : '틈새 시장'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* v2: Learning Roadmap */}
+      {technology.learningRoadmap && (
+        <Card className="glass-card border-tech">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Map className="size-5 text-success" />
+              학습 로드맵
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-secondary/30 rounded-lg p-4 border border-border">
+              <p className="text-muted-foreground font-medium whitespace-pre-line">
+                {technology.learningRoadmap}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* v2: Related Technologies */}
+      {technology.relatedTechnologies && technology.relatedTechnologies.length > 0 && (
+        <Card className="glass-card border-tech">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <LinkIcon className="size-5 text-primary" />
+              관련 기술
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {technology.relatedTechnologies.map((techKey: string, index: number) => (
+                <Badge
+                  key={index}
+                  variant="outline"
+                  className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
+                >
+                  {techKey}
+                </Badge>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

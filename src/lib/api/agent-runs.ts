@@ -4,14 +4,13 @@
  */
 
 import { apiClient, ApiResponse } from './client';
+import { AgentRunStatus } from './types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export type AgentType = 'LEARNING_PLAN';
-
-export type AgentRunStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
 
 export type SSEEventType =
   | 'AGENT_STARTED'
