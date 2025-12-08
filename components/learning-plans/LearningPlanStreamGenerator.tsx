@@ -29,6 +29,7 @@ export function LearningPlanStreamGenerator({
   onComplete,
 }: LearningPlanStreamGeneratorProps) {
   const [expandDAG, setExpandDAG] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const {
     isStreaming,
@@ -60,6 +61,20 @@ export function LearningPlanStreamGenerator({
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 스트리밍 중 경과 시간 1초씩 증가
+  useEffect(() => {
+    if (!isStreaming) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isStreaming]);
+
   const handleReset = () => {
     reset();
   };
@@ -85,13 +100,11 @@ export function LearningPlanStreamGenerator({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">진행 상황</span>
                 <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span>{elapsedSeconds}초</span>
+                  </div>
                   <span className="text-2xl font-bold text-indigo-600">{progress}%</span>
-                  {estimatedTimeRemaining !== null && estimatedTimeRemaining > 0 && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      <span>약 {Math.ceil(estimatedTimeRemaining / 1000)}초</span>
-                    </div>
-                  )}
                 </div>
               </div>
               <Progress value={progress} className="h-3" />
