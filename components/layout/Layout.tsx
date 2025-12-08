@@ -2,17 +2,18 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Target, 
-  Database, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  Target,
+  Database,
   GraduationCap,
   Settings,
   LogOut,
   Menu,
   Sparkles,
-  Zap
+  Zap,
+  Map
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -27,6 +28,7 @@ export function Layout() {
     { name: '내 기술 스택', href: '/skills', icon: BookOpen },
     { name: '학습 목표', href: '/goals', icon: Target },
     { name: '기술 카탈로그', href: '/technologies', icon: Database },
+    { name: '기술 탐색기', href: '/explore', icon: Map },
     { name: '학습 플랜', href: '/learning-plans', icon: GraduationCap },
   ];
 

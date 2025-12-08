@@ -281,3 +281,92 @@ export interface Pagination {
   totalPages: number;
 }
 
+// =============================================================================
+// V3 Graph API Types
+// =============================================================================
+
+// Graph relation types
+export type GraphRelationType =
+  | 'PREREQUISITE'
+  | 'RECOMMENDED_AFTER'
+  | 'DEPENDS_ON'
+  | 'CONTAINS'
+  | 'USED_WITH'
+  | 'ALTERNATIVE';
+
+export type GapPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+
+// Roadmap API
+export interface RoadmapTechnology {
+  name: string;
+  displayName: string;
+  category: SkillCategory;
+  difficulty: StepDifficulty;
+}
+
+export interface RoadmapPrerequisites {
+  required: RoadmapTechnology[];
+  recommended: RoadmapTechnology[];
+}
+
+export interface RoadmapData {
+  technology: string;
+  displayName: string;
+  prerequisites: RoadmapPrerequisites;
+  nextSteps: RoadmapTechnology[];
+}
+
+// Learning Path API
+export interface PathStep {
+  step: number;
+  technology: string;
+  relation: GraphRelationType;
+}
+
+export interface LearningPathData {
+  from: string;
+  to: string;
+  totalSteps: number;
+  path: PathStep[];
+}
+
+// Recommendations API
+export interface RecommendedTechnology {
+  name: string;
+  displayName: string;
+  relation: GraphRelationType;
+  category: SkillCategory;
+}
+
+export interface RecommendationsData {
+  technology: string;
+  recommendations: RecommendedTechnology[];
+}
+
+// Gap Analysis API
+export interface MissingTechnology {
+  name: string;
+  displayName: string;
+  priority: GapPriority;
+}
+
+export interface GapAnalysisRequest {
+  knownTechnologies: string[];
+  targetTechnology: string;
+}
+
+export interface GapAnalysisData {
+  target: string;
+  known: string[];
+  missing: MissingTechnology[];
+  ready: boolean;
+  readinessScore: number;
+  message: string;
+}
+
+// Graph API Error
+export type GraphErrorCode =
+  | 'TECHNOLOGY_NOT_FOUND'
+  | 'NO_PATH_FOUND'
+  | 'GRAPH_SERVICE_UNAVAILABLE';
+

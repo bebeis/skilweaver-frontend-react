@@ -191,10 +191,20 @@ export function TechnologyDetail() {
                 )}
               </div>
             </div>
-            <Button onClick={handleCreateLearningPlan} className="relative z-10">
-              <GraduationCap className="size-4 mr-2" />
-              학습 플랜 생성
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/explore?tech=${technology.key}`)}
+                className="relative z-10"
+              >
+                <Map className="size-4 mr-2" />
+                로드맵 탐색
+              </Button>
+              <Button onClick={handleCreateLearningPlan} className="relative z-10">
+                <GraduationCap className="size-4 mr-2" />
+                학습 플랜 생성
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

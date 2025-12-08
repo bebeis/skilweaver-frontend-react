@@ -15,6 +15,7 @@ import { TechnologyDetail } from './pages/technologies/TechnologyDetail';
 import { LearningPlans } from './pages/learning-plans/LearningPlans';
 import { LearningPlanNew } from './pages/learning-plans/LearningPlanNew';
 import { LearningPlanDetail } from './pages/learning-plans/LearningPlanDetail';
+import { TechExplorer } from './pages/explore/TechExplorer';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isInitializing } = useAuth();
@@ -62,6 +63,7 @@ function App() {
             <Route path="goals" element={<Goals />} />
             <Route path="technologies" element={<Technologies />} />
             <Route path="technologies/:technologyId" element={<TechnologyDetail />} />
+            <Route path="explore" element={<TechExplorer />} />
             <Route path="learning-plans" element={<LearningPlans />} />
             <Route path="learning-plans/new" element={<LearningPlanNew />} />
             <Route path="learning-plans/:planId" element={<LearningPlanDetail />} />

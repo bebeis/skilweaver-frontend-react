@@ -599,5 +599,144 @@ export const handlers = [
       timestamp: new Date().toISOString(),
     });
   }),
+
+  // ==================== V3 Graph APIs ====================
+
+  // 기술 로드맵 조회
+  http.get(`${BASE_URL}/graph/roadmap/:technology`, ({ params }) => {
+    const tech = params.technology as string;
+
+    // 알 수 없는 기술 처리
+    if (tech === 'unknown-tech') {
+      return HttpResponse.json({
+        success: false,
+        data: null,
+        message: `Technology '${tech}' not found in graph`,
+        errorCode: 'TECHNOLOGY_NOT_FOUND',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        technology: tech,
+        displayName: tech === 'spring-boot' ? 'Spring Boot' : tech === 'react' ? 'React' : tech,
+        prerequisites: {
+          required: [
+            { name: 'java', displayName: 'Java', category: 'LANGUAGE', difficulty: 'BEGINNER' },
+          ],
+          recommended: [
+            { name: 'spring-framework', displayName: 'Spring Framework', category: 'FRAMEWORK', difficulty: 'INTERMEDIATE' },
+          ],
+        },
+        nextSteps: [
+          { name: 'spring-data', displayName: 'Spring Data', category: 'LIBRARY', difficulty: 'INTERMEDIATE' },
+          { name: 'spring-security', displayName: 'Spring Security', category: 'LIBRARY', difficulty: 'INTERMEDIATE' },
+        ],
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  // 학습 경로 탐색
+  http.get(`${BASE_URL}/graph/path`, ({ request }) => {
+    const url = new URL(request.url);
+    const from = url.searchParams.get('from');
+    const to = url.searchParams.get('to');
+
+    // 경로 없음 처리
+    if (to === 'unknown-tech') {
+      return HttpResponse.json({
+        success: false,
+        data: null,
+        message: `Cannot find learning path from '${from}' to '${to}'`,
+        errorCode: 'NO_PATH_FOUND',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        from,
+        to,
+        totalSteps: 4,
+        path: [
+          { step: 1, technology: 'python-data', relation: 'RECOMMENDED_AFTER' },
+          { step: 2, technology: 'ml-theory', relation: 'DEPENDS_ON' },
+          { step: 3, technology: 'docker', relation: 'USED_WITH' },
+          { step: 4, technology: to, relation: 'RECOMMENDED_AFTER' },
+        ],
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  // 연관 기술 추천
+  http.get(`${BASE_URL}/graph/recommendations/:technology`, ({ params }) => {
+    const tech = params.technology as string;
+
+    if (tech === 'unknown-tech') {
+      return HttpResponse.json({
+        success: false,
+        data: null,
+        message: `Technology '${tech}' not found in graph`,
+        errorCode: 'TECHNOLOGY_NOT_FOUND',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        technology: tech,
+        recommendations: [
+          { name: 'nextjs', displayName: 'Next.js', relation: 'CONTAINS', category: 'FRAMEWORK' },
+          { name: 'tailwind', displayName: 'Tailwind CSS', relation: 'USED_WITH', category: 'LIBRARY' },
+          { name: 'zustand', displayName: 'Zustand', relation: 'USED_WITH', category: 'LIBRARY' },
+        ],
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  // 갭 분석
+  http.post(`${BASE_URL}/graph/gap-analysis`, async ({ request }) => {
+    const body = await request.json() as any;
+    const { knownTechnologies, targetTechnology } = body;
+
+    if (targetTechnology === 'unknown-tech') {
+      return HttpResponse.json({
+        success: false,
+        data: null,
+        message: `Technology '${targetTechnology}' not found in graph`,
+        errorCode: 'TECHNOLOGY_NOT_FOUND',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
+    // java, sql을 알고 있으면 spring-boot 학습 가능
+    const hasJava = knownTechnologies.includes('java');
+    const ready = hasJava;
+    const readinessScore = hasJava ? 0.8 : 0.3;
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        target: targetTechnology,
+        known: knownTechnologies,
+        missing: ready ? [] : [
+          { name: 'java', displayName: 'Java', priority: 'HIGH' },
+        ],
+        ready,
+        readinessScore,
+        message: ready
+          ? `${knownTechnologies.join(', ')} 지식이 있으므로 ${targetTechnology} 학습이 가능합니다.`
+          : `${targetTechnology} 학습을 위해 먼저 Java를 학습하세요.`,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }),
 ];
 
