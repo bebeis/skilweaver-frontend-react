@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -17,6 +16,7 @@ import {
 import { fetchRecommendations } from '../../src/lib/api/graph';
 import { RecommendationsData, RecommendedTechnology, GraphRelationType } from '../../src/lib/api/types';
 import { ApiError } from '../../src/lib/api/client';
+import { TechAutocomplete } from './TechAutocomplete';
 
 const relationLabels: Record<GraphRelationType, string> = {
   PREREQUISITE: '선행 지식',
@@ -156,10 +156,14 @@ export function TechRecommendations() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSearch} className="flex gap-3">
-            <Input
-              placeholder="예: react, spring-boot, kubernetes..."
+            <TechAutocomplete
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={setSearchQuery}
+              onSelect={(tech) => {
+                setSearchQuery(tech.key);
+                loadRecommendations(tech.key);
+              }}
+              placeholder="예: react, spring-boot, kubernetes..."
               className="flex-1"
             />
             <Button type="submit" disabled={loading || !searchQuery.trim()}>

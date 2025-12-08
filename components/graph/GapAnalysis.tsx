@@ -23,6 +23,7 @@ import { GapAnalysisData, MissingTechnology, GapPriority } from '../../src/lib/a
 import { ApiError } from '../../src/lib/api/client';
 import { useAuth } from '../../hooks/useAuth';
 import { skillsApi } from '../../src/lib/api/skills';
+import { TechAutocomplete } from './TechAutocomplete';
 
 const priorityColors: Record<GapPriority, string> = {
   HIGH: 'bg-red-100 text-red-700 border-red-200',
@@ -208,15 +209,13 @@ export function GapAnalysis() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">목표 기술</label>
-              <div className="relative">
-                <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-primary" />
-                <Input
-                  placeholder="배우고 싶은 기술 (예: kubernetes, spring-boot...)"
-                  value={targetTech}
-                  onChange={(e) => setTargetTech(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              <TechAutocomplete
+                value={targetTech}
+                onChange={setTargetTech}
+                onSelect={(tech) => setTargetTech(tech.key)}
+                placeholder="배우고 싶은 기술 (예: kubernetes, spring-boot...)"
+                icon={<Target className="size-4 text-primary" />}
+              />
             </div>
 
             <Button type="submit" disabled={loading || !targetTech.trim()} className="w-full md:w-auto">

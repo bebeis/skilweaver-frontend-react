@@ -46,6 +46,16 @@ Agent API(LLM 기반)와 상호 보완적으로 동작합니다.
 }
 ```
 
+**Response (404 Not Found)**
+```json
+{
+  "success": false,
+  "data": null,
+  "message": "Technology 'unknown-tech' not found in graph",
+  "errorCode": "TECHNOLOGY_NOT_FOUND"
+}
+```
+
 ---
 
 ### 2. 학습 경로 탐색
@@ -111,6 +121,16 @@ Agent API(LLM 기반)와 상호 보완적으로 동작합니다.
 }
 ```
 
+**Response (404 Not Found)**
+```json
+{
+  "success": false,
+  "data": null,
+  "message": "Technology 'unknown-tech' not found in graph",
+  "errorCode": "TECHNOLOGY_NOT_FOUND"
+}
+```
+
 ---
 
 ### 4. 갭 분석
@@ -144,13 +164,23 @@ Agent API(LLM 기반)와 상호 보완적으로 동작합니다.
 }
 ```
 
+**Response (404 Not Found)**
+```json
+{
+  "success": false,
+  "data": null,
+  "message": "Target technology 'unknown-tech' not found in graph",
+  "errorCode": "TECHNOLOGY_NOT_FOUND"
+}
+```
+
 ---
 
 ## 에러 코드
 
 | 코드 | HTTP Status | 설명 |
 |------|-------------|------|
-| TECH_NOT_FOUND | 404 | 기술이 그래프에 존재하지 않음 |
+| TECHNOLOGY_NOT_FOUND | 404 | 기술이 그래프에 존재하지 않음 |
 | NO_PATH_FOUND | 404 | 두 기술 간 경로 없음 |
 | GRAPH_SERVICE_UNAVAILABLE | 503 | Neo4j 연결 실패 |
 

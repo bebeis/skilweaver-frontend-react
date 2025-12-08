@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -10,14 +9,26 @@ import {
   ArrowRight,
   Loader2,
   AlertTriangle,
-  ChevronRight,
   Flag,
   Target,
-  CircleDot
+  CircleDot,
+  UserCircle,
+  ChevronDown
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '../ui/dropdown-menu';
 import { fetchLearningPath } from '../../src/lib/api/graph';
-import { LearningPathData, PathStep, GraphRelationType } from '../../src/lib/api/types';
+import { LearningPathData, PathStep, GraphRelationType, MemberSkill } from '../../src/lib/api/types';
 import { ApiError } from '../../src/lib/api/client';
+import { TechAutocomplete } from './TechAutocomplete';
+import { useAuth } from '../../hooks/useAuth';
+import { skillsApi } from '../../src/lib/api/skills';
 
 const relationLabels: Record<GraphRelationType, string> = {
   PREREQUISITE: '선행 지식',
@@ -89,11 +100,37 @@ function PathStepCard({ step, isLast, totalSteps }: {
 }
 
 export function PathFinder() {
+  const { user } = useAuth();
   const [fromTech, setFromTech] = useState('');
   const [toTech, setToTech] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pathData, setPathData] = useState<LearningPathData | null>(null);
+
+  // 사용자 보유 기술
+  const [userSkills, setUserSkills] = useState<MemberSkill[]>([]);
+  const [loadingSkills, setLoadingSkills] = useState(false);
+
+  // 사용자 보유 기술 로드
+  useEffect(() => {
+    const loadUserSkills = async () => {
+      if (!user?.memberId) return;
+
+      setLoadingSkills(true);
+      try {
+        const response = await skillsApi.getSkills(user.memberId);
+        if (response.success && response.data?.skills) {
+          setUserSkills(response.data.skills);
+        }
+      } catch (err) {
+        console.error('Failed to load skills:', err);
+      } finally {
+        setLoadingSkills(false);
+      }
+    };
+
+    loadUserSkills();
+  }, [user?.memberId]);
 
   const findPath = useCallback(async () => {
     if (!fromTech.trim() || !toTech.trim()) return;
@@ -134,6 +171,11 @@ export function PathFinder() {
     setToTech(to);
   };
 
+  const handleSelectUserSkill = (skill: MemberSkill) => {
+    const techKey = skill.technologyKey || skill.customName || '';
+    setFromTech(techKey);
+  };
+
   return (
     <div className="space-y-6">
       {/* Search Form */}
@@ -151,29 +193,70 @@ export function PathFinder() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">시작 기술 (현재 보유)</label>
-                <div className="relative">
-                  <Flag className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-green-500" />
-                  <Input
-                    placeholder="예: java, python..."
-                    value={fromTech}
-                    onChange={(e) => setFromTech(e.target.value)}
-                    className="pl-10"
-                  />
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">시작 기술 (현재 보유)</label>
+                  {userSkills.length > 0 && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                          <UserCircle className="size-3" />
+                          내 기술에서 선택
+                          <ChevronDown className="size-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel className="flex items-center gap-2">
+                          <UserCircle className="size-4" />
+                          보유 기술 목록
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {loadingSkills ? (
+                          <div className="py-2 px-2 text-center text-sm text-muted-foreground">
+                            <Loader2 className="size-4 animate-spin mx-auto" />
+                          </div>
+                        ) : (
+                          userSkills.map((skill) => (
+                            <DropdownMenuItem
+                              key={skill.memberSkillId}
+                              onClick={() => handleSelectUserSkill(skill)}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <span>{skill.displayName || skill.customName}</span>
+                                <Badge variant="secondary" className="text-xs ml-2">
+                                  {skill.level}
+                                </Badge>
+                              </div>
+                            </DropdownMenuItem>
+                          ))
+                        )}
+                        {!loadingSkills && userSkills.length === 0 && (
+                          <div className="py-2 px-2 text-center text-sm text-muted-foreground">
+                            등록된 기술이 없습니다
+                          </div>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
+                <TechAutocomplete
+                  value={fromTech}
+                  onChange={setFromTech}
+                  onSelect={(tech) => setFromTech(tech.key)}
+                  placeholder="예: java, python..."
+                  icon={<Flag className="size-4 text-green-500" />}
+                />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">목표 기술</label>
-                <div className="relative">
-                  <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-primary" />
-                  <Input
-                    placeholder="예: kubernetes, mlops..."
-                    value={toTech}
-                    onChange={(e) => setToTech(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+                <TechAutocomplete
+                  value={toTech}
+                  onChange={setToTech}
+                  onSelect={(tech) => setToTech(tech.key)}
+                  placeholder="예: kubernetes, mlops..."
+                  icon={<Target className="size-4 text-primary" />}
+                />
               </div>
             </div>
 

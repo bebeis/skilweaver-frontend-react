@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -19,6 +18,7 @@ import {
 import { fetchRoadmap } from '../../src/lib/api/graph';
 import { RoadmapData, RoadmapTechnology, StepDifficulty } from '../../src/lib/api/types';
 import { ApiError } from '../../src/lib/api/client';
+import { TechAutocomplete } from './TechAutocomplete';
 
 const difficultyColors: Record<StepDifficulty, string> = {
   EASY: 'bg-green-50 text-green-700 border-green-200',
@@ -161,10 +161,14 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSearch} className="flex gap-3">
-            <Input
-              placeholder="예: spring-boot, react, kubernetes..."
+            <TechAutocomplete
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={setSearchQuery}
+              onSelect={(tech) => {
+                setSearchQuery(tech.key);
+                loadRoadmap(tech.key);
+              }}
+              placeholder="예: spring-boot, react, kubernetes..."
               className="flex-1"
             />
             <Button type="submit" disabled={loading || !searchQuery.trim()}>
