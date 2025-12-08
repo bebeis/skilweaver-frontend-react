@@ -27,6 +27,7 @@ const categoryColors: Record<string, string> = {
   PLATFORM: 'bg-orange-50 text-orange-700',
   DEVOPS: 'bg-indigo-50 text-indigo-700',
   API: 'bg-pink-50 text-pink-700',
+  CONCEPT: 'bg-cyan-50 text-cyan-700',
 };
 
 export function TechAutocomplete({

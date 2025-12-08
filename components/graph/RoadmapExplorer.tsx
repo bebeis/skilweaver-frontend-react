@@ -35,6 +35,7 @@ const categoryColors: Record<string, string> = {
   DB: 'bg-green-50 text-green-700 border-green-200',
   PLATFORM: 'bg-orange-50 text-orange-700 border-orange-200',
   DEVOPS: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  CONCEPT: 'bg-cyan-50 text-cyan-700 border-cyan-200',
 };
 
 function TechNode({ tech, onClick, direction }: {
