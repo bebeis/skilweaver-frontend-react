@@ -9,6 +9,10 @@ import {
   AgentCompletedEvent,
   PathUpdatedEvent,
   ActionExecutionDetail,
+  AgentProgressEvent,
+  ProgressStage,
+  PROGRESS_STAGE_PERCENTAGE,
+  PROGRESS_STAGE_LABELS,
 } from '@/lib/api/agent-runs';
 
 export interface ExecutionPathItem {
@@ -17,6 +21,15 @@ export interface ExecutionPathItem {
   status: 'PLANNED' | 'EXECUTING' | 'COMPLETED' | 'FAILED';
   startedAt?: number;
   completedAt?: number;
+}
+
+// v3.1 신규: AgentProgress 상태
+export interface AgentProgressState {
+  stage: ProgressStage | null;
+  stageLabel: string;
+  stageProgress: number; // stage별 예상 진행률 (0-100)
+  message: string;
+  timestamp: number;
 }
 
 export interface UseLearningPlanStreamState {
@@ -35,6 +48,9 @@ export interface UseLearningPlanStreamState {
   estimatedTimeRemaining: number | null; // 예상 남은 시간 (ms)
   currentExecutingActionIndex: number; // 현재 실행 중인 액션 인덱스 (-1 = 없음)
   failedActions: Map<string, string>; // 실패한 액션 및 에러 메시지
+  // v3.1 신규
+  agentProgress: AgentProgressState; // 세분화된 진행률 상태
+  progressHistory: AgentProgressState[]; // 진행률 히스토리
 }
 
 export interface UseLearningPlanStreamReturn extends UseLearningPlanStreamState {
@@ -80,6 +96,15 @@ export interface UseLearningPlanStreamReturn extends UseLearningPlanStreamState 
  * }
  * ```
  */
+// 초기 AgentProgress 상태
+const initialAgentProgress: AgentProgressState = {
+  stage: null,
+  stageLabel: '',
+  stageProgress: 0,
+  message: '',
+  timestamp: 0,
+};
+
 export function useLearningPlanStream(): UseLearningPlanStreamReturn {
   const [state, setState] = useState<UseLearningPlanStreamState>({
     isStreaming: false,
@@ -97,6 +122,9 @@ export function useLearningPlanStream(): UseLearningPlanStreamReturn {
     estimatedTimeRemaining: null,
     currentExecutingActionIndex: -1,
     failedActions: new Map(),
+    // v3.1 신규
+    agentProgress: initialAgentProgress,
+    progressHistory: [],
   });
 
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -142,6 +170,9 @@ export function useLearningPlanStream(): UseLearningPlanStreamReturn {
         estimatedTimeRemaining: null,
         currentExecutingActionIndex: -1,
         failedActions: new Map(),
+        // v3.1 신규
+        agentProgress: initialAgentProgress,
+        progressHistory: [],
       });
 
       // SSE 스트림 시작
@@ -210,6 +241,30 @@ export function useLearningPlanStream(): UseLearningPlanStreamReturn {
             setState((prev) => ({
               ...prev,
               events: [...prev.events, data],
+            }));
+          },
+
+          // v3.1 신규: 세분화된 진행률 이벤트 핸들러
+          onAgentProgress: (data) => {
+            const stage = data.actionName as ProgressStage;
+            const stageProgress = PROGRESS_STAGE_PERCENTAGE[stage] || 0;
+            const stageLabel = PROGRESS_STAGE_LABELS[stage] || stage;
+
+            const newProgressState: AgentProgressState = {
+              stage,
+              stageLabel,
+              stageProgress,
+              message: data.message,
+              timestamp: data.timestamp,
+            };
+
+            setState((prev) => ({
+              ...prev,
+              events: [...prev.events, data],
+              currentAction: stageLabel,
+              progress: stageProgress, // agent_progress 기반 진행률 우선 적용
+              agentProgress: newProgressState,
+              progressHistory: [...prev.progressHistory, newProgressState],
             }));
           },
 
@@ -354,6 +409,9 @@ export function useLearningPlanStream(): UseLearningPlanStreamReturn {
       estimatedTimeRemaining: null,
       currentExecutingActionIndex: -1,
       failedActions: new Map(),
+      // v3.1 신규
+      agentProgress: initialAgentProgress,
+      progressHistory: [],
     });
     actionStartTimeRef.current.clear();
   }, []);

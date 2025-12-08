@@ -3,16 +3,17 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useLearningPlanStream } from '@hooks/useLearningPlanStream';
+import { useLearningPlanStream, AgentProgressState } from '@hooks/useLearningPlanStream';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Label } from '@components/ui/label';
 import { Progress } from '@components/ui/progress';
 import { Alert, AlertDescription } from '@components/ui/alert';
-import { CheckCircle2, XCircle, Loader2, Zap, Clock, ChevronRight, Maximize2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Zap, Clock, ChevronRight, Maximize2, Activity } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { PerformanceAnalytics } from './PerformanceAnalytics';
 import { GOAPPathDAG } from './GOAPPathDAG';
+import { PROGRESS_STAGE_LABELS, ProgressStage } from '@/lib/api/agent-runs';
 
 interface LearningPlanStreamGeneratorProps {
   memberId: number;
@@ -43,6 +44,8 @@ export function LearningPlanStreamGenerator({
     totalDuration,
     estimatedTimeRemaining,
     failedActions,
+    agentProgress,
+    progressHistory,
     startStream,
     stopStream,
     reset,
@@ -94,14 +97,60 @@ export function LearningPlanStreamGenerator({
               <Progress value={progress} className="h-3" />
             </div>
 
-            {/* 현재 작업 상태 */}
-            <Alert className="border-indigo-200 bg-indigo-50">
-              <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-              <AlertDescription className="text-indigo-900">
-                <div className="font-medium">{currentAction || '처리 중...'}</div>
-                <div className="text-xs mt-1">{executedPath.length}개 단계 완료</div>
-              </AlertDescription>
-            </Alert>
+            {/* v3.1 신규: 세분화된 진행 단계 표시 */}
+            {agentProgress.stage && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-indigo-500" />
+                  <span className="text-sm font-medium">현재 단계</span>
+                </div>
+                <Alert className="border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                  <AlertDescription className="text-indigo-900">
+                    <div className="font-semibold text-base">{agentProgress.stageLabel}</div>
+                    <div className="text-sm mt-1 text-indigo-700">{agentProgress.message}</div>
+                  </AlertDescription>
+                </Alert>
+
+                {/* 진행 단계 스텝퍼 */}
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(PROGRESS_STAGE_LABELS).map(([stage, label]) => {
+                    const stageKey = stage as ProgressStage;
+                    const isCompleted = progressHistory.some(p => p.stage === stageKey);
+                    const isCurrent = agentProgress.stage === stageKey;
+
+                    return (
+                      <Badge
+                        key={stage}
+                        variant={isCurrent ? 'default' : isCompleted ? 'secondary' : 'outline'}
+                        className={`text-xs ${
+                          isCurrent
+                            ? 'bg-indigo-600 text-white animate-pulse'
+                            : isCompleted
+                              ? 'bg-green-100 text-green-700 border-green-300'
+                              : 'text-muted-foreground'
+                        }`}
+                      >
+                        {isCompleted && !isCurrent && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                        {isCurrent && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+                        {label}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 현재 작업 상태 (agent_progress가 없을 때 fallback) */}
+            {!agentProgress.stage && (
+              <Alert className="border-indigo-200 bg-indigo-50">
+                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                <AlertDescription className="text-indigo-900">
+                  <div className="font-medium">{currentAction || '처리 중...'}</div>
+                  <div className="text-xs mt-1">{executedPath.length}개 단계 완료</div>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* GOAP 경로 DAG 시각화 */}
             {executionHistory.length > 0 && !expandDAG && (

@@ -17,9 +17,42 @@ export type SSEEventType =
   | 'PLANNING_STARTED'
   | 'ACTION_EXECUTED'
   | 'PROGRESS'
+  | 'AGENT_PROGRESS'
   | 'PATH_UPDATED'
   | 'AGENT_COMPLETED'
   | 'ERROR';
+
+// ProgressStage enum (v3.1 신규)
+export type ProgressStage =
+  | 'ANALYSIS_STARTED'
+  | 'DEEP_ANALYSIS'
+  | 'GAP_ANALYSIS'
+  | 'CURRICULUM_GENERATION'
+  | 'RESOURCE_ENRICHMENT'
+  | 'RESOURCE_STEP_PROGRESS'
+  | 'FINALIZING';
+
+// ProgressStage별 예상 진행률 매핑
+export const PROGRESS_STAGE_PERCENTAGE: Record<ProgressStage, number> = {
+  ANALYSIS_STARTED: 10,
+  DEEP_ANALYSIS: 20,
+  GAP_ANALYSIS: 30,
+  CURRICULUM_GENERATION: 50,
+  RESOURCE_ENRICHMENT: 70,
+  RESOURCE_STEP_PROGRESS: 85, // 70-95% 범위 내에서 동적
+  FINALIZING: 95,
+};
+
+// ProgressStage 한글 라벨
+export const PROGRESS_STAGE_LABELS: Record<ProgressStage, string> = {
+  ANALYSIS_STARTED: '기술 분석 시작',
+  DEEP_ANALYSIS: '심층 분석',
+  GAP_ANALYSIS: '역량 Gap 분석',
+  CURRICULUM_GENERATION: '커리큘럼 생성',
+  RESOURCE_ENRICHMENT: '학습 자료 수집',
+  RESOURCE_STEP_PROGRESS: '스텝별 리소스 수집',
+  FINALIZING: '최종화',
+};
 
 export interface AgentRun {
   agentRunId: number;
@@ -80,6 +113,13 @@ export interface ProgressEvent extends SSEBaseEvent {
   type: 'PROGRESS';
 }
 
+// v3.1 신규: 세분화된 진행률 이벤트
+export interface AgentProgressEvent extends SSEBaseEvent {
+  type: 'AGENT_PROGRESS';
+  actionName: ProgressStage;  // ProgressStage enum 값
+  message: string;  // 상세 메시지 (예: "커리큘럼 생성 중 (모드: standard) - 50%")
+}
+
 export type ActionStatus = 'PLANNED' | 'EXECUTING' | 'COMPLETED' | 'FAILED';
 
 export interface ActionExecutionDetail {
@@ -115,6 +155,7 @@ export type SSEEvent =
   | PlanningStartedEvent
   | ActionExecutedEvent
   | ProgressEvent
+  | AgentProgressEvent
   | PathUpdatedEvent
   | AgentCompletedEvent
   | ErrorEvent;
@@ -125,6 +166,7 @@ export interface SSECallbacks {
   onPlanningStarted?: (data: PlanningStartedEvent) => void;
   onActionExecuted?: (data: ActionExecutedEvent) => void;
   onProgress?: (data: ProgressEvent) => void;
+  onAgentProgress?: (data: AgentProgressEvent) => void;  // v3.1 신규
   onPathUpdated?: (data: PathUpdatedEvent) => void;
   onAgentCompleted?: (data: AgentCompletedEvent) => void;
   onError?: (data: ErrorEvent) => void;
@@ -303,6 +345,14 @@ export function streamLearningPlanGeneration(
     }
   });
 
+  // v3.1 신규: agent_progress 이벤트 (세분화된 진행률)
+  eventSource.addEventListener('agent_progress', (event) => {
+    if (callbacks.onAgentProgress) {
+      const data = JSON.parse(event.data) as AgentProgressEvent;
+      callbacks.onAgentProgress(data);
+    }
+  });
+
   eventSource.addEventListener('path_updated', (event) => {
     if (callbacks.onPathUpdated) {
       const data = JSON.parse(event.data) as PathUpdatedEvent;
@@ -323,7 +373,8 @@ export function streamLearningPlanGeneration(
   });
 
   eventSource.addEventListener('error', (event) => {
-    const data = JSON.parse(event.data) as ErrorEvent;
+    const messageEvent = event as MessageEvent;
+    const data = JSON.parse(messageEvent.data) as ErrorEvent;
     if (callbacks.onError) {
       callbacks.onError(data);
     }

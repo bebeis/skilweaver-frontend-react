@@ -1,6 +1,18 @@
 # SkillWeaver API 명세서
 
 
+### v3.1 (2025-12-09) - Agent Progress Streaming 추가
+
+주요 변경사항:
+1. **Agent Progress SSE 이벤트 추가**
+   - 새로운 `agent_progress` SSE 이벤트 타입 추가
+   - Agent 내부 실행 단계별 진행률 실시간 스트리밍
+   - `ProgressStage` enum 추가: 7단계 진행률 구분
+
+2. **프론트엔드 UX 개선**
+   - 기존: `action_executed` 이벤트만 수신 → 중간 진행상황 불투명
+   - 변경: `agent_progress` 이벤트로 세분화된 진행률 수신 가능
+
 ### v3.0 (2025-12-08) - Graph API 추가
 
 주요 변경사항:
@@ -34,7 +46,7 @@
 
 
 > [!IMPORTANT]
-> 이 문서는 v3.0 API 명세서입니다. v2.0의 모든 API를 포함하며, Graph API가 추가되었습니다.
+> 이 문서는 v3.1 API 명세서입니다. v3.0의 모든 API를 포함하며, Agent Progress Streaming이 추가되었습니다.
 > Graph API 상세 스펙은 `GRAPH_API.md` 파일을 참조하세요.
 
 
@@ -1429,6 +1441,16 @@ PATCH /api/v1/technologies/{technologyId}/edits/{editId}
 - `AGENT_COMPLETED` - 에이전트 실행 완료
 - `ERROR` - 오류 발생
 
+### ProgressStage (v3.1 신규)
+Agent 내부 진행 단계를 나타내는 enum:
+- `ANALYSIS_STARTED` - 기술 분석 시작 (10%)
+- `DEEP_ANALYSIS` - 심층 분석 진행 (20%)
+- `GAP_ANALYSIS` - 역량 Gap 분석 (30%)
+- `CURRICULUM_GENERATION` - 커리큘럼 생성 (50%)
+- `RESOURCE_ENRICHMENT` - 학습 자료 수집 (70%)
+- `RESOURCE_STEP_PROGRESS` - 스텝별 리소스 수집 진행 (70-95%)
+- `FINALIZING` - 최종화 (95%)
+
 ---
 
 ## 7. AI 에이전트 API
@@ -1492,7 +1514,22 @@ POST /api/v1/agents/learning-plan/stream
 }
 ```
 
-5. **path_updated** - 실행된 액션 경로(배치) 업데이트
+5. **agent_progress** (v3.1 신규) - 세분화된 진행률 이벤트
+```json
+{
+  "type": "PROGRESS",
+  "agentRunId": 1,
+  "actionName": "CURRICULUM_GENERATION",
+  "message": "커리큘럼 생성 중 (모드: standard) - 50%",
+  "timestamp": 1700000004000
+}
+```
+
+**agent_progress 필드 설명:**
+- `actionName`: ProgressStage enum 값 (ANALYSIS_STARTED, DEEP_ANALYSIS, GAP_ANALYSIS, CURRICULUM_GENERATION, RESOURCE_ENRICHMENT, RESOURCE_STEP_PROGRESS, FINALIZING)
+- `message`: 현재 단계 설명 + 상세 정보 + 진행률 %
+
+6. **path_updated** - 실행된 액션 경로(배치) 업데이트
 ```json
 {
   "type": "PATH_UPDATED",
@@ -1508,7 +1545,7 @@ POST /api/v1/agents/learning-plan/stream
 }
 ```
 
-6. **agent_completed** - 에이전트 실행 완료
+7. **agent_completed** - 에이전트 실행 완료
 ```json
 {
   "type": "AGENT_COMPLETED",
@@ -1524,7 +1561,7 @@ POST /api/v1/agents/learning-plan/stream
 }
 ```
 
-7. **error** - 오류 발생
+8. **error** - 오류 발생
 ```json
 {
   "type": "ERROR",
@@ -1547,6 +1584,15 @@ eventSource.addEventListener('agent_started', (e) => {
 eventSource.addEventListener('action_executed', (e) => {
   const data = JSON.parse(e.data);
   console.log(`${data.actionName} 완료`);
+});
+
+// v3.1 신규: 세분화된 진행률 이벤트
+eventSource.addEventListener('agent_progress', (e) => {
+  const data = JSON.parse(e.data);
+  console.log(`진행 단계: ${data.actionName}`);
+  console.log(`메시지: ${data.message}`);
+  // UI 업데이트 예시: 프로그레스 바 업데이트
+  // updateProgressBar(data.actionName, data.message);
 });
 
 eventSource.addEventListener('agent_completed', (e) => {
