@@ -47,7 +47,7 @@
 [data-theme="ocean"] {
   --background: 230 25% 5%;
   --foreground: 210 20% 98%;
-  --card: 230 25% 8%;
+  --card: 230 40% 12%;
   --primary: 190 90% 60%;
   --primary-foreground: 230 25% 5%;
   --secondary: 230 25% 12%;
@@ -62,7 +62,7 @@
 [data-theme="cyberpunk"] {
   --background: 260 30% 5%; /* Dark Violet Black */
   --foreground: 280 20% 98%;
-  --card: 260 30% 8%;
+  --card: 260 45% 12%;
   --card-foreground: 280 20% 98%;
   --popover: 260 30% 8%;
   --popover-foreground: 280 20% 98%;
@@ -85,7 +85,7 @@
 [data-theme="forest"] {
   --background: 150 30% 4%; /* Dark Green Black */
   --foreground: 140 20% 98%;
-  --card: 150 30% 7%;
+  --card: 150 35% 10%;
   --card-foreground: 140 20% 98%;
   --popover: 150 30% 7%;
   --popover-foreground: 140 20% 98%;
@@ -108,7 +108,7 @@
 [data-theme="magma"] {
   --background: 0 0% 5%; /* Jet Black */
   --foreground: 0 0% 98%;
-  --card: 0 0% 8%;
+  --card: 15 30% 10%;
   --card-foreground: 0 0% 98%;
   --popover: 0 0% 8%;
   --popover-foreground: 0 0% 98%;
@@ -254,7 +254,7 @@
   /* === 기존 스타일 (간소화 & Liquid Style 업데이트) === */
   
   .glass-card {
-    @apply bg-card/30 backdrop-blur-md border border-white/5 rounded-xl shadow-lg transition-all duration-300;
+    @apply bg-card/40 backdrop-blur-md border border-white/5 rounded-xl shadow-lg transition-all duration-300;
     background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.0) 100%);
     box-shadow: 
       0 4px 24px -1px rgba(0, 0, 0, 0.2),
