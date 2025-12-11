@@ -600,8 +600,8 @@ export function Skills() {
                 {skills.length}개의 기술
               </p>
             </div>
-            <Button size="sm" className="h-8 gap-1.5" onClick={() => handleOpenDialog('new')}>
-              <Plus className="size-3.5" />
+            <Button size="sm" className="h-8 gap-1.5 btn-liquid-glass-primary shadow-glow-primary" onClick={() => handleOpenDialog('new')}>
+              <Plus className="size-3.5 fill-current" />
               기술 추가
             </Button>
           </div>
@@ -704,7 +704,7 @@ export function Skills() {
                     {skills.length === 0 ? '등록된 기술이 없습니다' : '검색 결과가 없습니다'}
                   </p>
                   {skills.length === 0 && (
-                    <Button size="sm" variant="outline" className="h-8" onClick={() => handleOpenDialog('new')}>
+                    <Button size="sm" variant="outline" className="h-8 btn-liquid-glass" onClick={() => handleOpenDialog('new')}>
                       <Plus className="size-3.5 mr-1" />
                       첫 기술 추가
                     </Button>

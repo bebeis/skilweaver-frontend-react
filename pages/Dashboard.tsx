@@ -200,8 +200,8 @@ export function Dashboard() {
             </p>
           </div>
           <Link to="/learning-plans/new">
-            <Button size="sm" className="h-8 gap-1.5">
-              <Sparkles className="size-3.5" />
+            <Button size="sm" className="h-8 gap-1.5 btn-liquid-glass-primary shadow-glow-primary">
+              <Sparkles className="size-3.5 fill-current" />
               새 플랜 생성
             </Button>
           </Link>
@@ -331,7 +331,7 @@ export function Dashboard() {
                       </div>
                     </div>
                     <Link to="/learning-plans/new">
-                      <Button size="sm" className="h-8">
+                      <Button size="sm" className="h-8 btn-liquid-glass">
                         <Plus className="size-3.5 mr-1" />
                         생성
                       </Button>

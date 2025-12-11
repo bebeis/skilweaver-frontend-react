@@ -201,8 +201,8 @@ export function Goals() {
                 {goals.length}개의 목표
               </p>
             </div>
-          <Button size="sm" className="h-8 gap-1.5" onClick={handleOpenDialog}>
-              <Plus className="size-3.5" />
+          <Button size="sm" className="h-8 gap-1.5 btn-liquid-glass-primary shadow-glow-primary" onClick={handleOpenDialog}>
+              <Plus className="size-3.5 fill-current" />
               목표 추가
             </Button>
           </div>
@@ -286,7 +286,7 @@ export function Goals() {
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Target className="size-8 mb-2 opacity-50" />
                   <p className="text-sm mb-3">목표가 없습니다</p>
-                <Button size="sm" variant="outline" className="h-8" onClick={handleOpenDialog}>
+                <Button size="sm" variant="outline" className="h-8 btn-liquid-glass" onClick={handleOpenDialog}>
                     <Plus className="size-3.5 mr-1" />
                     첫 목표 추가
                   </Button>

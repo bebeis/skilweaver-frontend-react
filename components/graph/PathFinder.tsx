@@ -323,9 +323,9 @@ export function PathFinder() {
             <Button
               type="submit"
               disabled={loading || !fromTech.trim() || !toTech.trim()}
-              className="w-full md:w-auto"
+              className="w-full md:w-auto btn-liquid-glass-primary shadow-glow-primary"
             >
-              {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Route className="size-4 mr-2" />}
+              {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Route className="size-4 mr-2 fill-current" />}
               경로 찾기
             </Button>
           </form>

@@ -132,8 +132,8 @@ export function LearningPlans() {
             </p>
           </div>
           <Link to="/learning-plans/new">
-            <Button size="sm" className="h-8 gap-1.5">
-              <Sparkles className="size-3.5" />
+            <Button size="sm" className="h-8 gap-1.5 btn-liquid-glass-primary shadow-glow-primary">
+              <Sparkles className="size-3.5 fill-current" />
               새 플랜 생성
             </Button>
           </Link>
@@ -206,7 +206,7 @@ export function LearningPlans() {
                 <GraduationCap className="size-8 mb-2 opacity-50" />
                 <p className="text-sm mb-3">학습 플랜이 없습니다</p>
                 <Link to="/learning-plans/new">
-                  <Button size="sm" variant="outline" className="h-8">
+                  <Button size="sm" variant="outline" className="h-8 btn-liquid-glass">
                     <Plus className="size-3.5 mr-1" />
                     첫 플랜 생성
                   </Button>

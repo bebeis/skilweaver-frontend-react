@@ -520,6 +520,7 @@
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    color: hsl(var(--foreground)) !important;
     
     /* 엣지: 날카로운 유리 경계선 */
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -563,6 +564,7 @@
       inset 0 0 30px rgba(255, 255, 255, 0.1);
     transform: translateY(-2px);
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    color: hsl(var(--foreground)) !important;
   }
 
   .btn-liquid-glass:hover::before {
@@ -583,6 +585,7 @@
     @apply btn-liquid-glass;
     background: hsla(var(--primary) / 0.1);
     border-color: hsla(var(--primary) / 0.2);
+    color: hsl(var(--primary)) !important;
     box-shadow: 
       0 4px 24px -1px hsla(var(--primary) / 0.15),
       inset 0 0 0 1px hsla(var(--primary) / 0.1),
@@ -592,6 +595,7 @@
   .btn-liquid-glass-primary:hover {
     background: hsla(var(--primary) / 0.2);
     border-color: hsla(var(--primary) / 0.4);
+    color: hsl(var(--primary)) !important;
     box-shadow: 
       0 8px 32px -4px hsla(var(--primary) / 0.3),
       inset 0 0 0 1px hsla(var(--primary) / 0.2),

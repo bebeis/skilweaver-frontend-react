@@ -524,8 +524,8 @@ export function Technologies() {
                       갭 분석
                     </Button>
                     <Link to={`/learning-plans/new?target=${selectedTech.name}`}>
-                      <Button size="sm" className="w-full h-8 text-xs">
-                        <Sparkles className="size-3 mr-1.5" />
+                      <Button size="sm" className="w-full h-8 text-xs btn-liquid-glass-primary shadow-glow-primary">
+                        <Sparkles className="size-3 mr-1.5 fill-current" />
                         학습 플랜 생성
                       </Button>
                     </Link>

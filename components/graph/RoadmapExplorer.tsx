@@ -217,8 +217,8 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
               placeholder="예: spring-boot, react, kubernetes..."
               className="flex-1"
             />
-            <Button type="submit" disabled={loading || !searchQuery.trim()}>
-              {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+            <Button type="submit" disabled={loading || !searchQuery.trim()} className="btn-liquid-glass-primary shadow-glow-primary">
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4 fill-current" />}
               <span className="ml-2">검색</span>
             </Button>
           </form>
@@ -265,8 +265,8 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
               <ArrowLeft className="size-4 mr-2" />
               이전
             </Button>
-            <Button onClick={handleCreatePlan}>
-              <Sparkles className="size-4 mr-2" />
+            <Button onClick={handleCreatePlan} className="btn-liquid-glass-primary shadow-glow-primary">
+              <Sparkles className="size-4 mr-2 fill-current" />
               이 기술로 학습 플랜 생성
             </Button>
           </div>

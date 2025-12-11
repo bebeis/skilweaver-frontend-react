@@ -200,8 +200,8 @@ export function TechRecommendations() {
               placeholder="예: react, spring-boot, kubernetes..."
               className="flex-1"
             />
-            <Button type="submit" disabled={loading || !searchQuery.trim()}>
-              {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+            <Button type="submit" disabled={loading || !searchQuery.trim()} className="btn-liquid-glass-primary shadow-glow-primary">
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4 fill-current" />}
               <span className="ml-2">검색</span>
             </Button>
           </form>

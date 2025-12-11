@@ -376,8 +376,8 @@ export function GapAnalysis() {
                 />
               </div>
 
-              <Button type="submit" disabled={loading || !targetTech.trim()} className="w-full md:w-auto">
-                {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <GitCompare className="size-4 mr-2" />}
+              <Button type="submit" disabled={loading || !targetTech.trim()} className="w-full md:w-auto btn-liquid-glass-primary shadow-glow-primary">
+                {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <GitCompare className="size-4 mr-2 fill-current" />}
                 분석하기
               </Button>
             </form>
@@ -571,8 +571,8 @@ export function GapAnalysis() {
                         {sortedMissing[0].displayName} 먼저 분석
                       </Button>
                     )}
-                    <Button onClick={handleCreatePlan} disabled={!result.ready}>
-                      <Sparkles className="size-4 mr-2" />
+                    <Button onClick={handleCreatePlan} disabled={!result.ready} className="btn-liquid-glass-primary shadow-glow-primary">
+                      <Sparkles className="size-4 mr-2 fill-current" />
                       학습 플랜 생성
                     </Button>
                   </div>
