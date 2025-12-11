@@ -178,7 +178,7 @@ export function Layout() {
   // const handleMouseLeave = ... (removed)
 
   return (
-    <div className="min-h-screen relative selection:bg-primary/20 overflow-hidden">
+    <div className="min-h-screen relative selection:bg-primary/20 overflow-x-hidden">
       {/* Dynamic Background System */}
       {/* 1. Base Background Color */}
       <div className="fixed inset-0 -z-50 bg-background transition-colors duration-700" />
