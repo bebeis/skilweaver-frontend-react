@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
 import { Input } from '../../components/ui/input';
@@ -10,23 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ScrollArea } from '../../components/ui/scroll-area';
 import { 
   Plus, 
-  Edit, 
-  Trash2, 
   Target, 
-  Calendar, 
   Loader2, 
   ChevronRight,
-  MoreHorizontal,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  PlayCircle
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { goalsApi } from '../../src/lib/api';
 import { useAuth } from '../../hooks/useAuth';
@@ -58,19 +50,19 @@ const priorityLabels: Record<string, string> = {
 const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
   PLANNING: { label: '계획', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20', icon: Clock },
   ACTIVE: { label: '진행중', class: 'status-active', icon: Target },
+  IN_PROGRESS: { label: '학습중', class: 'bg-primary/10 text-primary border-primary/20', icon: PlayCircle },
   COMPLETED: { label: '완료', class: 'status-completed', icon: CheckCircle },
   ABANDONED: { label: '중단', class: 'status-error', icon: XCircle }
 };
 
 export function Goals() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
-  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -129,23 +121,12 @@ export function Goals() {
   // Stats
   const stats = {
     total: goals.length,
-    active: goals.filter(g => g.status === 'ACTIVE').length,
+    active: goals.filter(g => g.status === 'ACTIVE' || g.status === 'IN_PROGRESS').length,
     completed: goals.filter(g => g.status === 'COMPLETED').length,
     high: goals.filter(g => g.priority === 'HIGH').length
   };
 
-  const handleOpenDialog = (goal?: Goal) => {
-    if (goal) {
-      setEditingGoal(goal);
-      setFormData({
-        title: goal.title,
-        description: goal.description,
-        priority: goal.priority,
-        status: goal.status,
-        dueDate: goal.dueDate
-      });
-    } else {
-      setEditingGoal(null);
+  const handleOpenDialog = () => {
       setFormData({
         title: '',
         description: '',
@@ -153,7 +134,6 @@ export function Goals() {
         status: 'ACTIVE',
         dueDate: ''
       });
-    }
     setDialogOpen(true);
   };
 
@@ -169,35 +149,6 @@ export function Goals() {
     }
 
     try {
-      if (editingGoal) {
-        const response = await goalsApi.updateGoal(
-          Number(user.id),
-          Number(editingGoal.id),
-          {
-            title: formData.title,
-            description: formData.description,
-            dueDate: formData.dueDate,
-            priority: formData.priority as any,
-            status: formData.status as any,
-          }
-        );
-        
-        if (response.success) {
-          const updatedGoal = {
-            ...editingGoal,
-            title: formData.title,
-            description: formData.description,
-            priority: formData.priority,
-            status: formData.status,
-            dueDate: formData.dueDate,
-          };
-          setGoals(goals.map(g => g.id === editingGoal.id ? updatedGoal : g));
-          if (selectedGoal?.id === editingGoal.id) {
-            setSelectedGoal(updatedGoal);
-          }
-          toast.success('목표가 수정되었습니다.');
-        }
-      } else {
         const response = await goalsApi.createGoal(Number(user.id), {
           title: formData.title,
           description: formData.description,
@@ -217,32 +168,12 @@ export function Goals() {
           };
           setGoals([newGoal, ...goals]);
           toast.success('새 목표가 추가되었습니다.');
-        }
+        navigate(`/goals/${newGoal.id}`);
       }
 
       setDialogOpen(false);
     } catch (error: any) {
       toast.error(error.message || '작업을 처리하는데 실패했습니다.');
-    }
-  };
-
-  const handleDelete = async (goalId: string) => {
-    if (!confirm('이 목표를 삭제하시겠습니까?')) return;
-    
-    if (!user) {
-      toast.error('로그인이 필요합니다.');
-      return;
-    }
-
-    try {
-      await goalsApi.deleteGoal(Number(user.id), Number(goalId));
-      setGoals(goals.filter(g => g.id !== goalId));
-      if (selectedGoal?.id === goalId) {
-        setSelectedGoal(null);
-      }
-      toast.success('목표가 삭제되었습니다.');
-    } catch (error: any) {
-      toast.error(error.message || '삭제에 실패했습니다.');
     }
   };
 
@@ -261,9 +192,7 @@ export function Goals() {
 
   return (
     <>
-      <div className="flex h-[calc(100vh-8rem)] gap-4">
-        {/* Main List Panel */}
-        <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex flex-col h-[calc(100vh-8rem)]">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -272,11 +201,31 @@ export function Goals() {
                 {goals.length}개의 목표
               </p>
             </div>
-            <Button size="sm" className="h-8 gap-1.5" onClick={() => handleOpenDialog()}>
+          <Button size="sm" className="h-8 gap-1.5" onClick={handleOpenDialog}>
               <Plus className="size-3.5" />
               목표 추가
             </Button>
           </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          <div className="card-compact text-center">
+            <p className="text-lg font-bold text-foreground">{stats.total}</p>
+            <p className="text-[10px] text-muted-foreground">전체</p>
+          </div>
+          <div className="card-compact text-center">
+            <p className="text-lg font-bold text-green-400">{stats.active}</p>
+            <p className="text-[10px] text-muted-foreground">진행중</p>
+          </div>
+          <div className="card-compact text-center">
+            <p className="text-lg font-bold text-primary">{stats.completed}</p>
+            <p className="text-[10px] text-muted-foreground">완료</p>
+          </div>
+          <div className="card-compact text-center">
+            <p className="text-lg font-bold text-red-400">{stats.high}</p>
+            <p className="text-[10px] text-muted-foreground">높은 우선순위</p>
+          </div>
+        </div>
 
           {/* Filters */}
           <Card className="glass-card mb-4">
@@ -301,6 +250,7 @@ export function Goals() {
                   <SelectContent>
                     <SelectItem value="ALL">전체</SelectItem>
                     <SelectItem value="ACTIVE">진행중</SelectItem>
+                  <SelectItem value="IN_PROGRESS">학습중</SelectItem>
                     <SelectItem value="COMPLETED">완료</SelectItem>
                     <SelectItem value="ABANDONED">중단</SelectItem>
                   </SelectContent>
@@ -324,39 +274,19 @@ export function Goals() {
             </CardContent>
           </Card>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            <div className="card-compact text-center">
-              <p className="text-lg font-bold text-foreground">{stats.total}</p>
-              <p className="text-[10px] text-muted-foreground">전체</p>
-            </div>
-            <div className="card-compact text-center">
-              <p className="text-lg font-bold text-green-400">{stats.active}</p>
-              <p className="text-[10px] text-muted-foreground">진행중</p>
-            </div>
-            <div className="card-compact text-center">
-              <p className="text-lg font-bold text-primary">{stats.completed}</p>
-              <p className="text-[10px] text-muted-foreground">완료</p>
-            </div>
-            <div className="card-compact text-center">
-              <p className="text-lg font-bold text-red-400">{stats.high}</p>
-              <p className="text-[10px] text-muted-foreground">높은 우선순위</p>
-            </div>
-          </div>
-
           {/* Goals List */}
           <ScrollArea className="flex-1 -mx-1 px-1">
-            <div 
-              ref={listRef}
-              onMouseLeave={handleMouseLeave}
-              className="space-y-1 relative"
-            >
-              <LiquidHighlight style={highlightStyle} />
+          <div 
+            ref={listRef}
+            onMouseLeave={handleMouseLeave}
+            className="space-y-1 relative"
+          >
+            <LiquidHighlight style={highlightStyle} />
               {filteredGoals.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Target className="size-8 mb-2 opacity-50" />
                   <p className="text-sm mb-3">목표가 없습니다</p>
-                  <Button size="sm" variant="outline" className="h-8" onClick={() => handleOpenDialog()}>
+                <Button size="sm" variant="outline" className="h-8" onClick={handleOpenDialog}>
                     <Plus className="size-3.5 mr-1" />
                     첫 목표 추가
                   </Button>
@@ -369,141 +299,42 @@ export function Goals() {
                   return (
                     <button
                       key={goal.id}
-                      onClick={() => setSelectedGoal(goal)}
-                      onMouseEnter={handleMouseEnter}
-                      className={cn(
-                        "w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors relative z-10",
-                        selectedGoal?.id === goal.id
-                          ? "bg-primary/10 border border-primary/20"
-                          : "hover:text-foreground"
-                      )}
+                    onClick={() => navigate(`/goals/${goal.id}`)}
+                    onMouseEnter={handleMouseEnter}
+                    className="w-full flex items-center gap-3 p-3 rounded-md text-left transition-colors relative z-10 hover:text-foreground group"
                     >
-                      <div className="p-1.5 rounded bg-success/10 shrink-0">
-                        <Target className="size-3.5 text-success" />
+                    <div className="p-2 rounded bg-secondary/30 shrink-0 group-hover:bg-primary/10 transition-colors">
+                      <StatusIcon className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-medium text-sm text-foreground truncate">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
                             {goal.title}
                           </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Badge className={cn("badge-compact border", priorityColors[goal.priority])}>
+                        <Badge className={cn("badge-compact border h-5 px-1.5", priorityColors[goal.priority])}>
                             {priorityLabels[goal.priority]}
                           </Badge>
-                          <Badge className={cn("badge-compact border", statusInfo.class)}>
-                            <StatusIcon className="size-2.5 mr-0.5" />
-                            {statusInfo.label}
-                          </Badge>
-                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground shrink-0">
-                        ~{goal.dueDate}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{statusInfo.label}</span>
+                        <span>•</span>
+                        <span>{goal.dueDate} 까지</span>
                       </div>
-                      <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                    </div>
+                    <ChevronRight className="size-4 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                     </button>
                   );
                 })
               )}
             </div>
           </ScrollArea>
-        </div>
-
-        {/* Detail Panel */}
-        <div className="hidden lg:block w-80 shrink-0">
-          {selectedGoal ? (
-            <Card className="glass-card h-full flex flex-col">
-              <CardHeader className="p-4 pb-3 border-b border-border">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg truncate">{selectedGoal.title}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {selectedGoal.createdAt} 생성
-                    </p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleOpenDialog(selectedGoal)}>
-                        <Edit className="size-3.5 mr-2" />
-                        수정
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => handleDelete(selectedGoal.id)}
-                      >
-                        <Trash2 className="size-3.5 mr-2" />
-                        삭제
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardHeader>
-              <ScrollArea className="flex-1">
-                <CardContent className="p-4 space-y-4">
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-1.5">
-                    <Badge className={cn("border", priorityColors[selectedGoal.priority])}>
-                      {priorityLabels[selectedGoal.priority]} 우선순위
-                    </Badge>
-                    <Badge className={cn("border", statusConfig[selectedGoal.status]?.class)}>
-                      {statusConfig[selectedGoal.status]?.label}
-                    </Badge>
-                  </div>
-
-                  {/* Due Date */}
-                  <div className="p-3 rounded-md bg-secondary/50">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="size-4 text-primary" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">목표일</p>
-                        <p className="text-sm font-medium text-foreground">{selectedGoal.dueDate}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  {selectedGoal.description && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">설명</p>
-                      <p className="text-sm text-foreground">{selectedGoal.description}</p>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="space-y-2 pt-2">
-                    <Button 
-                      size="sm" 
-                      className="w-full h-8 text-xs"
-                      onClick={() => handleOpenDialog(selectedGoal)}
-                    >
-                      <Edit className="size-3 mr-1.5" />
-                      수정하기
-                    </Button>
-                  </div>
-                </CardContent>
-              </ScrollArea>
-            </Card>
-          ) : (
-            <Card className="glass-card h-full flex items-center justify-center">
-              <div className="text-center text-muted-foreground p-4">
-                <Target className="size-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">목표를 선택하세요</p>
-              </div>
-            </Card>
-          )}
-        </div>
       </div>
 
       {/* Goal Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingGoal ? '목표 수정' : '새 목표 추가'}</DialogTitle>
+            <DialogTitle>새 목표 추가</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -557,6 +388,7 @@ export function Goals() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ACTIVE">진행중</SelectItem>
+                    <SelectItem value="IN_PROGRESS">학습중</SelectItem>
                     <SelectItem value="COMPLETED">완료</SelectItem>
                     <SelectItem value="ABANDONED">중단</SelectItem>
                   </SelectContent>
@@ -580,7 +412,7 @@ export function Goals() {
               취소
             </Button>
             <Button size="sm" onClick={handleSubmit}>
-              {editingGoal ? '수정' : '추가'}
+              추가
             </Button>
           </DialogFooter>
         </DialogContent>

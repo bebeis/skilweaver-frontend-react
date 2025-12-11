@@ -47,6 +47,7 @@ import { learningPlansApi } from '../../src/lib/api/learning-plans';
 import { FeedbackModal, FeedbackSummaryCard, FeedbackList } from '../../components/feedback';
 import type { LearningPlan } from '../../src/lib/api/types';
 import { cn } from '../../components/ui/utils';
+import { LiquidHighlight, useFluidHighlight } from '../../components/ui/fluid-highlight';
 
 // Focus Timer Component
 function FocusTimer({ open, onOpenChange, currentTask }: { open: boolean; onOpenChange: (open: boolean) => void; currentTask?: string }) {
@@ -128,6 +129,49 @@ function FocusTimer({ open, onOpenChange, currentTask }: { open: boolean; onOpen
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Resource List Component with independent fluid highlight state
+function ResourceList({ resources }: { resources: any[] }) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div 
+      className="grid sm:grid-cols-2 gap-3 relative"
+      ref={containerRef}
+      onMouseLeave={handleMouseLeave}
+    >
+      <LiquidHighlight style={highlightStyle} />
+      {resources.map((res: any, i: number) => (
+        <a 
+          key={i} 
+          href={res.url} 
+          target="_blank" 
+          rel="noreferrer"
+          onMouseEnter={handleMouseEnter}
+          className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-border/50 transition-all text-sm group relative z-10"
+        >
+          <div className={cn(
+            "size-8 rounded-lg flex items-center justify-center shrink-0",
+            res.type === 'VIDEO' ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
+          )}>
+            {res.type === 'VIDEO' ? <PlayCircle className="size-4" /> : <BookOpen className="size-4" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-foreground truncate group-hover:text-primary transition-colors">{res.title}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              외부 링크 <ExternalLink className="size-2.5" />
+            </p>
+          </div>
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -239,161 +283,253 @@ export function LearningPlanDetail() {
   const currentStep = plan.steps?.find(s => s.stepId === currentStepId) || plan.steps?.[0];
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-6">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header - Compact */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground" onClick={() => navigate('/learning-plans')}>
-              <ArrowLeft className="size-4 mr-1" />
-              목록
-            </Button>
-            <div className="h-4 w-px bg-border/50 mx-1" />
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded bg-primary/10">
-                <GraduationCap className="size-4 text-primary" />
-              </div>
-              <h1 className="text-lg font-bold text-foreground">{plan.targetTechnology} 마스터</h1>
-              <Badge variant={plan.status === 'ACTIVE' ? 'default' : 'secondary'} className="badge-compact">
-                {plan.status}
-              </Badge>
+    <div className="h-[calc(100vh-8rem)] flex flex-col gap-6">
+      {/* Header - Compact */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground shrink-0" onClick={() => navigate('/learning-plans')}>
+            <ArrowLeft className="size-4 mr-1" />
+            목록
+          </Button>
+          <div className="h-4 w-px bg-border/50 mx-1 shrink-0" />
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="p-1.5 rounded bg-primary/10 shrink-0">
+              <GraduationCap className="size-4 text-primary" />
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button 
-              size="sm" 
-              className="h-8 shadow-glow-primary gap-1.5"
-              onClick={() => setFocusTimerOpen(true)}
-            >
-              <Zap className="size-3.5 fill-current" />
-              집중 모드
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-8">
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setFeedbackModalOpen(true)}>
-                  <MessageSquare className="size-4 mr-2" />
-                  피드백
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate(`/learning-plans/${planId}/edit`)}>
-                  <Edit className="size-4 mr-2" />
-                  수정
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <h1 className="text-lg font-bold text-foreground truncate min-w-0 flex-1" title={`${plan.targetTechnology} 마스터`}>
+              {plan.targetTechnology} 마스터
+            </h1>
+            <Badge variant={plan.status === 'ACTIVE' ? 'default' : 'secondary'} className="badge-compact shrink-0">
+              {plan.status}
+            </Badge>
           </div>
         </div>
 
-        {/* Progress Bar Header */}
-        <Card className="glass-card mb-4 p-4 flex items-center justify-between gap-6">
-          <div className="flex-1 space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="font-medium text-foreground">진행률</span>
-              <span className="font-bold text-primary">{plan.progress}%</span>
-            </div>
-            <Progress value={plan.progress} className="h-2" />
-          </div>
-          <div className="flex gap-4 text-xs text-muted-foreground shrink-0 border-l border-border/50 pl-4">
-            <div className="text-center">
-              <p className="font-bold text-foreground">{plan.totalWeeks}주</p>
-              <p>총 기간</p>
-            </div>
-            <div className="text-center">
-              <p className="font-bold text-foreground">{Math.round(plan.totalHours * (1 - (plan.progress || 0) / 100))}h</p>
-              <p>남은 시간</p>
-            </div>
-            <div className="text-center">
-              <p className="font-bold text-foreground">{plan.steps?.filter(s => s.completed).length}/{plan.steps?.length}</p>
-              <p>완료 단계</p>
-            </div>
-          </div>
-        </Card>
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          <Button 
+            size="sm" 
+            className="h-8 shadow-glow-primary gap-1.5 btn-liquid-glass-primary"
+            onClick={async () => {
+              if (!user || !planId) return;
+              try {
+                 // Simple start with defaults for now, or could open a dialog
+                 const res = await learningPlansApi.startPlan(user.memberId || Number(user.id), Number(planId), {
+                   priority: 'HIGH'
+                 });
+                 if (res.success) {
+                   toast.success('학습이 시작되었습니다! 목표 페이지로 이동합니다.');
+                   navigate(`/goals/${res.data.learningGoalId}`);
+                 }
+              } catch (e: any) {
+                // 이미 시작된 경우 처리
+                if (e.message?.includes('이미 시작된') || e.code === 'ALREADY_STARTED') {
+                  toast.info('이미 진행 중인 학습입니다. 목표 페이지로 이동합니다.');
+                  // 목표 ID를 알 수 없으므로 목록으로 이동하거나, API에서 Goal ID를 반환해주면 베스트
+                  // 현재는 일단 목표 목록으로 이동
+                  navigate('/goals');
+                } else {
+                  toast.error(e.message || '학습 시작 실패');
+                }
+              }
+            }}
+          >
+            <Target className="size-3.5 fill-current" />
+            <span className="hidden sm:inline">학습 시작하기</span>
+            <span className="sm:hidden">시작</span>
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="h-8 gap-1.5"
+            onClick={() => setFocusTimerOpen(true)}
+          >
+            <Zap className="size-3.5 fill-current" />
+            <span className="hidden sm:inline">집중 모드</span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setFeedbackModalOpen(true)}>
+                <MessageSquare className="size-4 mr-2" />
+                피드백
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate(`/learning-plans/${planId}/edit`)}>
+                <Edit className="size-4 mr-2" />
+                수정
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
-        {/* Current Focus Highlight */}
-        {currentStep && !currentStep.completed && (
-          <Card className="glass-card mb-4 border-l-4 border-l-primary animate-slide-up">
-            <CardContent className="p-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold text-primary uppercase mb-1">Current Focus</p>
-                <h3 className="font-bold text-lg text-foreground">{currentStep.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-1">{currentStep.description}</p>
+      <ScrollArea className="flex-1 -mx-4 px-4">
+        <div className="space-y-6 pb-10">
+          {/* Top Info Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left: Progress & Stats */}
+            <Card className="glass-card lg:col-span-2 p-5 flex flex-col justify-between gap-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                <Target className="size-32" />
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button size="sm" variant="outline" onClick={() => setFocusTimerOpen(true)}>
-                  <Play className="size-3.5 mr-1.5" /> 시작
-                </Button>
-                <Button 
-                  size="sm" 
-                  onClick={() => handleCompleteStep(currentStep.order)} 
-                  disabled={completingStep === currentStep.order}
-                >
-                  {completingStep === currentStep.order ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <>
-                      <CheckCircle className="size-3.5 mr-1.5" />
-                      완료
-                    </>
-                  )}
-                </Button>
+              
+              <div className="space-y-4 relative z-10">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">전체 진행률</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold tracking-tighter text-primary">{plan.progress}%</span>
+                      <span className="text-sm text-muted-foreground">완료</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex gap-6 text-sm">
+                      <div className="text-center">
+                        <p className="font-bold text-foreground text-lg">{plan.totalWeeks}주</p>
+                        <p className="text-xs text-muted-foreground">총 기간</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-foreground text-lg">{Math.round(plan.totalHours * (1 - (plan.progress || 0) / 100))}h</p>
+                        <p className="text-xs text-muted-foreground">남은 시간</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-foreground text-lg">{plan.steps?.filter(s => s.completed).length}/{plan.steps?.length}</p>
+                        <p className="text-xs text-muted-foreground">완료 단계</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <Progress value={plan.progress} className="h-3 w-full" />
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </Card>
 
-        {/* Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="w-full justify-start h-10 p-1 bg-secondary/30 rounded-lg mb-4 shrink-0">
-            <TabsTrigger value="curriculum" className="h-8 px-4 text-xs">커리큘럼</TabsTrigger>
-            <TabsTrigger value="schedule" className="h-8 px-4 text-xs">일정</TabsTrigger>
-            <TabsTrigger value="analysis" className="h-8 px-4 text-xs">분석</TabsTrigger>
-          </TabsList>
+            {/* Right: AI Tips & Stats Summary */}
+            <Card className="glass-card p-5 flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-3 text-primary">
+                <Lightbulb className="size-4 fill-current" />
+                <span className="font-semibold text-sm">AI 학습 조언</span>
+              </div>
+              <ul className="text-xs space-y-2.5 text-muted-foreground">
+                {plan.backgroundAnalysis?.recommendations?.slice(0, 3).map((rec: string, i: number) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-primary mt-0.5">•</span>
+                    <span className="line-clamp-2">{rec}</span>
+                  </li>
+                ))}
+                {!plan.backgroundAnalysis?.recommendations?.length && (
+                  <li>등록된 조언이 없습니다.</li>
+                )}
+              </ul>
+              
+              <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] text-muted-foreground">총 소요 시간</p>
+                  <p className="font-medium text-sm">{plan.totalHours}시간</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground">예상 완료일</p>
+                  <p className="font-medium text-sm">
+                    {plan.createdAt 
+                      ? new Date(new Date(plan.createdAt).getTime() + (plan.totalWeeks * 7 * 24 * 60 * 60 * 1000)).toLocaleDateString() 
+                      : '-'}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </div>
 
-          <ScrollArea className="flex-1 -mx-4 px-4">
-            <TabsContent value="curriculum" className="mt-0 pb-6">
-              <div className="relative border-l border-border/50 ml-4 space-y-6">
+          {/* Current Focus Highlight */}
+          {currentStep && !currentStep.completed && (
+            <Card className="glass-card border-l-4 border-l-primary animate-slide-up bg-primary/5">
+              <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-xs font-bold text-primary uppercase tracking-wider">Current Focus</p>
+                    <div className="h-px flex-1 bg-primary/20 w-12" />
+                  </div>
+                  <h3 className="font-bold text-xl text-foreground mb-1">{currentStep.title}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-1">{currentStep.description}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+                  <Button size="sm" variant="outline" onClick={() => setFocusTimerOpen(true)} className="bg-background/50">
+                    <Play className="size-3.5 mr-1.5" /> 시작
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleCompleteStep(currentStep.order)} 
+                    disabled={completingStep === currentStep.order}
+                  >
+                    {completingStep === currentStep.order ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle className="size-3.5 mr-1.5" />
+                        완료
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Content Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full justify-start h-12 p-1 bg-secondary/30 rounded-xl mb-6">
+              <TabsTrigger value="curriculum" className="flex-1 h-10 text-sm">커리큘럼</TabsTrigger>
+              <TabsTrigger value="schedule" className="flex-1 h-10 text-sm">일정</TabsTrigger>
+              <TabsTrigger value="analysis" className="flex-1 h-10 text-sm">분석</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="curriculum" className="mt-0">
+              <div className="relative border-l-2 border-border/50 ml-4 space-y-8 pb-4">
                 {plan.steps?.map((step: any, index: number) => (
                   <div key={step.stepId} className="relative pl-8 group">
                     {/* Timeline Dot */}
                     <div className={cn(
-                      "absolute -left-[5px] top-1.5 size-2.5 rounded-full border-2 transition-colors",
+                      "absolute -left-[9px] top-6 size-4 rounded-full border-4 transition-colors z-10 bg-background",
                       step.completed 
-                        ? "bg-success border-success" 
+                        ? "border-success" 
                         : step.stepId === currentStepId
-                        ? "bg-primary border-primary animate-pulse"
-                        : "bg-background border-muted-foreground"
+                        ? "border-primary shadow-[0_0_0_4px_rgba(var(--primary),0.2)]"
+                        : "border-muted-foreground/30"
                     )} />
                     
                     <Card className={cn(
-                      "transition-all duration-200",
-                      step.completed ? "opacity-70 bg-secondary/10" : "bg-card",
-                      step.stepId === currentStepId && "border-primary shadow-md"
+                      "transition-all duration-300 overflow-hidden",
+                      step.completed ? "opacity-70 bg-card/30" : "bg-card/50 backdrop-blur-sm",
+                      step.stepId === currentStepId && "border-primary/50 shadow-lg ring-1 ring-primary/20"
                     )}>
-                      <CardHeader className="p-4 pb-2">
-                        <div className="flex items-start justify-between">
+                      <CardHeader className="p-5 pb-3 bg-secondary/10 border-b border-border/50">
+                        <div className="flex items-start justify-between gap-4">
                           <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline" className="badge-compact">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Badge variant="outline" className="badge-compact bg-background/50">
                                 Step {index + 1}
                               </Badge>
-                              <h4 className="font-semibold text-sm">{step.title}</h4>
+                              {step.stepId === currentStepId && (
+                                <Badge className="badge-compact bg-primary/20 text-primary hover:bg-primary/30 border-primary/20">
+                                  진행 중
+                                </Badge>
+                              )}
                             </div>
-                            <p className="text-xs text-muted-foreground">{step.description}</p>
+                            <h4 className="font-bold text-lg">{step.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
                           </div>
                           {step.completed ? (
-                            <div className="flex items-center gap-2">
-                              <CheckCircle2 className="size-5 text-success shrink-0" />
+                            <div className="flex items-center gap-2 shrink-0">
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10 text-success text-xs font-medium border border-success/20">
+                                <CheckCircle2 className="size-3.5" />
+                                <span>완료됨</span>
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 p-0"
+                                className="h-8 w-8"
                                 onClick={() => toggleStep(step.stepId)}
                               >
                                 {expandedSteps.includes(step.stepId) ? (
@@ -407,10 +543,9 @@ export function LearningPlanDetail() {
                             step.stepId === currentStepId && (
                               <Button 
                                 size="sm" 
-                                variant="ghost" 
-                                className="h-7 text-xs"
                                 onClick={() => handleCompleteStep(step.order)}
                                 disabled={completingStep === step.order}
+                                className="shrink-0"
                               >
                                 {completingStep === step.order ? (
                                   <Loader2 className="size-3.5 animate-spin" />
@@ -423,14 +558,14 @@ export function LearningPlanDetail() {
                         </div>
                       </CardHeader>
                       {(step.stepId === currentStepId || !step.completed || expandedSteps.includes(step.stepId)) && (
-                        <CardContent className="p-4 pt-2 space-y-3">
+                        <CardContent className="p-5 space-y-6">
                           {/* Objectives */}
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1.5">학습 목표</p>
-                            <ul className="grid gap-1">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">학습 목표</p>
+                            <ul className="grid gap-2">
                               {step.objectives?.map((obj: string, i: number) => (
-                                <li key={i} className="text-xs flex items-start gap-2 text-muted-foreground">
-                                  <span className="mt-1.5 size-1 rounded-full bg-primary/50 shrink-0" />
+                                <li key={i} className="text-sm flex items-start gap-2.5 text-foreground/90">
+                                  <span className="mt-2 size-1.5 rounded-full bg-primary shrink-0" />
                                   {obj}
                                 </li>
                               ))}
@@ -440,24 +575,8 @@ export function LearningPlanDetail() {
                           {/* Resources */}
                           {step.suggestedResources?.length > 0 && (
                             <div>
-                              <p className="text-xs font-semibold text-muted-foreground mb-1.5">추천 자료</p>
-                              <div className="grid gap-1.5">
-                                {step.suggestedResources.map((res: any, i: number) => (
-                                  <a 
-                                    key={i} 
-                                    href={res.url} 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="flex items-center justify-between p-2 rounded bg-secondary/30 hover:bg-secondary/50 transition-colors text-xs group"
-                                  >
-                                    <div className="flex items-center gap-2 overflow-hidden">
-                                      {res.type === 'VIDEO' ? <PlayCircle className="size-3.5 text-red-500" /> : <BookOpen className="size-3.5 text-blue-500" />}
-                                      <span className="truncate group-hover:text-primary transition-colors">{res.title}</span>
-                                    </div>
-                                    <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                  </a>
-                                ))}
-                              </div>
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">추천 자료</p>
+                              <ResourceList resources={step.suggestedResources} />
                             </div>
                           )}
                         </CardContent>
@@ -470,9 +589,12 @@ export function LearningPlanDetail() {
 
             <TabsContent value="schedule" className="mt-0">
               <Card className="glass-card">
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  <Calendar className="size-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">주간 일정 기능이 준비 중입니다.</p>
+                <CardContent className="py-16 text-center text-muted-foreground">
+                  <div className="size-16 rounded-full bg-secondary/50 flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="size-8 opacity-50" />
+                  </div>
+                  <h3 className="text-lg font-medium text-foreground mb-1">일정 관리 준비 중</h3>
+                  <p className="text-sm">주간 학습 일정을 관리하는 기능이 곧 추가됩니다.</p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -483,57 +605,9 @@ export function LearningPlanDetail() {
                 <FeedbackList planId={Number(planId)} />
               </div>
             </TabsContent>
-          </ScrollArea>
-        </Tabs>
-      </div>
-
-      {/* Right Sidebar */}
-      <div className="w-72 shrink-0 space-y-4">
-        {/* AI Tips */}
-        <Card className="glass-card">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Lightbulb className="size-4 text-yellow-500" />
-              AI 조언
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <ul className="text-xs space-y-2 text-muted-foreground">
-              {plan.backgroundAnalysis?.recommendations?.slice(0, 3).map((rec: string, i: number) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  {rec}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Stats */}
-        <Card className="glass-card">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-sm font-medium">통계</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 space-y-3">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-muted-foreground">총 소요 시간</span>
-              <span className="font-bold">{plan.totalHours}시간</span>
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-muted-foreground">시작일</span>
-              <span className="font-bold">{plan.createdAt ? new Date(plan.createdAt).toLocaleDateString() : '-'}</span>
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-muted-foreground">예상 완료일</span>
-              <span className="font-bold">
-                {plan.createdAt 
-                  ? new Date(new Date(plan.createdAt).getTime() + (plan.totalWeeks * 7 * 24 * 60 * 60 * 1000)).toLocaleDateString() 
-                  : '-'}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </Tabs>
+        </div>
+      </ScrollArea>
 
       {/* Focus Timer Modal */}
       <FocusTimer 

@@ -19,6 +19,53 @@ export const goalsApi = {
   },
 
   /**
+   * 학습 목표 상세 조회
+   */
+  async getGoal(
+    memberId: number,
+    goalId: number
+  ): Promise<ApiResponse<LearningGoal>> {
+    return apiClient.get(`/members/${memberId}/goals/${goalId}`);
+  },
+
+  /**
+   * 학습 목표 스트릭 조회 - V5
+   */
+  async getGoalStreak(
+    memberId: number,
+    goalId: number
+  ): Promise<ApiResponse<{
+    currentStreak: number;
+    longestStreak: number;
+    lastStudyDate: string;
+    isActiveToday: boolean;
+    streakStatus: 'ACTIVE' | 'AT_RISK' | 'BROKEN' | 'NEW';
+    message: string;
+  }>> {
+    return apiClient.get(`/members/${memberId}/goals/${goalId}/streak`);
+  },
+
+  /**
+   * 주간 리포트 조회 - V5
+   */
+  async getGoalWeeklyReport(
+    memberId: number,
+    goalId: number
+  ): Promise<ApiResponse<any>> {
+    return apiClient.get(`/members/${memberId}/goals/${goalId}/reports/weekly`);
+  },
+
+  /**
+   * 월간 리포트 조회 - V5
+   */
+  async getGoalMonthlyReport(
+    memberId: number,
+    goalId: number
+  ): Promise<ApiResponse<any>> {
+    return apiClient.get(`/members/${memberId}/goals/${goalId}/reports/monthly`);
+  },
+
+  /**
    * 학습 목표 생성
    */
   async createGoal(

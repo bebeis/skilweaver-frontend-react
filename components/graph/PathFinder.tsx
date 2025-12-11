@@ -65,7 +65,7 @@ function PathStepCard({
 
   return (
     <div 
-      className="flex items-stretch gap-4 relative z-10"
+      className="flex items-stretch gap-4 relative z-10 p-2"
       onMouseEnter={onMouseEnter}
     >
       {/* Timeline */}
@@ -84,14 +84,14 @@ function PathStepCard({
 
       {/* Content */}
       <div className={`flex-1 ${!isLast ? 'pb-6' : ''}`}>
-        <Card className={`glass-card border-tech ${isLast ? 'border-primary/50 shadow-neon' : ''}`}>
+        <Card className={`glass-card border-tech bg-secondary/30 ${isLast ? 'border-primary/50 shadow-neon' : ''}`}>
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">
                   Step {step.step}
                 </Badge>
-                <Badge className={`text-xs ${relationColors[step.relation]}`}>
+                <Badge className={`text-xs ${relationColors[step.relation] ? relationColors[step.relation].replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'text-opacity-90 text-') : 'bg-gray-100/10 text-gray-400'}`}>
                   {relationLabels[step.relation]}
                 </Badge>
               </div>

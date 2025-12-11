@@ -10,6 +10,7 @@ import { Dashboard } from './pages/Dashboard';
 import { ProfileSettings } from './pages/settings/ProfileSettings';
 import { Skills } from './pages/skills/Skills';
 import { Goals } from './pages/goals/Goals';
+import { GoalDetail } from './pages/goals/GoalDetail';
 import { Technologies } from './pages/technologies/Technologies';
 import { TechnologyDetail } from './pages/technologies/TechnologyDetail';
 import { LearningPlans } from './pages/learning-plans/LearningPlans';
@@ -47,9 +48,9 @@ function SkillEditRedirect() {
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <Routes>
+    <AuthProvider>
+      <Router>
+        <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -69,6 +70,7 @@ function App() {
             <Route path="skills/:skillId/edit" element={<SkillEditRedirect />} />
             
             <Route path="goals" element={<Goals />} />
+            <Route path="goals/:goalId" element={<GoalDetail />} />
             <Route path="technologies" element={<Technologies />} />
             {/* V4: technologyId → name 기반 라우팅 */}
             <Route path="technologies/:name" element={<TechnologyDetail />} />
@@ -79,8 +81,8 @@ function App() {
           </Route>
         </Routes>
         <Toaster />
-        </Router>
-      </AuthProvider>
+      </Router>
+    </AuthProvider>
     </ThemeProvider>
   );
 }

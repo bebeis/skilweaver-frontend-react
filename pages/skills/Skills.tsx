@@ -258,7 +258,7 @@ function SkillDialog({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[460px] p-0" align="start">
-                <Command>
+                <Command shouldFilter={false}>
                   <CommandInput
                     placeholder="기술 검색..."
                     value={searchValue}
@@ -271,10 +271,12 @@ function SkillDialog({
                     </div>
                   ) : (
                     <div className="max-h-[300px] overflow-y-auto">
-                      {filteredTechnologies.length === 0 ? (
+                      {!searchValue ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
-                          검색 결과가 없습니다.
+                          검색어를 입력하여 기술을 찾으세요.
                         </div>
+                      ) : filteredTechnologies.length === 0 ? (
+                        <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>
                       ) : (
                         <CommandGroup>
                           {filteredTechnologies.map((tech) => (

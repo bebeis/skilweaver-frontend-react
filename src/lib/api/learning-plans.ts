@@ -82,5 +82,21 @@ export const learningPlansApi = {
       `/members/${memberId}/learning-plans/${planId}/steps/${stepOrder}/complete`
     );
   },
+
+  /**
+   * 학습 플랜 시작 (Goal 생성 및 연동) - V5
+   */
+  async startPlan(
+    memberId: number,
+    planId: number,
+    options?: {
+      goalTitle?: string;
+      goalDescription?: string;
+      dueDate?: string;
+      priority?: 'LOW' | 'MEDIUM' | 'HIGH';
+    }
+  ): Promise<ApiResponse<any>> { // Returns Created Goal info
+    return apiClient.post(`/members/${memberId}/learning-plans/${planId}/start`, options);
+  },
 };
 

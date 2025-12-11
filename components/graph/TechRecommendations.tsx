@@ -71,10 +71,10 @@ function RecommendationCard({ tech, onSelect, onMouseEnter }: {
     <button
       onClick={() => onSelect(tech.name)}
       onMouseEnter={onMouseEnter}
-      className="p-4 rounded-lg border border-border bg-card transition-all duration-200 text-left w-full group relative z-10"
+      className="p-4 rounded-lg border border-border bg-card/50 transition-all duration-200 text-left w-full group relative z-10 hover:border-border/50"
     >
       <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-lg bg-secondary ${relationColors[tech.relation]}`}>
+        <div className={`p-2 rounded-lg bg-secondary/50 ${relationColors[tech.relation] ? relationColors[tech.relation].replace('text-', 'text-opacity-90 text-') : ''}`}>
           <Icon className="size-4" />
         </div>
         <div className="flex-1 min-w-0">
@@ -84,7 +84,7 @@ function RecommendationCard({ tech, onSelect, onMouseEnter }: {
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className={`text-xs ${categoryColors[tech.category] || 'bg-gray-50'}`}>
+            <Badge variant="outline" className={`text-xs ${categoryColors[tech.category] ? categoryColors[tech.category].replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'text-opacity-90 text-').replace('border-', 'border-opacity-20 border-') : 'bg-gray-50/10 text-gray-400'}`}>
               {tech.category}
             </Badge>
             <Badge variant="secondary" className="text-xs">

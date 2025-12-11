@@ -355,7 +355,7 @@ export function Layout() {
           </div>
           
           <div className="flex items-center gap-4 pointer-events-auto relative z-50">
-            {/* Add extra header actions if needed */}
+             {/* Add extra header actions if needed */}
             <ThemeSwitcher />
             <Link to="/settings/profile">
               <Avatar className="h-9 w-9 ring-2 ring-background cursor-pointer hover:ring-primary transition-all">

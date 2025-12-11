@@ -9,7 +9,7 @@ export type LearningStyle = 'DOC_FIRST' | 'VIDEO_FIRST' | 'PROJECT_BASED' | 'BAL
 export type SkillCategory = 'LANGUAGE' | 'FRAMEWORK' | 'LIBRARY' | 'TOOL' | 'DB' | 'PLATFORM' | 'ETC' | 'DEVOPS' | 'API' | 'DATABASE';
 export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
 export type GoalPriority = 'LOW' | 'MEDIUM' | 'HIGH';
-export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED' | 'PLANNING';
+export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED' | 'PLANNING' | 'IN_PROGRESS';
 export type LearningPlanStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED' | 'DRAFT';
 export type StepDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export type AgentRunStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
@@ -108,6 +108,31 @@ export interface UpdateSkillRequest {
 }
 
 // 학습 목표
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  lastStudyDate?: string;
+  isActiveToday: boolean;
+  streakStatus: 'ACTIVE' | 'AT_RISK' | 'BROKEN' | 'NEW';
+  message: string;
+}
+
+export interface GoalMilestone {
+  milestone: string;
+  achieved: boolean;
+}
+
+export interface GoalReport {
+  weekStartDate: string;
+  weekEndDate: string;
+  completedSteps: number;
+  totalLearningHours: number;
+  learningDays: number;
+  averageDailyHours: number;
+  progressChange: number;
+  milestones: GoalMilestone[];
+}
+
 export interface LearningGoal {
   learningGoalId: number;
   title: string;
@@ -117,6 +142,13 @@ export interface LearningGoal {
   status: GoalStatus;
   createdAt: string;
   updatedAt: string;
+  
+  // V5: Plan-Goal 연동
+  learningPlanId?: number;
+  totalSteps?: number;
+  completedSteps?: number;
+  progressPercentage?: number;
+  streakInfo?: StreakInfo;
 }
 
 export interface CreateGoalRequest {

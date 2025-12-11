@@ -52,13 +52,13 @@ function TechNode({ tech, onClick, direction, onMouseEnter }: {
     <button
       onClick={onClick}
       onMouseEnter={onMouseEnter}
-      className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card transition-all duration-200 text-left w-full group relative z-10"
+      className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card/50 transition-all duration-200 text-left w-full group relative z-10 hover:border-border/50"
     >
-      <div className={`p-2 rounded-lg ${direction === 'prerequisite' ? 'bg-amber-100' : 'bg-emerald-100'}`}>
+      <div className={`p-2 rounded-lg ${direction === 'prerequisite' ? 'bg-amber-100/10' : 'bg-emerald-100/10'}`}>
         {direction === 'prerequisite' ? (
-          <BookOpen className="size-4 text-amber-600" />
+          <BookOpen className="size-4 text-amber-500" />
         ) : (
-          <GraduationCap className="size-4 text-emerald-600" />
+          <GraduationCap className="size-4 text-emerald-500" />
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -66,11 +66,11 @@ function TechNode({ tech, onClick, direction, onMouseEnter }: {
           {tech.displayName}
         </div>
         <div className="flex items-center gap-2 mt-1">
-          <Badge variant="outline" className={`text-xs ${categoryColors[tech.category] || 'bg-gray-50 text-gray-700'}`}>
+          <Badge variant="outline" className={`text-xs ${categoryColors[tech.category] ? categoryColors[tech.category].replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'text-opacity-90 text-').replace('border-', 'border-opacity-20 border-') : 'bg-gray-50/10 text-gray-400 border-gray-200/20'}`}>
             {tech.category}
           </Badge>
           {tech.difficulty && (
-            <Badge variant="outline" className={`text-xs ${difficultyColors[tech.difficulty] || 'bg-gray-50 text-gray-700'}`}>
+            <Badge variant="outline" className={`text-xs ${difficultyColors[tech.difficulty] ? difficultyColors[tech.difficulty].replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'text-opacity-90 text-').replace('border-', 'border-opacity-20 border-') : 'bg-gray-50/10 text-gray-400 border-gray-200/20'}`}>
               {tech.difficulty}
             </Badge>
           )}
@@ -290,7 +290,7 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
             {/* Prerequisites */}
             <Card className="glass-card border-tech">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-amber-600">
+                <CardTitle className="flex items-center gap-2 text-amber-500">
                   <ArrowLeft className="size-5" />
                   선수 지식
                 </CardTitle>
@@ -303,12 +303,12 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
                 {roadmap.prerequisites.required.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                      <Badge variant="destructive" className="text-xs">필수</Badge>
+                      <Badge variant="destructive" className="text-xs bg-red-500/10 text-red-500 border-red-500/20">필수</Badge>
                     </h4>
                     <div className="space-y-2">
                       <FluidTechList 
                         techs={roadmap.prerequisites.required} 
-                        direction="prerequisite" 
+                        direction="prerequisite"
                         onTechClick={handleTechClick} 
                       />
                     </div>
@@ -319,12 +319,12 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
                 {roadmap.prerequisites.recommended.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">권장</Badge>
+                      <Badge variant="secondary" className="text-xs bg-secondary/50 text-secondary-foreground border-secondary">권장</Badge>
                     </h4>
                     <div className="space-y-2">
                       <FluidTechList 
                         techs={roadmap.prerequisites.recommended} 
-                        direction="prerequisite" 
+                        direction="prerequisite"
                         onTechClick={handleTechClick} 
                       />
                     </div>
@@ -343,7 +343,7 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
             {/* Next Steps */}
             <Card className="glass-card border-tech">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-emerald-600">
+                <CardTitle className="flex items-center gap-2 text-emerald-500">
                   <ArrowRight className="size-5" />
                   다음 단계
                 </CardTitle>
@@ -356,7 +356,7 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
                   <div className="space-y-2">
                     <FluidTechList 
                       techs={roadmap.nextSteps} 
-                      direction="next" 
+                      direction="next"
                       onTechClick={handleTechClick} 
                     />
                   </div>

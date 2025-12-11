@@ -63,10 +63,10 @@ function MissingTechCard({
   
   return (
     <div 
-      className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card transition-colors relative z-10"
+      className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card/50 transition-colors relative z-10 hover:border-border/50"
       onMouseEnter={onMouseEnter}
     >
-      <div className="p-2 rounded-lg bg-red-50">
+      <div className="p-2 rounded-lg bg-red-500/10">
         <AlertCircle className="size-4 text-red-500" />
       </div>
       <div className="flex-1 min-w-0">
@@ -92,7 +92,7 @@ function MissingTechCard({
           </TooltipTrigger>
           <TooltipContent>보유 기술에 추가</TooltipContent>
         </Tooltip>
-        <Badge variant="outline" className={priorityColors[tech.priority]}>
+        <Badge variant="outline" className={priorityColors[tech.priority] ? priorityColors[tech.priority].replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'text-opacity-90 text-').replace('border-', 'border-opacity-20 border-') : ''}>
           {priorityLabels[tech.priority]}
         </Badge>
       </div>
@@ -505,8 +505,8 @@ export function GapAnalysis() {
                 <CardContent>
                   <MissingTechList 
                     techs={sortedMissing} 
-                    onAddToKnown={addMissingToKnown} 
-                  />
+                        onAddToKnown={addMissingToKnown}
+                      />
                   
                   {/* Priority Legend */}
                   <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
