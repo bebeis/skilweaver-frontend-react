@@ -54,13 +54,12 @@ function DropdownMenuContent({
         )}
         {...props}
       >
-        {/* Pass the hook result down via Context */}
         <FluidHighlightContext.Provider value={fluidHighlight}>
           {/* Render the LiquidHighlight background */}
-          {/* Use a div wrapper for the content and ref, instead of 'contents' display which breaks layout calc */}
-          <div ref={fluidHighlight.containerRef} onMouseLeave={fluidHighlight.handleMouseLeave} className="relative w-full h-full">
+          {/* Ensure wrapper takes full height/width but respects padding of content */}
+          <div ref={fluidHighlight.containerRef} onMouseLeave={fluidHighlight.handleMouseLeave} className="relative flex flex-col w-full h-full">
             <LiquidHighlight style={fluidHighlight.highlightStyle} className="z-0" />
-            <div className="relative z-10">{props.children}</div>
+            <div className="relative z-10 flex flex-col">{props.children}</div>
           </div>
         </FluidHighlightContext.Provider>
       </DropdownMenuPrimitive.Content>
@@ -97,12 +96,11 @@ function DropdownMenuItem({
         props.onMouseEnter?.(e);
       }}
       className={cn(
-        // Remove default focus bg, as we use liquid highlight
+        // Remove default focus bg to reveal liquid highlight
         "focus:outline-hidden relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "data-[variant=destructive]:text-destructive",
-        // Keep focus text color changes if needed, but background is handled by liquid highlight
-        // Actually, for consistency, we might want to keep some subtle focus indication for keyboard users who might not trigger mouse enter
-        "focus:bg-accent/50 focus:text-accent-foreground", 
+        // Only change text color on focus, background is handled by liquid highlight
+        "focus:text-accent-foreground", 
         className,
       )}
       {...props}
@@ -126,7 +124,7 @@ function DropdownMenuCheckboxItem({
         props.onMouseEnter?.(e);
       }}
       className={cn(
-        "focus:bg-accent/50 focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       checked={checked}
@@ -168,7 +166,7 @@ function DropdownMenuRadioItem({
         props.onMouseEnter?.(e);
       }}
       className={cn(
-        "focus:bg-accent/50 focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
@@ -257,7 +255,7 @@ function DropdownMenuSubTrigger({
         props.onMouseEnter?.(e);
       }}
       className={cn(
-        "focus:bg-accent/50 focus:text-accent-foreground data-[state=open]:bg-accent/50 data-[state=open]:text-accent-foreground flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8",
+        "focus:text-accent-foreground data-[state=open]:bg-accent/50 data-[state=open]:text-accent-foreground flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8",
         className,
       )}
       {...props}

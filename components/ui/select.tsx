@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
+import { useFluidHighlight, LiquidHighlight } from "./fluid-highlight";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -9,6 +10,9 @@ import {
 } from "lucide-react";
 
 import { cn } from "./utils";
+
+// Context to share the fluid highlight functionality
+const FluidHighlightContext = React.createContext<ReturnType<typeof useFluidHighlight> | null>(null);
 
 function Select({
   ...props
@@ -60,6 +64,8 @@ function SelectContent({
   position = "popper",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const fluidHighlight = useFluidHighlight<HTMLDivElement>();
+
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -93,7 +99,12 @@ function SelectContent({
               : undefined
           }
         >
-          {children}
+          <FluidHighlightContext.Provider value={fluidHighlight}>
+            <div ref={fluidHighlight.containerRef} onMouseLeave={fluidHighlight.handleMouseLeave} className="relative flex flex-col w-full h-full">
+              <LiquidHighlight style={fluidHighlight.highlightStyle} className="z-0" />
+              <div className="relative z-10 flex flex-col">{children}</div>
+            </div>
+          </FluidHighlightContext.Provider>
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
       </SelectPrimitive.Content>
@@ -119,11 +130,17 @@ function SelectItem({
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Item>) {
+  const context = React.useContext(FluidHighlightContext);
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      onMouseEnter={(e) => {
+        context?.handleMouseEnter(e);
+        props.onMouseEnter?.(e);
+      }}
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
       {...props}

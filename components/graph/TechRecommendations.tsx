@@ -37,6 +37,8 @@ const relationIcons: Record<TechRelation, typeof LinkIcon> = {
   ALTERNATIVE_TO: GitMerge,
 };
 
+import { LiquidHighlight, useFluidHighlight } from '../ui/fluid-highlight';
+
 const relationColors: Record<TechRelation, string> = {
   DEPENDS_ON: 'text-orange-500',
   RECOMMENDED_AFTER: 'text-blue-500',
@@ -58,16 +60,18 @@ const categoryColors: Record<string, string> = {
   CONCEPT: 'bg-cyan-50 text-cyan-700 border-cyan-200',
 };
 
-function RecommendationCard({ tech, onSelect }: {
+function RecommendationCard({ tech, onSelect, onMouseEnter }: {
   tech: RecommendedTechnology;
   onSelect: (name: string) => void;
+  onMouseEnter?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
   const Icon = relationIcons[tech.relation];
 
   return (
     <button
       onClick={() => onSelect(tech.name)}
-      className="p-4 rounded-lg border border-border bg-card hover:bg-secondary/50 hover:border-primary/50 transition-all duration-200 text-left w-full group"
+      onMouseEnter={onMouseEnter}
+      className="p-4 rounded-lg border border-border bg-card transition-all duration-200 text-left w-full group relative z-10"
     >
       <div className="flex items-start gap-3">
         <div className={`p-2 rounded-lg bg-secondary ${relationColors[tech.relation]}`}>
@@ -91,6 +95,33 @@ function RecommendationCard({ tech, onSelect }: {
         <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
       </div>
     </button>
+  );
+}
+
+function RecommendationList({ techs, onSelect }: { techs: RecommendedTechnology[], onSelect: (name: string) => void }) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseLeave={handleMouseLeave}
+      className="grid grid-cols-1 md:grid-cols-2 gap-3 relative"
+    >
+      <LiquidHighlight style={highlightStyle} />
+      {techs.map(tech => (
+        <RecommendationCard
+          key={tech.name}
+          tech={tech}
+          onSelect={onSelect}
+          onMouseEnter={handleMouseEnter}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -234,15 +265,7 @@ export function TechRecommendations() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {techs.map(tech => (
-                    <RecommendationCard
-                      key={tech.name}
-                      tech={tech}
-                      onSelect={handleTechSelect}
-                    />
-                  ))}
-                </div>
+                <RecommendationList techs={techs} onSelect={handleTechSelect} />
               </CardContent>
             </Card>
           ))}
