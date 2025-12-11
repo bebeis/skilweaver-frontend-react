@@ -29,6 +29,8 @@ import { skillsApi } from '../../src/lib/api/skills';
 import { TechAutocomplete } from './TechAutocomplete';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { LiquidHighlight, useFluidHighlight } from '../ui/fluid-highlight';
+import { cn } from '../ui/utils';
 
 const priorityColors: Record<GapPriority, string> = {
   HIGH: 'bg-red-100 text-red-700 border-red-200',
@@ -48,11 +50,22 @@ const priorityOrder: Record<GapPriority, number> = {
   LOW: 3,
 };
 
-function MissingTechCard({ tech, onAddToKnown }: { tech: MissingTechnology; onAddToKnown: (name: string) => void }) {
+function MissingTechCard({ 
+  tech, 
+  onAddToKnown,
+  onMouseEnter 
+}: { 
+  tech: MissingTechnology; 
+  onAddToKnown: (name: string) => void;
+  onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
+}) {
   const navigate = useNavigate();
   
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-secondary/30 transition-colors">
+    <div 
+      className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card transition-colors relative z-10"
+      onMouseEnter={onMouseEnter}
+    >
       <div className="p-2 rounded-lg bg-red-50">
         <AlertCircle className="size-4 text-red-500" />
       </div>
@@ -83,6 +96,39 @@ function MissingTechCard({ tech, onAddToKnown }: { tech: MissingTechnology; onAd
           {priorityLabels[tech.priority]}
         </Badge>
       </div>
+    </div>
+  );
+}
+
+function MissingTechList({ 
+  techs, 
+  onAddToKnown 
+}: { 
+  techs: MissingTechnology[]; 
+  onAddToKnown: (name: string) => void;
+}) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseLeave={handleMouseLeave}
+      className="space-y-3 relative"
+    >
+      <LiquidHighlight style={highlightStyle} />
+      {techs.map(tech => (
+        <MissingTechCard 
+          key={tech.name} 
+          tech={tech} 
+          onAddToKnown={onAddToKnown}
+          onMouseEnter={handleMouseEnter}
+        />
+      ))}
     </div>
   );
 }
@@ -457,15 +503,10 @@ export function GapAnalysis() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {sortedMissing.map(tech => (
-                      <MissingTechCard 
-                        key={tech.name} 
-                        tech={tech} 
-                        onAddToKnown={addMissingToKnown}
-                      />
-                    ))}
-                  </div>
+                  <MissingTechList 
+                    techs={sortedMissing} 
+                    onAddToKnown={addMissingToKnown} 
+                  />
                   
                   {/* Priority Legend */}
                   <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">

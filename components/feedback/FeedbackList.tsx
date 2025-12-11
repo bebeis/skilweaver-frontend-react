@@ -1,119 +1,49 @@
-/**
- * 피드백 목록 컴포넌트 (v2)
- */
-
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Star, MessageCircle, Loader2 } from 'lucide-react';
+import { MessageCircle, Star } from 'lucide-react';
 import { feedbackApi } from '../../src/lib/api/feedback';
-import type { Feedback, FeedbackType } from '../../src/lib/api/types';
+import { Feedback, FeedbackType } from '../../src/lib/api/types';
+import { LiquidHighlight, useFluidHighlight } from '../ui/fluid-highlight';
+import { cn } from '../ui/utils';
 
 interface FeedbackListProps {
-  planId: number;
-  refreshTrigger?: number;
+  planId: string;
+  refreshTrigger: number;
 }
 
-const feedbackTypeLabels: Record<FeedbackType, string> = {
-  HELPFUL: '도움이 됨',
-  TOO_EASY: '너무 쉬움',
-  TOO_HARD: '너무 어려움',
-  IRRELEVANT: '관련 없음',
-  TIME_ISSUE: '시간 문제',
-  RESOURCE_ISSUE: '리소스 문제',
-  GENERAL: '일반',
+const feedbackTypeColors: Record<FeedbackType, string> = {
+  STRENGTH: 'bg-green-50 text-green-700 border-green-200',
+  WEAKNESS: 'bg-red-50 text-red-700 border-red-200',
+  IMPROVEMENT: 'bg-blue-50 text-blue-700 border-blue-200',
+  GENERAL: 'bg-gray-50 text-gray-700 border-gray-200',
 };
 
-const feedbackTypeColors: Record<FeedbackType, string> = {
-  HELPFUL: 'bg-green-100 text-green-700 border-green-200',
-  TOO_EASY: 'bg-blue-100 text-blue-700 border-blue-200',
-  TOO_HARD: 'bg-red-100 text-red-700 border-red-200',
-  IRRELEVANT: 'bg-gray-100 text-gray-700 border-gray-200',
-  TIME_ISSUE: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  RESOURCE_ISSUE: 'bg-orange-100 text-orange-700 border-orange-200',
-  GENERAL: 'bg-purple-100 text-purple-700 border-purple-200',
+const feedbackTypeLabels: Record<FeedbackType, string> = {
+  STRENGTH: '강점',
+  WEAKNESS: '약점',
+  IMPROVEMENT: '개선점',
+  GENERAL: '일반',
 };
 
 export function FeedbackList({ planId, refreshTrigger }: FeedbackListProps) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchFeedbacks = async () => {
+    const loadFeedbacks = async () => {
       try {
-        setLoading(true);
-        const response = await feedbackApi.getFeedbacksByPlan(planId);
-        if (response.success) {
+        const response = await feedbackApi.getPlanFeedbacks(planId);
+        if (response.success && response.data) {
           setFeedbacks(response.data);
-          setError(null);
         }
-      } catch (err: any) {
-        setError('피드백을 불러올 수 없습니다.');
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error('Failed to load feedbacks:', error);
       }
     };
 
-    fetchFeedbacks();
+    loadFeedbacks();
   }, [planId, refreshTrigger]);
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`size-4 ${
-              star <= rating
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  if (loading) {
-    return (
-      <Card className="glass-card border-tech">
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="size-6 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="glass-card border-tech">
-        <CardContent className="py-6">
-          <p className="text-muted-foreground text-center">{error}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (feedbacks.length === 0) {
-    return (
-      <Card className="glass-card border-tech">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <MessageCircle className="size-5 text-primary" />
-            피드백 목록
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center">
-            아직 피드백이 없습니다. 첫 번째 피드백을 남겨보세요!
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Group feedbacks by step
   const planFeedbacks = feedbacks.filter((f) => !f.stepId);
   const stepFeedbacks = feedbacks.filter((f) => f.stepId);
 
@@ -128,33 +58,64 @@ export function FeedbackList({ planId, refreshTrigger }: FeedbackListProps) {
       <CardContent className="space-y-6">
         {/* Plan-level feedbacks */}
         {planFeedbacks.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">
-              전체 플랜 피드백
-            </h3>
-            <div className="space-y-3">
-              {planFeedbacks.map((feedback) => (
-                <FeedbackItem key={feedback.id} feedback={feedback} />
-              ))}
-            </div>
-          </div>
+          <FeedbackGroup 
+            title="전체 플랜 피드백" 
+            feedbacks={planFeedbacks} 
+          />
         )}
 
         {/* Step-level feedbacks */}
         {stepFeedbacks.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground">
-              단계별 피드백
-            </h3>
-            <div className="space-y-3">
-              {stepFeedbacks.map((feedback) => (
-                <FeedbackItem key={feedback.id} feedback={feedback} showStep />
-              ))}
-            </div>
-          </div>
+          <FeedbackGroup 
+            title="단계별 피드백" 
+            feedbacks={stepFeedbacks} 
+            showStep 
+          />
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function FeedbackGroup({ 
+  title, 
+  feedbacks, 
+  showStep = false 
+}: { 
+  title: string; 
+  feedbacks: Feedback[]; 
+  showStep?: boolean; 
+}) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-muted-foreground">
+        {title}
+      </h3>
+      <div 
+        ref={containerRef}
+        onMouseLeave={handleMouseLeave}
+        className="space-y-3 relative"
+      >
+        <LiquidHighlight style={highlightStyle} />
+        
+        {feedbacks.map((feedback) => (
+          <div 
+            key={feedback.id} 
+            onMouseEnter={handleMouseEnter}
+            className="relative z-10"
+          >
+            <FeedbackItem feedback={feedback} showStep={showStep} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -166,7 +127,7 @@ function FeedbackItem({
   showStep?: boolean;
 }) {
   return (
-    <div className="p-4 bg-secondary/30 rounded-lg border border-border">
+    <div className="p-4 rounded-lg border border-border/50 transition-colors">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-0.5">

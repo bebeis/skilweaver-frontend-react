@@ -30,6 +30,7 @@ import {
 import { toast } from 'sonner';
 import { goalsApi } from '../../src/lib/api';
 import { useAuth } from '../../hooks/useAuth';
+import { LiquidHighlight, useFluidHighlight } from '../../components/ui/fluid-highlight';
 import { cn } from '../../components/ui/utils';
 
 interface Goal {
@@ -77,6 +78,13 @@ export function Goals() {
     status: 'ACTIVE',
     dueDate: ''
   });
+
+  const { 
+    containerRef: listRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
 
   // Load goals from API
   useEffect(() => {
@@ -338,7 +346,12 @@ export function Goals() {
 
           {/* Goals List */}
           <ScrollArea className="flex-1 -mx-1 px-1">
-            <div className="space-y-1">
+            <div 
+              ref={listRef}
+              onMouseLeave={handleMouseLeave}
+              className="space-y-1 relative"
+            >
+              <LiquidHighlight style={highlightStyle} />
               {filteredGoals.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Target className="size-8 mb-2 opacity-50" />
@@ -357,11 +370,12 @@ export function Goals() {
                     <button
                       key={goal.id}
                       onClick={() => setSelectedGoal(goal)}
+                      onMouseEnter={handleMouseEnter}
                       className={cn(
-                        "w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors",
+                        "w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors relative z-10",
                         selectedGoal?.id === goal.id
                           ? "bg-primary/10 border border-primary/20"
-                          : "hover:bg-secondary/50"
+                          : "hover:text-foreground"
                       )}
                     >
                       <div className="p-1.5 rounded bg-success/10 shrink-0">
