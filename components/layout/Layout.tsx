@@ -227,12 +227,12 @@ export function Layout() {
           <Link to="/learning-plans/new">
             <Button 
               className={cn(
-                "w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white border-0 shadow-lg shadow-primary/20 transition-all",
-                sidebarCollapsed ? "h-10 px-0" : "h-10"
+                "w-full btn-liquid-glass-primary text-white border-0 transition-all",
+                sidebarCollapsed ? "h-10 px-0" : "h-10 px-4"
               )}
             >
               <Sparkles className="size-4" />
-              {!sidebarCollapsed && <span className="ml-2">새 플랜</span>}
+              {!sidebarCollapsed && <span className="ml-2 font-bold">새 플랜</span>}
             </Button>
           </Link>
 
