@@ -23,6 +23,7 @@ import {
   Star
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { ThemeSwitcher } from '../ui/theme-switcher';
 import {
   Dialog,
   DialogContent,
@@ -177,11 +178,30 @@ export function Layout() {
   // const handleMouseLeave = ... (removed)
 
   return (
-    <div className="min-h-screen bg-background relative selection:bg-primary/20">
-      {/* Background Gradients for modern feel */}
-      <div className="fixed inset-0 -z-10 h-full w-full bg-background [background:radial-gradient(125%_125%_at_50%_10%,#000_40%,#63e_100%)] opacity-20 pointer-events-none" />
-      <div className="fixed top-0 left-0 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-      <div className="fixed bottom-0 right-0 -z-10 h-96 w-96 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+    <div className="min-h-screen relative selection:bg-primary/20 overflow-hidden">
+      {/* Dynamic Background System */}
+      {/* 1. Base Background Color */}
+      <div className="fixed inset-0 -z-50 bg-background transition-colors duration-700" />
+      
+      {/* 2. Top Light (Primary Gradient) - 상단에서 부드럽게 내려오는 빛 */}
+      <div 
+        className="fixed inset-0 -z-40 opacity-40 transition-opacity duration-700 pointer-events-none mix-blend-screen"
+        style={{ 
+          background: 'radial-gradient(circle at 50% -20%, var(--gradient-color-1), transparent 70%)' 
+        }} 
+      />
+
+      {/* 3. Bottom Light (Accent Gradient) - 하단에서 부드럽게 올라오는 빛 */}
+      <div 
+        className="fixed inset-0 -z-40 opacity-30 transition-opacity duration-700 pointer-events-none mix-blend-screen"
+        style={{ 
+          background: 'radial-gradient(circle at 80% 120%, var(--gradient-color-2), transparent 70%)' 
+        }} 
+      />
+
+      {/* 4. Floating Ambient Orbs - 더욱 자연스러운 블렌딩을 위한 추가 광원 */}
+      <div className="fixed top-[-10%] left-[-10%] -z-30 h-[50vw] w-[50vw] rounded-full bg-primary/10 blur-[100px] animate-float opacity-40 pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] -z-30 h-[50vw] w-[50vw] rounded-full bg-accent/10 blur-[100px] animate-float opacity-40 pointer-events-none" style={{ animationDelay: '-2s' }} />
 
       {/* Command Palette */}
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
@@ -334,8 +354,16 @@ export function Layout() {
             </button>
           </div>
           
-          <div className="flex items-center gap-4 pointer-events-auto">
-             {/* Add extra header actions if needed */}
+          <div className="flex items-center gap-4 pointer-events-auto relative z-50">
+            {/* Add extra header actions if needed */}
+            <ThemeSwitcher />
+            <Link to="/settings/profile">
+              <Avatar className="h-9 w-9 ring-2 ring-background cursor-pointer hover:ring-primary transition-all">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-xs font-bold">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
           </div>
         </header>
 
