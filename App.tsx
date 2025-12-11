@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from './components/ui/sonner';
@@ -8,7 +8,6 @@ import { Signup } from './pages/auth/Signup';
 import { Dashboard } from './pages/Dashboard';
 import { ProfileSettings } from './pages/settings/ProfileSettings';
 import { Skills } from './pages/skills/Skills';
-import { SkillForm } from './pages/skills/SkillForm';
 import { Goals } from './pages/goals/Goals';
 import { Technologies } from './pages/technologies/Technologies';
 import { TechnologyDetail } from './pages/technologies/TechnologyDetail';
@@ -39,6 +38,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function SkillEditRedirect() {
+  const { skillId } = useParams();
+  return <Navigate to={`/skills?mode=edit&skillId=${skillId}`} replace />;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -58,8 +62,10 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="settings/profile" element={<ProfileSettings />} />
             <Route path="skills" element={<Skills />} />
-            <Route path="skills/new" element={<SkillForm />} />
-            <Route path="skills/:skillId/edit" element={<SkillForm />} />
+            {/* Redirect old routes to new modal-based structure */}
+            <Route path="skills/new" element={<Navigate to="/skills?mode=new" replace />} />
+            <Route path="skills/:skillId/edit" element={<SkillEditRedirect />} />
+            
             <Route path="goals" element={<Goals />} />
             <Route path="technologies" element={<Technologies />} />
             {/* V4: technologyId → name 기반 라우팅 */}

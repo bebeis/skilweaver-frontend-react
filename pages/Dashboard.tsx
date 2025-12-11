@@ -11,32 +11,34 @@ import {
   Clock, 
   TrendingUp, 
   Plus,
-  CheckCircle2,
   Calendar,
   Sparkles,
   ArrowRight,
   Zap,
-  Activity,
   Loader2,
   Flame,
   Briefcase,
-  Users,
-  Database
+  Database,
+  GraduationCap,
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { skillsApi, goalsApi, learningPlansApi, technologiesApi } from '../src/lib/api';
 import { toast } from 'sonner';
+import { cn } from '../components/ui/utils';
 
-const levelColors = {
-  BEGINNER: 'bg-success/20 text-success border-success/30',
-  INTERMEDIATE: 'bg-primary/20 text-primary border-primary/30',
-  ADVANCED: 'bg-accent/20 text-accent border-accent/30'
+const levelColors: Record<string, string> = {
+  BEGINNER: 'level-beginner',
+  INTERMEDIATE: 'level-intermediate',
+  ADVANCED: 'level-advanced',
+  EXPERT: 'level-expert'
 };
 
-const priorityColors = {
-  HIGH: 'bg-destructive/20 text-destructive border-destructive/30',
-  MEDIUM: 'bg-warning/20 text-warning border-warning/30',
-  LOW: 'bg-muted-foreground/20 text-muted-foreground border-muted-foreground/30'
+const priorityColors: Record<string, string> = {
+  HIGH: 'bg-red-500/10 text-red-400 border-red-500/20',
+  MEDIUM: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+  LOW: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
 };
 
 export function Dashboard() {
@@ -49,7 +51,6 @@ export function Dashboard() {
   const [trendingTechs, setTrendingTechs] = useState<any[]>([]);
   const [highDemandTechs, setHighDemandTechs] = useState<any[]>([]);
 
-  // Load dashboard data from APIs
   useEffect(() => {
     if (!user) return;
     
@@ -57,7 +58,6 @@ export function Dashboard() {
       try {
         setLoading(true);
         
-        // Load all data in parallel
         const [skillsResponse, goalsResponse, plansResponse, techsResponse] = await Promise.all([
           skillsApi.getSkills(Number(user.id)),
           goalsApi.getGoals(Number(user.id), { status: 'ACTIVE' }),
@@ -66,26 +66,22 @@ export function Dashboard() {
         ]);
         
         if (skillsResponse.success) {
-          // Handle both response formats:
-          // 1. { skills: [...] } - from API spec
-          // 2. [...] - direct array from actual API
           const skillsArray = Array.isArray(skillsResponse.data)
             ? skillsResponse.data
             : skillsResponse.data?.skills || [];
-          setSkills(skillsArray.slice(0, 5)); // Top 5 skills
+          setSkills(skillsArray.slice(0, 6));
         }
 
         if (goalsResponse.success && goalsResponse.data?.goals) {
           const goalsArray = Array.isArray(goalsResponse.data.goals)
             ? goalsResponse.data.goals
             : [];
-          setGoals(goalsArray.slice(0, 3)); // Top 3 goals
+          setGoals(goalsArray.slice(0, 4));
         }
         
         if (plansResponse.success && plansResponse.data?.pagination) {
           setPlansCount(plansResponse.data.pagination.totalElements);
           if (plansResponse.data.plans && plansResponse.data.plans.length > 0) {
-            // Get the first active plan details
             const firstPlan = plansResponse.data.plans[0];
             try {
               const planDetailResponse = await learningPlansApi.getPlan(Number(user.id), firstPlan.learningPlanId);
@@ -99,24 +95,19 @@ export function Dashboard() {
                   currentWeek: Math.floor((planDetailResponse.data.progress / 100) * planDetailResponse.data.totalWeeks),
                 });
               }
-            } catch (error) {
-              // Ignore if plan details fail
-            }
+            } catch (error) {}
           }
         }
 
-        // 인기 기술 및 수요 높은 기술 분류
         if (techsResponse.success && techsResponse.data?.technologies) {
           const techs = techsResponse.data.technologies;
           
-          // 커뮤니티 인기도 기준 상위 5개
           const trending = [...techs]
             .filter((t: any) => t.communityPopularity)
             .sort((a: any, b: any) => (b.communityPopularity || 0) - (a.communityPopularity || 0))
             .slice(0, 5);
           setTrendingTechs(trending);
 
-          // 취업 시장 수요 기준 상위 5개
           const highDemand = [...techs]
             .filter((t: any) => t.jobMarketDemand)
             .sort((a: any, b: any) => (b.jobMarketDemand || 0) - (a.jobMarketDemand || 0))
@@ -135,439 +126,346 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="size-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-[300px]">
+        <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="content-spacing">
-      {/* 웰컴 헤더 */}
-      <div className="relative overflow-hidden">
-        <div className="glass-card border-tech card-hover-float p-8 animate-slide-up-fluid">
-          <div className="flex items-center justify-between flex-wrap gap-6">
-            <div className="flex items-center gap-5">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary rounded-2xl blur-xl opacity-50 animate-glow-pulse"></div>
-                <div className="relative bg-gradient-tech-primary rounded-2xl p-4 shadow-neon">
-                  <Activity className="size-10 text-white" />
-                </div>
+    <TooltipProvider>
+      <div className="section-gap">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">
+              안녕하세요, {user?.name}님 👋
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              오늘도 성장을 향해 한 걸음 나아가세요
+            </p>
+          </div>
+          <Link to="/learning-plans/new">
+            <Button size="sm" className="h-8 gap-1.5">
+              <Sparkles className="size-3.5" />
+              새 플랜 생성
+            </Button>
+          </Link>
+        </div>
+
+        {/* Stats Grid - Compact */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Link to="/skills" className="card-compact-hover">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">기술 스택</p>
+                <p className="text-2xl font-bold text-foreground mt-0.5">{skills.length}</p>
               </div>
-      <div>
-                <h1 className="text-4xl font-bold text-foreground mb-2">안녕하세요, {user?.name}님</h1>
-                <p className="text-xl text-muted-foreground font-medium">
-                  오늘도 성장을 위한 여정을 이어가세요 🚀
-                </p>
+              <div className="p-2 rounded-lg bg-primary/10">
+                <BookOpen className="size-4 text-primary" />
               </div>
             </div>
-            <Link to="/learning-plans/new">
-              <Button className="bg-gradient-tech-primary hover-glow-primary btn-ripple shadow-neon h-14 px-8 text-base">
-                <Sparkles className="size-5 mr-2" />
-                새 학습 플랜 만들기
-              </Button>
-            </Link>
+          </Link>
+
+          <Link to="/goals" className="card-compact-hover">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">활성 목표</p>
+                <p className="text-2xl font-bold text-foreground mt-0.5">{goals.length}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-success/10">
+                <Target className="size-4 text-success" />
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/learning-plans" className="card-compact-hover">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">학습 플랜</p>
+                <p className="text-2xl font-bold text-foreground mt-0.5">{plansCount}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-accent/10">
+                <GraduationCap className="size-4 text-accent" />
+              </div>
+            </div>
+          </Link>
+
+          <div className="card-compact">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">목표 트랙</p>
+                <p className="text-sm font-semibold text-foreground mt-1 truncate">
+                  {user?.targetTrack || '-'}
+                </p>
+              </div>
+              <div className="p-2 rounded-lg bg-warning/10">
+                <TrendingUp className="size-4 text-warning" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left Column - Active Plan & Goals */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Active Plan - Compact */}
+            {activePlan ? (
+              <Card className="glass-card">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-primary/10">
+                        <Sparkles className="size-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">진행 중인 플랜</p>
+                        <h3 className="font-semibold text-foreground">{activePlan.targetTechnology}</h3>
+                      </div>
+                    </div>
+                    <Link to={`/learning-plans/${activePlan.id}`}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                        상세 <ChevronRight className="size-3" />
+                      </Button>
+                    </Link>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {activePlan.currentWeek}주차 / {activePlan.totalWeeks}주
+                      </span>
+                      <span className="font-semibold text-primary">{activePlan.progress}%</span>
+                    </div>
+                    <Progress value={activePlan.progress} className="h-1.5" />
+                    <p className="text-xs text-muted-foreground">
+                      총 {activePlan.totalHours}시간 · 남은 시간: {Math.round((activePlan.totalHours * (100 - activePlan.progress)) / 100)}시간
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="glass-card border-dashed">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Sparkles className="size-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">학습 플랜이 없습니다</p>
+                        <p className="text-xs text-muted-foreground">AI가 맞춤형 커리큘럼을 생성해드립니다</p>
+                      </div>
+                    </div>
+                    <Link to="/learning-plans/new">
+                      <Button size="sm" className="h-8">
+                        <Plus className="size-3.5 mr-1" />
+                        생성
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Skills & Goals Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Skills */}
+              <Card className="glass-card">
+                <CardHeader className="p-3 pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <BookOpen className="size-4 text-primary" />
+                      내 기술
+                    </CardTitle>
+                    <Link to="/skills">
+                      <Button variant="ghost" size="sm" className="h-6 text-xs px-2">
+                        전체
+                      </Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <div className="space-y-1">
+                    {skills.length === 0 ? (
+                      <Link to="/skills/new" className="flex items-center justify-center p-4 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md transition-colors">
+                        <Plus className="size-4 mr-2" />
+                        기술 추가하기
+                      </Link>
+                    ) : (
+                      skills.map((skill: any) => (
+                        <Link
+                          key={skill.memberSkillId}
+                          to={`/technologies/${encodeURIComponent(skill.technologyName)}`}
+                          className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-secondary/50 transition-colors"
+                        >
+                          <span className="text-sm text-foreground truncate">{skill.technologyName}</span>
+                          <Badge className={cn("badge-compact border", levelColors[skill.level])}>
+                            {skill.level}
+                          </Badge>
+                        </Link>
+                      ))
+                    )}
+                    {skills.length > 0 && (
+                      <Link to="/skills/new">
+                        <Button variant="ghost" size="sm" className="w-full h-7 text-xs mt-1 border border-dashed border-border">
+                          <Plus className="size-3 mr-1" />
+                          추가
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Goals */}
+              <Card className="glass-card">
+                <CardHeader className="p-3 pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Target className="size-4 text-success" />
+                      활성 목표
+                    </CardTitle>
+                    <Link to="/goals">
+                      <Button variant="ghost" size="sm" className="h-6 text-xs px-2">
+                        전체
+                      </Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <div className="space-y-1">
+                    {goals.length === 0 ? (
+                      <Link to="/goals" className="flex items-center justify-center p-4 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md transition-colors">
+                        <Plus className="size-4 mr-2" />
+                        목표 추가하기
+                      </Link>
+                    ) : (
+                      goals.map((goal: any) => (
+                        <div
+                          key={goal.id}
+                          className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-secondary/50 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground truncate">{goal.title}</p>
+                            <p className="text-xs text-muted-foreground">~{goal.dueDate}</p>
+                          </div>
+                          <Badge className={cn("badge-compact border ml-2", priorityColors[goal.priority])}>
+                            {goal.priority}
+                          </Badge>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Right Column - Trending & Demand */}
+          <div className="space-y-4">
+            {/* Trending Techs */}
+            {trendingTechs.length > 0 && (
+              <Card className="glass-card">
+                <CardHeader className="p-3 pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Flame className="size-4 text-orange-500" />
+                    인기 기술
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <div className="space-y-1">
+                    {trendingTechs.map((tech: any, index: number) => (
+                      <Link
+                        key={tech.name}
+                        to={`/technologies/${encodeURIComponent(tech.name)}`}
+                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-secondary/50 transition-colors"
+                      >
+                        <span className="text-xs font-medium text-muted-foreground w-4">{index + 1}</span>
+                        <span className="text-sm text-foreground flex-1 truncate">{tech.displayName}</span>
+                        <span className="text-xs text-orange-500 font-medium">{tech.communityPopularity}/10</span>
+                      </Link>
+                    ))}
+                  </div>
+                  <Link to="/technologies?sort=popularity">
+                    <Button variant="ghost" size="sm" className="w-full h-7 text-xs mt-2">
+                      전체 보기 <ChevronRight className="size-3 ml-1" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* High Demand Techs */}
+            {highDemandTechs.length > 0 && (
+              <Card className="glass-card">
+                <CardHeader className="p-3 pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Briefcase className="size-4 text-blue-500" />
+                    취업 수요
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <div className="space-y-1">
+                    {highDemandTechs.map((tech: any, index: number) => (
+                      <Link
+                        key={tech.name}
+                        to={`/technologies/${encodeURIComponent(tech.name)}`}
+                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-secondary/50 transition-colors"
+                      >
+                        <span className="text-xs font-medium text-muted-foreground w-4">{index + 1}</span>
+                        <span className="text-sm text-foreground flex-1 truncate">{tech.displayName}</span>
+                        <span className="text-xs text-blue-500 font-medium">{tech.jobMarketDemand}/10</span>
+                      </Link>
+                    ))}
+                  </div>
+                  <Link to="/technologies?sort=demand">
+                    <Button variant="ghost" size="sm" className="w-full h-7 text-xs mt-2">
+                      전체 보기 <ChevronRight className="size-3 ml-1" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Quick Actions */}
+            <Card className="glass-card">
+              <CardHeader className="p-3 pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Zap className="size-4 text-accent" />
+                  빠른 작업
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <div className="space-y-1.5">
+                  <Link to="/learning-plans/new" className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors">
+                    <div className="p-1.5 rounded bg-primary/10">
+                      <Sparkles className="size-3.5 text-primary" />
+                    </div>
+                    <span className="text-sm">새 학습 플랜</span>
+                    <ChevronRight className="size-3 text-muted-foreground ml-auto" />
+                  </Link>
+                  <Link to="/technologies" className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors">
+                    <div className="p-1.5 rounded bg-secondary">
+                      <Database className="size-3.5 text-muted-foreground" />
+                    </div>
+                    <span className="text-sm">기술 둘러보기</span>
+                    <ChevronRight className="size-3 text-muted-foreground ml-auto" />
+                  </Link>
+                  <Link to="/explore" className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors">
+                    <div className="p-1.5 rounded bg-secondary">
+                      <TrendingUp className="size-3.5 text-muted-foreground" />
+                    </div>
+                    <span className="text-sm">로드맵 탐색</span>
+                    <ChevronRight className="size-3 text-muted-foreground ml-auto" />
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
-
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="glass-card border-tech card-hover-float animate-scale-in stagger-1">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground font-semibold mb-2">내 기술 스택</p>
-                <p className="text-5xl font-bold text-foreground">{skills.length}</p>
-                <p className="text-sm text-muted-foreground font-medium mt-1">개</p>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary rounded-xl blur-md opacity-30"></div>
-                <div className="relative bg-primary/20 rounded-xl p-4 border border-primary/30">
-                  <BookOpen className="size-8 text-primary" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card border-tech card-hover-float animate-scale-in stagger-2">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground font-semibold mb-2">활성 목표</p>
-                <p className="text-5xl font-bold text-foreground">{goals.length}</p>
-                <p className="text-sm text-muted-foreground font-medium mt-1">개</p>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-0 bg-success rounded-xl blur-md opacity-30"></div>
-                <div className="relative bg-success/20 rounded-xl p-4 border border-success/30">
-                  <Target className="size-8 text-success" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card border-tech card-hover-float animate-scale-in stagger-3">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground font-semibold mb-2">하루 학습 시간</p>
-                <p className="text-5xl font-bold text-foreground">60</p>
-                <p className="text-sm text-muted-foreground font-medium mt-1">분</p>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-0 bg-accent rounded-xl blur-md opacity-30"></div>
-                <div className="relative bg-accent/20 rounded-xl p-4 border border-accent/30">
-                  <Clock className="size-8 text-accent" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card border-tech card-hover-float animate-scale-in stagger-4">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground font-semibold mb-2">목표 트랙</p>
-                <p className="text-2xl font-bold text-foreground mt-3">{user?.targetTrack}</p>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-0 bg-warning rounded-xl blur-md opacity-30"></div>
-                <div className="relative bg-warning/20 rounded-xl p-4 border border-warning/30">
-                  <TrendingUp className="size-8 text-warning" />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 활성 학습 플랜 */}
-      {activePlan && (
-        <Card className="glass-card border-tech card-hover-float shadow-neon animate-slide-up-fluid stagger-5">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary rounded-lg blur-md opacity-50"></div>
-                  <div className="relative bg-primary/20 rounded-lg p-3 border border-primary/30">
-                    <Sparkles className="size-6 text-primary" />
-                  </div>
-                </div>
-                <CardTitle className="text-2xl">진행 중인 학습 플랜</CardTitle>
-              </div>
-                <Link to={`/learning-plans/${activePlan.id}`}>
-                <Button variant="outline" className="border-primary/30 hover:bg-primary/10 transition-all duration-fluid">
-                  상세 보기
-                  <ArrowRight className="size-4 ml-2" />
-                </Button>
-                </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-3xl font-bold text-foreground mb-2">{activePlan.targetTechnology}</h3>
-                <p className="text-muted-foreground text-lg font-medium">
-                  {activePlan.currentWeek}주차 / {activePlan.totalWeeks}주 · {activePlan.totalHours}시간
-                </p>
-              </div>
-              <Badge className="bg-success/20 text-success border-success/30 px-4 py-2 text-sm shadow-neon-sm">
-                진행중
-              </Badge>
-            </div>
-
-            <div className="space-y-4 glass-card p-5 rounded-xl border border-border/50">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-semibold">진행률</span>
-                <span className="text-3xl font-bold text-primary">{activePlan.progress}%</span>
-              </div>
-              <Progress value={activePlan.progress} className="h-3" />
-            </div>
-
-            <div className="bg-gradient-tech-primary p-6 rounded-xl shadow-neon border border-primary/30">
-              <div className="flex items-start gap-4">
-                <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
-                  <Calendar className="size-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-white text-lg mb-2">오늘의 학습</p>
-                  <p className="text-white/90 text-base leading-relaxed">학습 플랜을 진행 중입니다</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 스킬 & 목표 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* 스킬 */}
-        <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary rounded-lg blur-md opacity-40"></div>
-                  <div className="relative bg-primary/20 rounded-lg p-2.5 border border-primary/30">
-                    <BookOpen className="size-5 text-primary" />
-                  </div>
-                </div>
-                <CardTitle className="text-xl">내 기술 스택</CardTitle>
-              </div>
-                <Link to="/skills">
-                <Button variant="outline" size="sm" className="border-primary/30 hover:bg-primary/10 transition-fluid">
-                  전체 보기
-                  <ArrowRight className="size-4 ml-1" />
-                </Button>
-                </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {skills.map((skill: any) => (
-                <Link key={skill.memberSkillId} to={`/skills/${skill.memberSkillId}`} className="flex items-center justify-between p-4 glass-card rounded-lg border-tech hover-glow-primary">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-primary/20 rounded-lg p-2.5 border border-primary/30">
-                      <BookOpen className="size-5 text-primary" />
-                    </div>
-                    <div>
-                      {/* V4: technologyName 기반 */}
-                      <p className="font-semibold text-foreground">{skill.technologyName}</p>
-                      <p className="text-sm text-muted-foreground">{skill.level}</p>
-                    </div>
-                  </div>
-                  <Badge className={levelColors[skill.level as keyof typeof levelColors] + ' px-3 py-1 font-medium border'}>
-                    {skill.level}
-                  </Badge>
-                </Link>
-              ))}
-                <Link to="/skills/new">
-                <Button variant="outline" className="w-full h-12 border-dashed border-2 border-primary/30 hover:bg-primary/10 transition-fluid">
-                  <Plus className="size-5 mr-2" />
-                  기술 추가
-                </Button>
-                </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 목표 */}
-        <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-7">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-success rounded-lg blur-md opacity-40"></div>
-                  <div className="relative bg-success/20 rounded-lg p-2.5 border border-success/30">
-                    <Target className="size-5 text-success" />
-                  </div>
-                </div>
-                <CardTitle className="text-xl">활성 목표</CardTitle>
-              </div>
-                <Link to="/goals">
-                <Button variant="outline" size="sm" className="border-success/30 hover:bg-success/10 transition-fluid">
-                  전체 보기
-                  <ArrowRight className="size-4 ml-1" />
-                </Button>
-                </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {goals.map((goal) => (
-                <Link key={goal.id} to={`/goals/${goal.id}`} className="block p-4 glass-card rounded-lg border-tech hover-glow-primary">
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="font-semibold text-foreground flex-1">{goal.title}</p>
-                    <Badge className={priorityColors[goal.priority as keyof typeof priorityColors] + ' px-3 py-1 font-medium border'}>
-                      {goal.priority}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="size-4" />
-                    <span className="text-sm">~{goal.dueDate}</span>
-                  </div>
-                </Link>
-              ))}
-                <Link to="/goals">
-                <Button variant="outline" className="w-full h-12 border-dashed border-2 border-success/30 hover:bg-success/10 transition-fluid">
-                  <Plus className="size-5 mr-2" />
-                  목표 추가
-                </Button>
-                </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 인기 기술 & 수요 높은 기술 */}
-      {(trendingTechs.length > 0 || highDemandTechs.length > 0) && (
-        <TooltipProvider>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* 인기 기술 */}
-            {trendingTechs.length > 0 && (
-              <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-8">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-orange-500 rounded-lg blur-md opacity-40"></div>
-                        <div className="relative bg-orange-500/20 rounded-lg p-2.5 border border-orange-500/30">
-                          <Flame className="size-5 text-orange-500" />
-                        </div>
-                      </div>
-                      <CardTitle className="text-xl">인기 기술</CardTitle>
-                    </div>
-                    <Link to="/technologies?sort=popularity">
-                      <Button variant="outline" size="sm" className="border-orange-500/30 hover:bg-orange-500/10 transition-fluid">
-                        전체 보기
-                        <ArrowRight className="size-4 ml-1" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {trendingTechs.map((tech: any, index: number) => (
-                      <Link 
-                        key={tech.name} 
-                        to={`/technologies/${encodeURIComponent(tech.name)}`}
-                        className="flex items-center justify-between p-3 glass-card rounded-lg border-tech hover-glow-primary"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center size-8 rounded-full bg-orange-500/20 text-orange-600 font-bold text-sm">
-                            {index + 1}
-                          </div>
-                          <div className="bg-primary/20 rounded-lg p-2 border border-primary/30">
-                            <Database className="size-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-foreground">{tech.displayName}</p>
-                            <p className="text-xs text-muted-foreground">{tech.category}</p>
-                          </div>
-                        </div>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div className="flex items-center gap-1 text-orange-600">
-                              <Users className="size-4" />
-                              <span className="font-bold">{tech.communityPopularity}/10</span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>커뮤니티 인기도</TooltipContent>
-                        </Tooltip>
-                      </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* 수요 높은 기술 */}
-            {highDemandTechs.length > 0 && (
-              <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-9">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-blue-500 rounded-lg blur-md opacity-40"></div>
-                        <div className="relative bg-blue-500/20 rounded-lg p-2.5 border border-blue-500/30">
-                          <Briefcase className="size-5 text-blue-500" />
-                        </div>
-                      </div>
-                      <CardTitle className="text-xl">취업 수요 높은 기술</CardTitle>
-                    </div>
-                    <Link to="/technologies?sort=demand">
-                      <Button variant="outline" size="sm" className="border-blue-500/30 hover:bg-blue-500/10 transition-fluid">
-                        전체 보기
-                        <ArrowRight className="size-4 ml-1" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {highDemandTechs.map((tech: any, index: number) => (
-                      <Link 
-                        key={tech.name} 
-                        to={`/technologies/${encodeURIComponent(tech.name)}`}
-                        className="flex items-center justify-between p-3 glass-card rounded-lg border-tech hover-glow-primary"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center size-8 rounded-full bg-blue-500/20 text-blue-600 font-bold text-sm">
-                            {index + 1}
-                          </div>
-                          <div className="bg-primary/20 rounded-lg p-2 border border-primary/30">
-                            <Database className="size-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-foreground">{tech.displayName}</p>
-                            <p className="text-xs text-muted-foreground">{tech.category}</p>
-                          </div>
-                        </div>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div className="flex items-center gap-1 text-blue-600">
-                              <TrendingUp className="size-4" />
-                              <span className="font-bold">{tech.jobMarketDemand}/10</span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>취업 시장 수요</TooltipContent>
-                        </Tooltip>
-                      </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TooltipProvider>
-      )}
-
-      {/* 빠른 작업 */}
-      <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-10">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-accent rounded-lg blur-md opacity-40"></div>
-              <div className="relative bg-accent/20 rounded-lg p-2.5 border border-accent/30">
-                <Zap className="size-5 text-accent" />
-              </div>
-            </div>
-            <CardTitle className="text-xl">빠른 작업</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link to="/learning-plans/new">
-              <Button variant="outline" className="w-full h-28 flex-col items-start p-6 hover-glow-primary border-tech transition-fluid group">
-                <div className="bg-gradient-tech-primary rounded-lg p-3 mb-3 group-hover:scale-110 transition-transform shadow-neon-sm">
-                  <Plus className="size-6 text-white" />
-                </div>
-                <span className="font-semibold text-foreground text-left">새 학습 플랜 만들기</span>
-              </Button>
-              </Link>
-              <Link to="/technologies">
-              <Button variant="outline" className="w-full h-28 flex-col items-start p-6 hover-glow-primary border-tech transition-fluid group">
-                <div className="bg-primary/20 rounded-lg p-3 mb-3 border border-primary/30 group-hover:scale-110 transition-transform">
-                  <BookOpen className="size-6 text-primary" />
-                </div>
-                <span className="font-semibold text-foreground text-left">기술 카탈로그 둘러보기</span>
-              </Button>
-              </Link>
-              <Link to="/skills/new">
-              <Button variant="outline" className="w-full h-28 flex-col items-start p-6 hover-glow-primary border-tech transition-fluid group">
-                <div className="bg-success/20 rounded-lg p-3 mb-3 border border-success/30 group-hover:scale-110 transition-transform">
-                  <CheckCircle2 className="size-6 text-success" />
-                </div>
-                <span className="font-semibold text-foreground text-left">기술 스택 업데이트</span>
-              </Button>
-              </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </TooltipProvider>
   );
 }

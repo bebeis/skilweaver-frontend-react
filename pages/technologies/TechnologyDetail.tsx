@@ -6,6 +6,9 @@ import { Badge } from '../../components/ui/badge';
 import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
 import { Input } from '../../components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { ScrollArea } from '../../components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import {
   Database,
   ExternalLink,
@@ -28,61 +31,232 @@ import {
   Star,
   StarOff,
   GitCompare,
-  Copy,
-  Check
+  Check,
+  StickyNote,
+  Save,
+  Trash2,
+  MoreHorizontal,
+  ChevronRight,
+  Search
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '../../components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { Progress } from '../../components/ui/progress';
 import { toast } from 'sonner';
 import { technologiesApi } from '../../src/lib/api';
+import { cn } from '../../components/ui/utils';
 
-const categoryColors = {
-  LANGUAGE: 'bg-red-50 text-red-700 border-red-200',
-  FRAMEWORK: 'bg-blue-50 text-blue-700 border-blue-200',
-  LIBRARY: 'bg-teal-50 text-teal-700 border-teal-200',
-  TOOL: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  DB: 'bg-green-50 text-green-700 border-green-200',
-  PLATFORM: 'bg-purple-50 text-purple-700 border-purple-200',
-  ETC: 'bg-gray-50 text-gray-700 border-gray-200'
+const BOOKMARKS_KEY = 'skillweaver_tech_bookmarks';
+const MEMO_KEY_PREFIX = 'skillweaver_memo_';
+
+const categoryColors: Record<string, string> = {
+  LANGUAGE: 'category-language',
+  FRAMEWORK: 'category-framework',
+  LIBRARY: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+  TOOL: 'category-tool',
+  DATABASE: 'category-database',
+  DB: 'category-database',
+  PLATFORM: 'category-platform',
+  DEVOPS: 'category-devops',
+  API: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
+  CONCEPT: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+  ETC: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
 };
 
-// 북마크 로컬스토리지 키
-const BOOKMARKS_KEY = 'skillweaver_tech_bookmarks';
+const difficultyColors: Record<string, string> = {
+  BEGINNER: 'level-beginner',
+  INTERMEDIATE: 'level-intermediate',
+  ADVANCED: 'level-advanced',
+  EXPERT: 'level-expert'
+};
+
+// Compare Dialog Component
+function CompareDialog({ 
+  open, 
+  onOpenChange, 
+  currentTech 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void;
+  currentTech: any;
+}) {
+  const [targetTech, setTargetTech] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (search.length > 1) {
+      const searchTech = async () => {
+        try {
+          const response = await technologiesApi.getTechnologies({ limit: 100 });
+          if (response.success && response.data?.technologies) {
+            const results = response.data.technologies.filter((t: any) => 
+              t.name !== currentTech.name && 
+              (t.displayName.toLowerCase().includes(search.toLowerCase()) || 
+               t.name.toLowerCase().includes(search.toLowerCase()))
+            );
+            setSearchResults(results.slice(0, 5));
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      const timer = setTimeout(searchTech, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchResults([]);
+    }
+  }, [search, currentTech]);
+
+  const handleSelect = async (techName: string) => {
+    try {
+      setLoading(true);
+      const response = await technologiesApi.getTechnology(techName);
+      if (response.success) {
+        setTargetTech(response.data);
+      }
+    } catch (error) {
+      toast.error('비교 대상을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>기술 비교</DialogTitle>
+        </DialogHeader>
+        
+        {!targetTech ? (
+          <div className="space-y-4 py-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input 
+                placeholder="비교할 기술 검색..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="space-y-1">
+              {searchResults.map((tech) => (
+                <button
+                  key={tech.name}
+                  onClick={() => handleSelect(tech.name)}
+                  className="w-full flex items-center justify-between p-2 rounded hover:bg-secondary/50 transition-colors text-left"
+                >
+                  <span className="font-medium">{tech.displayName}</span>
+                  <Badge variant="outline" className="text-xs">{tech.category}</Badge>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 py-4">
+            {/* Current Tech */}
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-base text-primary">{currentTech.displayName}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-3">
+                <div className="text-sm">
+                  <span className="text-muted-foreground block text-xs">카테고리</span>
+                  {currentTech.category}
+                </div>
+                <div className="text-sm">
+                  <span className="text-muted-foreground block text-xs">난이도</span>
+                  {currentTech.difficulty || '-'}
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs mb-1">인기도</span>
+                  <Progress value={(currentTech.communityPopularity || 0) * 10} className="h-1.5" />
+                  <span className="text-xs font-bold">{currentTech.communityPopularity}/10</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs mb-1">수요</span>
+                  <Progress value={(currentTech.jobMarketDemand || 0) * 10} className="h-1.5" />
+                  <span className="text-xs font-bold">{currentTech.jobMarketDemand}/10</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Target Tech */}
+            <Card className="bg-secondary/30">
+              <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+                <CardTitle className="text-base">{targetTech.displayName}</CardTitle>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setTargetTech(null)}>
+                  <Trash2 className="size-3" />
+                </Button>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 space-y-3">
+                <div className="text-sm">
+                  <span className="text-muted-foreground block text-xs">카테고리</span>
+                  {targetTech.category}
+                </div>
+                <div className="text-sm">
+                  <span className="text-muted-foreground block text-xs">난이도</span>
+                  {targetTech.difficulty || '-'}
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs mb-1">인기도</span>
+                  <Progress value={(targetTech.communityPopularity || 0) * 10} className="h-1.5" />
+                  <span className="text-xs font-bold">{targetTech.communityPopularity}/10</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs mb-1">수요</span>
+                  <Progress value={(targetTech.jobMarketDemand || 0) * 10} className="h-1.5" />
+                  <span className="text-xs font-bold">{targetTech.jobMarketDemand}/10</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function TechnologyDetail() {
-  // V4: technologyId → name (String 기반 라우팅)
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
+  
   const [loading, setLoading] = useState(true);
   const [technology, setTechnology] = useState<any>(null);
-  const [relationships, setRelationships] = useState<any>({
-    DEPENDS_ON: [],
-    RECOMMENDED_AFTER: [],
-    USED_WITH: [],
-    ALTERNATIVE_TO: [],
-    EXTENDS: [],
-    CONTAINS: []
-  });
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [editForm, setEditForm] = useState({
-    proposedSummary: '',
-    proposedLearningTips: '',
-    proposedPrerequisites: ''
-  });
+  
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  // Memo state
+  const [memo, setMemo] = useState('');
+  const [isMemoOpen, setIsMemoOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
 
-  // 북마크 상태 로드
+  // Load bookmark & memo
   useEffect(() => {
     if (!name) return;
-    const saved = localStorage.getItem(BOOKMARKS_KEY);
-    if (saved) {
-      const bookmarks = new Set(JSON.parse(saved));
-      setIsBookmarked(bookmarks.has(decodeURIComponent(name)));
+    const techName = decodeURIComponent(name);
+    
+    // Bookmark
+    const savedBookmarks = localStorage.getItem(BOOKMARKS_KEY);
+    if (savedBookmarks) {
+      const bookmarks = new Set(JSON.parse(savedBookmarks));
+      setIsBookmarked(bookmarks.has(techName));
     }
+
+    // Memo
+    const savedMemo = localStorage.getItem(`${MEMO_KEY_PREFIX}${techName}`);
+    if (savedMemo) setMemo(savedMemo);
   }, [name]);
 
-  // 북마크 토글
   const toggleBookmark = () => {
     if (!name) return;
     const techName = decodeURIComponent(name);
@@ -92,67 +266,37 @@ export function TechnologyDetail() {
     if (bookmarks.has(techName)) {
       bookmarks.delete(techName);
       setIsBookmarked(false);
-      toast.success('북마크에서 제거했습니다');
+      toast.success('북마크 해제');
     } else {
       bookmarks.add(techName);
       setIsBookmarked(true);
-      toast.success('북마크에 추가했습니다');
+      toast.success('북마크 추가');
     }
     localStorage.setItem(BOOKMARKS_KEY, JSON.stringify([...bookmarks]));
   };
 
-  // 페이지 공유
-  const sharePage = async () => {
-    const url = window.location.href;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      toast.success('링크가 클립보드에 복사되었습니다');
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error('복사에 실패했습니다');
-    }
+  const saveMemo = () => {
+    if (!name) return;
+    const techName = decodeURIComponent(name);
+    localStorage.setItem(`${MEMO_KEY_PREFIX}${techName}`, memo);
+    toast.success('메모 저장됨');
+    setIsMemoOpen(false);
   };
 
-  // V4: Load technology details from API using name
+  // Load technology
   useEffect(() => {
     if (!name) return;
     
     const loadTechnology = async () => {
       try {
         setLoading(true);
-        // V4: getTechnology(name: string)
         const response = await technologiesApi.getTechnology(decodeURIComponent(name));
         
         if (response.success) {
           setTechnology(response.data);
-          
-          // V4: Load relationships using name
-          try {
-            const relationshipsResponse = await technologiesApi.getRelationships(
-              decodeURIComponent(name)
-            );
-            if (relationshipsResponse.success && relationshipsResponse.data) {
-              // Group relationships by type
-              const grouped: any = {};
-              relationshipsResponse.data.forEach((rel: any) => {
-                if (!grouped[rel.relation]) {
-                  grouped[rel.relation] = [];
-                }
-                grouped[rel.relation].push({
-                  name: rel.to,
-                  displayName: rel.to, // API에서 displayName 제공 시 사용
-                  relation: rel.relation
-                });
-              });
-              setRelationships(grouped);
-            }
-          } catch (error) {
-            // Ignore relationship errors
-          }
         }
       } catch (error: any) {
-        toast.error(error.message || '기술 정보를 불러오는데 실패했습니다.');
+        toast.error('기술 정보를 불러오는데 실패했습니다.');
         navigate('/technologies');
       } finally {
         setLoading(false);
@@ -162,641 +306,335 @@ export function TechnologyDetail() {
     loadTechnology();
   }, [name, navigate]);
 
-  const handleSubmitEdit = () => {
-    if (!editForm.proposedSummary && !editForm.proposedLearningTips && !editForm.proposedPrerequisites) {
-      toast.error('최소 하나 이상의 수정 사항을 입력해주세요.');
-      return;
-    }
-
-    // Mock API call
-    toast.success('수정 제안이 제출되었습니다. 검토 후 반영됩니다.');
-    setShowEditForm(false);
-    setEditForm({
-      proposedSummary: '',
-      proposedLearningTips: '',
-      proposedPrerequisites: ''
-    });
-  };
-
-  const handleCreateLearningPlan = () => {
-    navigate(`/learning-plans/new?target=${technology.displayName}`);
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="size-8 text-primary animate-spin" />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!technology) {
-    return (
-      <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate('/technologies')}>
-          <ArrowLeft className="size-4 mr-2" />
-          기술 카탈로그로 돌아가기
-        </Button>
-        <Card className="glass-card border-tech">
-          <CardContent className="pt-6">
-            <p className="text-muted-foreground text-center">기술 정보를 불러올 수 없습니다.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (!technology) return null;
 
   return (
     <TooltipProvider>
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Button variant="ghost" onClick={() => navigate('/technologies')}>
-        <ArrowLeft className="size-4 mr-2" />
-        기술 카탈로그로 돌아가기
-      </Button>
-
-      {/* Header */}
-      <Card className="glass-card border-tech">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="bg-primary/20 rounded-lg p-3 border border-primary/30">
-                <Database className="size-8 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold text-foreground">{technology.displayName}</h1>
-                  {/* 북마크 & 공유 버튼 */}
-                  <div className="flex items-center gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          onClick={toggleBookmark}
-                        >
-                          {isBookmarked ? (
-                            <Star className="size-5 fill-yellow-500 text-yellow-500" />
-                          ) : (
-                            <StarOff className="size-5" />
-                          )}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{isBookmarked ? '북마크 제거' : '북마크 추가'}</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          onClick={sharePage}
-                        >
-                          {copied ? (
-                            <Check className="size-5 text-green-500" />
-                          ) : (
-                            <Share2 className="size-5" />
-                          )}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>링크 복사</TooltipContent>
-                    </Tooltip>
-                  </div>
+      <div className="flex h-[calc(100vh-8rem)] gap-6">
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header - Compact */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground" onClick={() => navigate('/technologies')}>
+                <ArrowLeft className="size-4 mr-1" />
+                목록
+              </Button>
+              <div className="h-4 w-px bg-border/50 mx-1" />
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded bg-primary/10">
+                  <Database className="size-4 text-primary" />
                 </div>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <Badge
-                    variant="outline"
-                    className={categoryColors[technology.category as keyof typeof categoryColors]}
-                  >
-                    {technology.category}
-                  </Badge>
-                  {technology.ecosystem && (
-                    <Badge variant="outline" className="bg-secondary/50 text-muted-foreground border-border">
-                      {technology.ecosystem}
-                    </Badge>
-                  )}
-                  {/* V4: difficulty 필드 표시 */}
-                  {technology.difficulty && (
-                    <Badge variant="outline" className={
-                      technology.difficulty === 'BEGINNER' ? 'bg-green-50 text-green-700 border-green-200' :
-                      technology.difficulty === 'INTERMEDIATE' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                      technology.difficulty === 'ADVANCED' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                      'bg-red-50 text-red-700 border-red-200'
-                    }>
-                      {technology.difficulty}
-                    </Badge>
-                  )}
-                  {technology.estimatedLearningHours && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                      <Clock className="size-3 mr-1" />
-                      {technology.estimatedLearningHours}시간 예상
-                    </Badge>
-                  )}
-                </div>
-                {technology.officialSite && (
-                  <a
-                    href={technology.officialSite}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-primary hover:underline font-medium"
-                  >
-                    <ExternalLink className="size-4" />
-                    <span>공식 사이트 방문</span>
-                  </a>
-                )}
+                <h1 className="text-lg font-bold text-foreground">{technology.displayName}</h1>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate(`/explore?tab=gap&target=${technology.name}`)}
-                    className="relative z-10"
-                  >
-                    <GitCompare className="size-4 mr-2" />
-                    갭 분석
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>현재 실력으로 이 기술을 배울 준비가 되었는지 확인</TooltipContent>
-              </Tooltip>
+            
+            <div className="flex items-center gap-2">
               <Button
-                variant="outline"
-                onClick={() => navigate(`/explore?tech=${technology.name}`)}
-                className="relative z-10"
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={toggleBookmark}
               >
-                <Map className="size-4 mr-2" />
-                로드맵 탐색
+                {isBookmarked ? (
+                  <Star className="size-4 text-yellow-500 fill-yellow-500" />
+                ) : (
+                  <StarOff className="size-4 text-muted-foreground" />
+                )}
               </Button>
-              <Button onClick={handleCreateLearningPlan} className="relative z-10">
-                <GraduationCap className="size-4 mr-2" />
-                학습 플랜 생성
-              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-8">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setCompareOpen(true)}>
+                    <GitCompare className="size-4 mr-2" />
+                    비교하기
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsMemoOpen(true)}>
+                    <StickyNote className="size-4 mr-2" />
+                    메모 작성
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate(`/learning-plans/new?target=${technology.name}`)}>
+                    <GraduationCap className="size-4 mr-2" />
+                    학습 플랜 생성
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* V4: Summary (description) */}
-      {technology.description && (
-        <Card className="glass-card border-tech">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <BookOpen className="size-5 text-primary" />
-              개요
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground font-medium">{technology.description}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* V4: Learning Tips */}
-      {technology.learningTips && (
-        <Card className="glass-card border-tech">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <Lightbulb className="size-5 text-accent" />
-              학습 팁
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground font-medium">{technology.learningTips}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* v2: Popularity & Demand Stats */}
-      {(technology.communityPopularity || technology.jobMarketDemand) && (
-        <Card className="glass-card border-tech">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <TrendingUp className="size-5 text-primary" />
-              인기도 및 시장 수요
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {technology.communityPopularity && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-muted-foreground font-medium">
-                      <Users className="size-4" />
-                      커뮤니티 인기도
-                    </span>
-                    <span className="text-foreground font-bold">{technology.communityPopularity}/10</span>
+          {/* Memo Alert */}
+          {isMemoOpen && (
+            <Card className="glass-card mb-4 border-l-4 border-l-accent animate-slide-up">
+              <CardContent className="p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">내 메모</Label>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setIsMemoOpen(false)} className="h-6 w-6 p-0">
+                      <Trash2 className="size-3" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={saveMemo} className="h-6 text-xs gap-1">
+                      <Save className="size-3" /> 저장
+                    </Button>
                   </div>
-                  <Progress value={technology.communityPopularity * 10} className="h-3" />
-                  <p className="text-xs text-muted-foreground">
-                    {technology.communityPopularity >= 8 ? '매우 활발한 커뮤니티' :
-                     technology.communityPopularity >= 6 ? '활발한 커뮤니티' :
-                     technology.communityPopularity >= 4 ? '보통 수준의 커뮤니티' : '성장 중인 커뮤니티'}
-                  </p>
                 </div>
-              )}
-              {technology.jobMarketDemand && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-muted-foreground font-medium">
-                      <Briefcase className="size-4" />
-                      취업 시장 수요
-                    </span>
-                    <span className="text-foreground font-bold">{technology.jobMarketDemand}/10</span>
-                  </div>
-                  <Progress value={technology.jobMarketDemand * 10} className="h-3" />
-                  <p className="text-xs text-muted-foreground">
-                    {technology.jobMarketDemand >= 8 ? '매우 높은 수요' :
-                     technology.jobMarketDemand >= 6 ? '높은 수요' :
-                     technology.jobMarketDemand >= 4 ? '보통 수준의 수요' : '틈새 시장'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* v2: Learning Roadmap */}
-      {technology.learningRoadmap && (
-        <Card className="glass-card border-tech">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <Map className="size-5 text-success" />
-              학습 로드맵
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-secondary/30 rounded-lg p-4 border border-border">
-              <p className="text-muted-foreground font-medium whitespace-pre-line">
-                {technology.learningRoadmap}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* V4: Related Technologies (TechNode[] 구조 지원) */}
-      {technology.relatedTechnologies && technology.relatedTechnologies.length > 0 && (
-        <Card className="glass-card border-tech">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <LinkIcon className="size-5 text-primary" />
-              관련 기술
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {technology.relatedTechnologies.map((tech: any, index: number) => {
-                // V4: TechNode 객체 또는 레거시 문자열 지원
-                const techName = typeof tech === 'string' ? tech : tech.name;
-                const displayName = typeof tech === 'string' ? tech : (tech.displayName || tech.name);
-                const category = typeof tech === 'string' ? null : tech.category;
-                
-                return (
-                  <Link key={index} to={`/technologies/${encodeURIComponent(techName)}`}>
-                    <Badge
-                      variant="outline"
-                      className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
-                    >
-                      {displayName}
-                      {category && (
-                        <span className="ml-1 text-xs opacity-70">({category})</span>
-                      )}
-                    </Badge>
-                  </Link>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* V4: Prerequisites (required/recommended 구조) & Use Cases */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* V4: prerequisites.required / prerequisites.recommended 구조 지원 */}
-        {technology.prerequisites && (
-          (technology.prerequisites.required?.length > 0 || technology.prerequisites.recommended?.length > 0) ? (
-            <Card className="glass-card border-tech">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-foreground">
-                  <CheckCircle2 className="size-5 text-success" />
-                  선행 학습
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* 필수 선행 지식 */}
-                {technology.prerequisites.required?.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                      <Badge variant="destructive" className="text-xs">필수</Badge>
-                    </h4>
-                    <ul className="space-y-2">
-                      {technology.prerequisites.required.map((prereq: any, index: number) => (
-                        <li key={index}>
-                          <Link 
-                            to={`/technologies/${encodeURIComponent(prereq.name)}`}
-                            className="flex items-center gap-2 text-muted-foreground font-medium hover:text-primary transition-colors"
-                          >
-                            <div className="size-2 bg-red-500 rounded-full" />
-                            {prereq.displayName || prereq.name}
-                            {prereq.difficulty && (
-                              <Badge variant="outline" className="text-xs ml-auto">
-                                {prereq.difficulty}
-                              </Badge>
-                            )}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {/* 권장 선행 지식 */}
-                {technology.prerequisites.recommended?.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">권장</Badge>
-                    </h4>
-                    <ul className="space-y-2">
-                      {technology.prerequisites.recommended.map((prereq: any, index: number) => (
-                        <li key={index}>
-                          <Link 
-                            to={`/technologies/${encodeURIComponent(prereq.name)}`}
-                            className="flex items-center gap-2 text-muted-foreground font-medium hover:text-primary transition-colors"
-                          >
-                            <div className="size-2 bg-yellow-500 rounded-full" />
-                            {prereq.displayName || prereq.name}
-                            {prereq.difficulty && (
-                              <Badge variant="outline" className="text-xs ml-auto">
-                                {prereq.difficulty}
-                              </Badge>
-                            )}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <Textarea 
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  placeholder="메모를 입력하세요..."
+                  className="bg-secondary/30 min-h-[80px] text-sm resize-none"
+                />
               </CardContent>
             </Card>
-          ) : Array.isArray(technology.prerequisites) && technology.prerequisites.length > 0 ? (
-            // 레거시 배열 형식 지원
-            <Card className="glass-card border-tech">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-foreground">
-                  <CheckCircle2 className="size-5 text-success" />
-                  선행 학습
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {technology.prerequisites.map((prereq: any, index: number) => (
-                    <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
-                      <div className="size-2 bg-primary rounded-full" />
-                      {typeof prereq === 'string' ? prereq : prereq.displayName}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ) : null
-        )}
+          )}
 
-        {technology.useCases && technology.useCases.length > 0 && (
-          <Card className="glass-card border-tech">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <GitBranch className="size-5 text-success" />
-                주요 활용 사례
-              </CardTitle>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+            <TabsList className="w-full justify-start h-10 p-1 bg-secondary/30 rounded-lg mb-4 shrink-0">
+              <TabsTrigger value="overview" className="h-8 px-4 text-xs">개요</TabsTrigger>
+              <TabsTrigger value="resources" className="h-8 px-4 text-xs">학습 자료</TabsTrigger>
+            </TabsList>
+
+            <ScrollArea className="flex-1 -mx-4 px-4">
+              <div className="pb-6">
+                <TabsContent value="overview" className="mt-0 space-y-4">
+                  {/* Description */}
+                  <Card className="glass-card">
+                    <CardHeader className="p-4 pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <BookOpen className="size-4 text-primary" />
+                        소개
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                        {technology.description || '상세 설명이 없습니다.'}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Use Cases & Tips Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {technology.useCases && technology.useCases.length > 0 && (
+                      <Card className="glass-card">
+                        <CardHeader className="p-4 pb-2">
+                          <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <GitBranch className="size-4 text-success" />
+                            활용 사례
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                          <ul className="grid gap-2">
+                            {technology.useCases.map((useCase: string, idx: number) => (
+                              <li key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
+                                <CheckCircle2 className="size-3.5 text-success mt-0.5 shrink-0" />
+                                {useCase}
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {technology.learningTips && (
+                      <Card className="glass-card bg-accent/5 border-accent/20">
+                        <CardHeader className="p-4 pb-2">
+                          <CardTitle className="text-sm font-medium flex items-center gap-2 text-accent">
+                            <Lightbulb className="size-4" />
+                            학습 팁
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                          <p className="text-xs text-muted-foreground/90 leading-relaxed">
+                            {technology.learningTips}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+
+                  {/* Prerequisites */}
+                  {(technology.prerequisites?.required?.length > 0 || technology.prerequisites?.recommended?.length > 0) && (
+                    <Card className="glass-card">
+                      <CardHeader className="p-4 pb-2">
+                        <CardTitle className="text-sm font-medium">선행 학습</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <div className="space-y-2">
+                          {technology.prerequisites.required?.map((req: any) => (
+                            <div key={req.name} className="flex items-center justify-between text-xs p-2 rounded bg-secondary/30">
+                              <Link 
+                                to={`/technologies/${encodeURIComponent(req.name)}`}
+                                className="font-medium hover:text-primary transition-colors"
+                              >
+                                {req.displayName}
+                              </Link>
+                              <Badge variant="destructive" className="badge-compact">필수</Badge>
+                            </div>
+                          ))}
+                          {technology.prerequisites.recommended?.map((rec: any) => (
+                            <div key={rec.name} className="flex items-center justify-between text-xs p-2 rounded bg-secondary/30">
+                              <Link 
+                                to={`/technologies/${encodeURIComponent(rec.name)}`}
+                                className="font-medium hover:text-primary transition-colors"
+                              >
+                                {rec.displayName}
+                              </Link>
+                              <Badge variant="secondary" className="badge-compact">권장</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="resources" className="mt-0">
+                  <Card className="glass-card">
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      <BookOpen className="size-10 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">준비된 학습 자료가 없습니다.</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </div>
+            </ScrollArea>
+          </Tabs>
+        </div>
+
+        {/* Right Sidebar - Metadata */}
+        <div className="w-72 shrink-0 space-y-4">
+          <Card className="glass-card">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-medium">정보</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {technology.useCases.map((useCase: string, index: number) => (
-                  <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
-                    <div className="size-2 bg-success rounded-full" />
-                    {useCase}
-                  </li>
-                ))}
-              </ul>
+            <CardContent className="p-4 pt-0 space-y-4">
+              {/* Badges */}
+              <div className="flex flex-wrap gap-1.5">
+                <Badge className={cn("badge-compact border", categoryColors[technology.category])}>
+                  {technology.category}
+                </Badge>
+                {technology.difficulty && (
+                  <Badge className={cn("badge-compact border", difficultyColors[technology.difficulty])}>
+                    {technology.difficulty}
+                  </Badge>
+                )}
+                {technology.ecosystem && (
+                  <Badge variant="outline" className="badge-compact">
+                    {technology.ecosystem}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="space-y-3 pt-2 border-t border-border/50">
+                <div>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Users className="size-3" /> 커뮤니티
+                    </span>
+                    <span className="text-xs font-bold">{technology.communityPopularity}/10</span>
+                  </div>
+                  <Progress value={(technology.communityPopularity || 0) * 10} className="h-1" />
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Briefcase className="size-3" /> 수요
+                    </span>
+                    <span className="text-xs font-bold">{technology.jobMarketDemand}/10</span>
+                  </div>
+                  <Progress value={(technology.jobMarketDemand || 0) * 10} className="h-1" />
+                </div>
+                {technology.estimatedLearningHours && (
+                  <div className="pt-2 flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Clock className="size-3" /> 시간
+                    </span>
+                    <span className="font-bold">{technology.estimatedLearningHours}h</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Official Site */}
+              {technology.officialSite && (
+                <a
+                  href={technology.officialSite}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors pt-2 border-t border-border/50"
+                >
+                  <ExternalLink className="size-3" />
+                  공식 웹사이트 방문
+                </a>
+              )}
             </CardContent>
           </Card>
-        )}
+
+          {/* Related Techs */}
+          {technology.relatedTechnologies?.length > 0 && (
+            <Card className="glass-card">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-sm font-medium">관련 기술</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="flex flex-wrap gap-1.5">
+                  {technology.relatedTechnologies.map((tech: any, idx: number) => {
+                    const techName = typeof tech === 'string' ? tech : tech.name;
+                    const displayName = typeof tech === 'string' ? tech : (tech.displayName || tech.name);
+                    return (
+                      <Link key={idx} to={`/technologies/${encodeURIComponent(techName)}`}>
+                        <Badge variant="outline" className="badge-compact hover:bg-primary/10 transition-colors cursor-pointer">
+                          {displayName}
+                        </Badge>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Roadmap Link Button - Added Here */}
+          <Button 
+            variant="outline" 
+            className="w-full justify-start text-xs h-9"
+            onClick={() => navigate(`/explore?tech=${technology.name}`)}
+          >
+            <Map className="size-3.5 mr-2 text-muted-foreground" />
+            로드맵 전체 보기
+          </Button>
+
+          {/* CTA */}
+          <Button 
+            className="w-full shadow-glow-primary"
+            onClick={() => navigate(`/learning-plans/new?target=${technology.name}`)}
+          >
+            <GraduationCap className="size-4 mr-2" />
+            이 기술 학습하기
+          </Button>
+        </div>
+
+        {/* Dialogs */}
+        <CompareDialog 
+          open={compareOpen} 
+          onOpenChange={setCompareOpen} 
+          currentTech={technology} 
+        />
       </div>
-
-      {/* V4: Relationships (Graph 기반) */}
-      {(relationships.DEPENDS_ON?.length > 0 || relationships.RECOMMENDED_AFTER?.length > 0 || 
-        relationships.USED_WITH?.length > 0 || relationships.ALTERNATIVE_TO?.length > 0) && (
-        <Card className="glass-card border-tech">
-          <CardHeader>
-            <CardTitle className="text-foreground">관련 기술</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* DEPENDS_ON - 선수 지식 */}
-            {relationships.DEPENDS_ON && relationships.DEPENDS_ON.length > 0 && (
-              <div>
-                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
-                  <ArrowLeft className="size-4 text-primary" />
-                  먼저 학습하면 좋은 기술 (의존)
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {relationships.DEPENDS_ON.map((tech: any) => (
-                    <Link key={tech.name} to={`/technologies/${encodeURIComponent(tech.name)}`}>
-                      <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
-                        <div className="flex items-center justify-between">
-                          <span className="text-foreground font-medium">{tech.displayName || tech.name}</span>
-                          {tech.category && (
-                            <Badge
-                              variant="outline"
-                              className={categoryColors[tech.category as keyof typeof categoryColors]}
-                            >
-                              {tech.category}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* RECOMMENDED_AFTER - 권장 학습 순서 */}
-            {relationships.RECOMMENDED_AFTER && relationships.RECOMMENDED_AFTER.length > 0 && (
-              <div>
-                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
-                  <ArrowRight className="size-4 text-accent" />
-                  다음 단계로 학습할 기술
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {relationships.RECOMMENDED_AFTER.map((tech: any) => (
-                    <Link key={tech.name} to={`/technologies/${encodeURIComponent(tech.name)}`}>
-                      <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
-                        <div className="flex items-center justify-between">
-                          <span className="text-foreground font-medium">{tech.displayName || tech.name}</span>
-                          {tech.category && (
-                            <Badge
-                              variant="outline"
-                              className={categoryColors[tech.category as keyof typeof categoryColors]}
-                            >
-                              {tech.category}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* USED_WITH - 함께 사용 */}
-            {relationships.USED_WITH && relationships.USED_WITH.length > 0 && (
-              <div>
-                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
-                  <LinkIcon className="size-4 text-green-500" />
-                  함께 사용하는 기술
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {relationships.USED_WITH.map((tech: any) => (
-                    <Link key={tech.name} to={`/technologies/${encodeURIComponent(tech.name)}`}>
-                      <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
-                        <div className="flex items-center justify-between">
-                          <span className="text-foreground font-medium">{tech.displayName || tech.name}</span>
-                          {tech.category && (
-                            <Badge
-                              variant="outline"
-                              className={categoryColors[tech.category as keyof typeof categoryColors]}
-                            >
-                              {tech.category}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ALTERNATIVE_TO - 대안 기술 */}
-            {relationships.ALTERNATIVE_TO && relationships.ALTERNATIVE_TO.length > 0 && (
-              <div>
-                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
-                  <GitBranch className="size-4 text-success" />
-                  대안 기술
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {relationships.ALTERNATIVE_TO.map((tech: any) => (
-                    <Link key={tech.name} to={`/technologies/${encodeURIComponent(tech.name)}`}>
-                      <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
-                        <div className="flex items-center justify-between">
-                          <span className="text-foreground font-medium">{tech.displayName || tech.name}</span>
-                          {tech.category && (
-                            <Badge
-                              variant="outline"
-                              className={categoryColors[tech.category as keyof typeof categoryColors]}
-                            >
-                              {tech.category}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Community Contribution */}
-      <Card className="glass-card border-tech">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <Edit className="size-5 text-primary" />
-              커뮤니티 기여
-            </CardTitle>
-            {!showEditForm && (
-              <Button variant="outline" onClick={() => setShowEditForm(true)} className="relative z-10">
-                수정 제안하기
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        {showEditForm ? (
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground font-medium">
-              이 기술에 대한 정보를 개선하는데 도움을 주세요. 제안하신 내용은 검토 후 반영됩니다.
-            </p>
-
-            <div className="space-y-2">
-              <Label htmlFor="proposedSummary" className="text-foreground font-semibold">개요 수정 제안</Label>
-              <Textarea
-                id="proposedSummary"
-                placeholder="더 나은 개요를 제안해주세요..."
-                value={editForm.proposedSummary}
-                onChange={(e) => setEditForm({ ...editForm, proposedSummary: e.target.value })}
-                rows={4}
-                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="proposedLearningTips" className="text-foreground font-semibold">학습 팁 수정 제안</Label>
-              <Textarea
-                id="proposedLearningTips"
-                placeholder="더 나은 학습 팁을 제안해주세요..."
-                value={editForm.proposedLearningTips}
-                onChange={(e) => setEditForm({ ...editForm, proposedLearningTips: e.target.value })}
-                rows={4}
-                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="proposedPrerequisites" className="text-foreground font-semibold">선행 학습 수정 제안</Label>
-              <Input
-                id="proposedPrerequisites"
-                placeholder="쉼표로 구분하여 입력 (예: Docker, Linux, 네트워킹)"
-                value={editForm.proposedPrerequisites}
-                onChange={(e) => setEditForm({ ...editForm, proposedPrerequisites: e.target.value })}
-                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button onClick={handleSubmitEdit} className="relative z-10">
-                제출하기
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setShowEditForm(false);
-                  setEditForm({
-                    proposedSummary: '',
-                    proposedLearningTips: '',
-                    proposedPrerequisites: ''
-                  });
-                }}
-                className="relative z-10"
-              >
-                취소
-              </Button>
-            </div>
-          </CardContent>
-        ) : (
-          <CardContent>
-            <p className="text-muted-foreground font-medium">
-              이 기술에 대한 정보가 부정확하거나 개선이 필요하다면 수정을 제안해주세요.
-            </p>
-          </CardContent>
-        )}
-      </Card>
-    </div>
     </TooltipProvider>
   );
 }

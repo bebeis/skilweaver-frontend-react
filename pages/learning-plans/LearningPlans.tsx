@@ -1,14 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Progress } from '../../components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Plus, GraduationCap, Clock, Calendar, TrendingUp, Sparkles, ArrowRight, Filter, Loader2 } from 'lucide-react';
+import { ScrollArea } from '../../components/ui/scroll-area';
+import { 
+  Plus, 
+  GraduationCap, 
+  Clock, 
+  Calendar, 
+  TrendingUp, 
+  Sparkles, 
+  Loader2,
+  ChevronRight,
+  Play,
+  CheckCircle,
+  XCircle
+} from 'lucide-react';
 import { learningPlansApi } from '../../src/lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';
+import { cn } from '../../components/ui/utils';
 
 interface Plan {
   id: string;
@@ -18,12 +32,25 @@ interface Plan {
   progress: number;
   status: string;
   createdAt: string;
+  currentWeek?: number;
 }
 
-const statusColors = {
-  ACTIVE: 'bg-green-100 text-green-800',
-  COMPLETED: 'bg-blue-100 text-blue-800',
-  ABANDONED: 'bg-red-100 text-red-800'
+const statusConfig: Record<string, { label: string; class: string; icon: any }> = {
+  ACTIVE: { 
+    label: '진행중', 
+    class: 'status-active', 
+    icon: Play 
+  },
+  COMPLETED: { 
+    label: '완료', 
+    class: 'status-completed', 
+    icon: CheckCircle 
+  },
+  ABANDONED: { 
+    label: '중단', 
+    class: 'status-error', 
+    icon: XCircle 
+  }
 };
 
 export function LearningPlans() {
@@ -31,8 +58,8 @@ export function LearningPlans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
-  // Load plans from API
   useEffect(() => {
     if (!user) return;
     
@@ -54,6 +81,7 @@ export function LearningPlans() {
             progress: p.progress,
             status: p.status,
             createdAt: p.createdAt.split('T')[0],
+            currentWeek: Math.floor((p.progress / 100) * p.totalWeeks),
           }));
           setPlans(mappedPlans);
         }
@@ -67,59 +95,49 @@ export function LearningPlans() {
     loadPlans();
   }, [user, statusFilter]);
 
-  const filteredPlans = plans.filter(plan => {
-    if (statusFilter !== 'ALL' && plan.status !== statusFilter) return false;
-    return true;
-  });
+  // Stats
+  const stats = {
+    total: plans.length,
+    active: plans.filter(p => p.status === 'ACTIVE').length,
+    completed: plans.filter(p => p.status === 'COMPLETED').length,
+    totalHours: plans.reduce((sum, p) => sum + p.totalHours, 0)
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="size-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-[300px]">
+        <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-3xl blur-3xl opacity-30"></div>
-        <div className="relative bg-gradient-to-br from-white to-indigo-50/50 rounded-2xl p-8 border border-indigo-100 shadow-soft">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-glow-primary animate-float">
-                <GraduationCap className="size-8 text-white" />
-              </div>
-        <div>
-                <h1 className="text-3xl font-bold text-slate-900 mb-1">학습 플랜</h1>
-                <p className="text-lg text-slate-600">
-            AI가 생성한 맞춤형 학습 계획을 관리하세요
-          </p>
-              </div>
-        </div>
-        <Link to="/learning-plans/new">
-              <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-glow-primary btn-glow h-12 px-6">
-                <Sparkles className="size-5 mr-2" />
-            새 플랜 생성
-          </Button>
-        </Link>
+    <div className="flex h-[calc(100vh-8rem)] gap-4">
+      {/* Main List Panel */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">학습 플랜</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              AI 기반 맞춤형 학습 계획
+            </p>
           </div>
+          <Link to="/learning-plans/new">
+            <Button size="sm" className="h-8 gap-1.5">
+              <Sparkles className="size-3.5" />
+              새 플랜 생성
+            </Button>
+          </Link>
         </div>
-      </div>
 
-      {/* Filter */}
-      <Card className="glass-card border-tech shadow-tech">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-foreground font-semibold flex items-center gap-2">
-                <Filter className="size-4 text-primary" />
-                상태
-              </label>
+        {/* Filters */}
+        <Card className="glass-card mb-4">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-11">
-                  <SelectValue />
+                <SelectTrigger className="h-8 w-[120px] text-xs">
+                  <SelectValue placeholder="상태" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">전체</SelectItem>
@@ -128,139 +146,196 @@ export function LearningPlans() {
                   <SelectItem value="ABANDONED">중단</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="flex items-end">
-              <Button 
-                variant="outline" 
-                className="w-full h-11 hover:bg-indigo-50 hover:border-indigo-300 relative z-10"
-                onClick={() => setStatusFilter('ALL')}
-              >
-                필터 초기화
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              {statusFilter !== 'ALL' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setStatusFilter('ALL')}
+                >
+                  초기화
+                </Button>
+              )}
 
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredPlans.length === 0 ? (
-          <div className="col-span-full">
-            <Card className="border-0 shadow-soft">
-              <CardContent className="py-16 text-center">
-                <div className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                  <GraduationCap className="size-12 text-indigo-600" />
-                </div>
-                <p className="text-lg text-slate-600 mb-4">조건에 맞는 학습 플랜이 없습니다.</p>
-                <Link to="/learning-plans/new">
-                  <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-glow-primary btn-glow">
-                    <Plus className="size-5 mr-2" />
-                    첫 플랜 생성하기
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          filteredPlans.map((plan) => (
-            <Card key={plan.id} className="card-hover border-0 shadow-soft bg-gradient-to-br from-white to-slate-50">
-              <CardContent className="pt-6">
-                <div className="space-y-5">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-3 shadow-lg">
-                        <GraduationCap className="size-7 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-1">{plan.targetTechnology}</h3>
-                        <p className="text-slate-600">
-                          {plan.totalWeeks}주 · {plan.totalHours}시간
-                        </p>
-                      </div>
-                    </div>
-                    <Badge className={statusColors[plan.status as keyof typeof statusColors] + ' px-3 py-1.5 font-medium shadow-sm'}>
-                      {plan.status}
-                    </Badge>
-                  </div>
-
-                  {/* Progress */}
-                  {plan.status !== 'DRAFT' && (
-                    <div className="space-y-3 bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600 font-medium">진행률</span>
-                        <span className="text-xl font-bold text-slate-900">{plan.progress}%</span>
-                      </div>
-                      <Progress value={plan.progress} className="h-2.5" />
-                      {plan.status === 'ACTIVE' && (
-                        <p className="text-sm text-slate-600 flex items-center gap-2">
-                          <TrendingUp className="size-4" />
-                          현재 {plan.currentWeek}주차 진행중
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Metadata */}
-                  <div className="flex flex-wrap gap-4 text-slate-600">
-                    <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-lg px-3 py-2">
-                      <Calendar className="size-4 text-indigo-600" />
-                      <span className="text-sm">생성: {plan.createdAt}</span>
-                    </div>
-                    {plan.status === 'ACTIVE' && (
-                      <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-lg px-3 py-2">
-                        <Clock className="size-4 text-purple-600" />
-                        <span className="text-sm">남은: {Math.round((plan.totalHours * (100 - plan.progress)) / 100)}시간</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action */}
-                  <Link to={`/learning-plans/${plan.id}`}>
-                    <Button variant="outline" className="w-full h-11 hover:bg-indigo-50 hover:border-indigo-300 group">
-                      <span className="mr-2">{plan.status === 'DRAFT' ? '플랜 확인하기' : '상세 보기'}</span>
-                      <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Stats */}
-      {filteredPlans.length > 0 && (
-        <Card className="border-0 shadow-soft bg-gradient-to-br from-slate-50 to-slate-100">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div className="p-4 bg-white rounded-xl shadow-sm">
-                <p className="text-4xl font-bold text-slate-900 mb-1">{filteredPlans.length}</p>
-                <p className="text-slate-600 font-medium">총 플랜</p>
-              </div>
-              <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-sm border border-green-200">
-                <p className="text-4xl font-bold text-green-700 mb-1">
-                  {filteredPlans.filter(p => p.status === 'ACTIVE').length}
-                </p>
-                <p className="text-green-700 font-medium">진행중</p>
-              </div>
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl shadow-sm border border-blue-200">
-                <p className="text-4xl font-bold text-blue-700 mb-1">
-                  {filteredPlans.filter(p => p.status === 'COMPLETED').length}
-                </p>
-                <p className="text-blue-700 font-medium">완료</p>
-              </div>
-              <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-sm border border-purple-200">
-                <p className="text-4xl font-bold text-purple-700 mb-1">
-                  {filteredPlans.reduce((sum, p) => sum + p.totalHours, 0)}
-                </p>
-                <p className="text-purple-700 font-medium">총 학습 시간</p>
+              <div className="ml-auto text-xs text-muted-foreground">
+                {plans.length}개의 플랜
               </div>
             </div>
           </CardContent>
         </Card>
-      )}
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          <div className="card-compact text-center">
+            <p className="text-lg font-bold text-foreground">{stats.total}</p>
+            <p className="text-[10px] text-muted-foreground">전체</p>
+          </div>
+          <div className="card-compact text-center">
+            <p className="text-lg font-bold text-green-400">{stats.active}</p>
+            <p className="text-[10px] text-muted-foreground">진행중</p>
+          </div>
+          <div className="card-compact text-center">
+            <p className="text-lg font-bold text-primary">{stats.completed}</p>
+            <p className="text-[10px] text-muted-foreground">완료</p>
+          </div>
+          <div className="card-compact text-center">
+            <p className="text-lg font-bold text-accent">{stats.totalHours}</p>
+            <p className="text-[10px] text-muted-foreground">총 시간</p>
+          </div>
+        </div>
+
+        {/* Plans List */}
+        <ScrollArea className="flex-1 -mx-1 px-1">
+          <div className="space-y-1">
+            {plans.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <GraduationCap className="size-8 mb-2 opacity-50" />
+                <p className="text-sm mb-3">학습 플랜이 없습니다</p>
+                <Link to="/learning-plans/new">
+                  <Button size="sm" variant="outline" className="h-8">
+                    <Plus className="size-3.5 mr-1" />
+                    첫 플랜 생성
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              plans.map((plan) => {
+                const statusInfo = statusConfig[plan.status] || statusConfig.ACTIVE;
+                const StatusIcon = statusInfo.icon;
+                
+                return (
+                  <button
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-md text-left transition-colors",
+                      selectedPlan?.id === plan.id
+                        ? "bg-primary/10 border border-primary/20"
+                        : "hover:bg-secondary/50"
+                    )}
+                  >
+                    <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                      <GraduationCap className="size-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-sm text-foreground truncate">
+                          {plan.targetTechnology}
+                        </span>
+                        <Badge className={cn("badge-compact border", statusInfo.class)}>
+                          <StatusIcon className="size-2.5 mr-0.5" />
+                          {statusInfo.label}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{plan.totalWeeks}주</span>
+                        <span>{plan.totalHours}시간</span>
+                      </div>
+                      {plan.status === 'ACTIVE' && (
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">
+                              {plan.currentWeek}주차
+                            </span>
+                            <span className="text-primary font-medium">{plan.progress}%</span>
+                          </div>
+                          <Progress value={plan.progress} className="h-1" />
+                        </div>
+                      )}
+                    </div>
+                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Detail Panel */}
+      <div className="hidden lg:block w-80 shrink-0">
+        {selectedPlan ? (
+          <Card className="glass-card h-full flex flex-col">
+            <CardHeader className="p-4 pb-3 border-b border-border">
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-lg">{selectedPlan.targetTechnology}</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {selectedPlan.createdAt} 생성
+                  </p>
+                </div>
+                <Badge className={cn("border", statusConfig[selectedPlan.status]?.class)}>
+                  {statusConfig[selectedPlan.status]?.label}
+                </Badge>
+              </div>
+            </CardHeader>
+            <ScrollArea className="flex-1">
+              <CardContent className="p-4 space-y-4">
+                {/* Progress */}
+                {selectedPlan.status === 'ACTIVE' && (
+                  <div className="p-3 rounded-lg bg-secondary/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">진행률</span>
+                      <span className="text-xl font-bold text-primary">{selectedPlan.progress}%</span>
+                    </div>
+                    <Progress value={selectedPlan.progress} className="h-2" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      현재 {selectedPlan.currentWeek}주차 / 총 {selectedPlan.totalWeeks}주
+                    </p>
+                  </div>
+                )}
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-3 rounded-md bg-secondary/50 text-center">
+                    <Calendar className="size-4 text-primary mx-auto" />
+                    <p className="text-lg font-bold mt-1">{selectedPlan.totalWeeks}</p>
+                    <p className="text-[10px] text-muted-foreground">주</p>
+                  </div>
+                  <div className="p-3 rounded-md bg-secondary/50 text-center">
+                    <Clock className="size-4 text-accent mx-auto" />
+                    <p className="text-lg font-bold mt-1">{selectedPlan.totalHours}</p>
+                    <p className="text-[10px] text-muted-foreground">시간</p>
+                  </div>
+                </div>
+
+                {/* Remaining Time */}
+                {selectedPlan.status === 'ACTIVE' && (
+                  <div className="p-3 rounded-md bg-primary/10">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="size-4 text-primary" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">남은 학습 시간</p>
+                        <p className="text-xs text-muted-foreground">
+                          약 {Math.round((selectedPlan.totalHours * (100 - selectedPlan.progress)) / 100)}시간
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="space-y-2 pt-2">
+                  <Link to={`/learning-plans/${selectedPlan.id}`}>
+                    <Button size="sm" className="w-full h-8 text-xs">
+                      <ChevronRight className="size-3 mr-1.5" />
+                      상세 보기
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </ScrollArea>
+          </Card>
+        ) : (
+          <Card className="glass-card h-full flex items-center justify-center">
+            <div className="text-center text-muted-foreground p-4">
+              <GraduationCap className="size-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">플랜을 선택하세요</p>
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

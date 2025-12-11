@@ -15,9 +15,9 @@
   --popover: 217 33% 17%;
   --popover-foreground: 210 20% 98%;
   
-  /* 프라이머리 - 사이버 블루 (더 밝게) */
+  /* 프라이머리 - 사이버 블루 */
   --primary: 199 89% 60%;
-  --primary-foreground: 210 20% 98%;
+  --primary-foreground: 222 47% 11%;
   
   /* 세컨더리 - 다크 그레이 */
   --secondary: 217 33% 22%;
@@ -25,9 +25,9 @@
   
   /* 뮤트 */
   --muted: 217 33% 22%;
-  --muted-foreground: 215 16% 78%;
+  --muted-foreground: 215 16% 70%;
   
-  /* 액센트 - 네온 퍼플 (더 밝게) */
+  /* 액센트 - 네온 퍼플 */
   --accent: 271 91% 70%;
   --accent-foreground: 210 20% 98%;
   
@@ -36,36 +36,30 @@
   --destructive-foreground: 210 20% 98%;
   
   /* 보더 및 인풋 */
-  --border: 217 33% 28%;
+  --border: 217 33% 25%;
   --input: 217 33% 23%;
   --ring: 199 89% 60%;
   
   /* 라디우스 */
   --radius: 0.5rem;
   
-  /* 차트 색상 - 테크 팔레트 (더 밝게) */
+  /* 차트 색상 */
   --chart-1: 199 89% 60%;
   --chart-2: 271 91% 70%;
   --chart-3: 142 71% 55%;
   --chart-4: 24 95% 60%;
   --chart-5: 339 90% 60%;
   
-  /* 커스텀 색상 - 네온 효과 (더 밝게) */
+  /* 커스텀 색상 */
   --success: 142 71% 55%;
   --success-foreground: 210 20% 98%;
   --warning: 45 93% 55%;
   --warning-foreground: 222 47% 11%;
   --info: 199 89% 60%;
   --info-foreground: 210 20% 98%;
-  
-  /* 네온 글로우 */
-  --glow-primary: 199 89% 60%;
-  --glow-accent: 271 91% 70%;
-  --glow-success: 142 71% 55%;
 }
 
 .light {
-  /* 라이트 모드 색상 (필요시 사용) */
   --background: 0 0% 100%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
@@ -90,227 +84,225 @@
 @layer base {
   * {
     @apply border-border;
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: 'rlig' 1, 'calt' 1, 'ss01' 1;
-    letter-spacing: -0.011em;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
   }
   
-  /* 세련된 스크롤바 */
+  /* 컴팩트 스크롤바 */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-background;
+    @apply bg-transparent;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary/30 rounded-full;
-    transition: background-color 0.3s ease;
+    @apply bg-border/50 rounded-full;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary/50;
+    @apply bg-border;
   }
   
-  /* 선택 텍스트 스타일 */
   ::selection {
     @apply bg-primary/30 text-foreground;
   }
 }
 
 @layer components {
-  /* 간격 시스템 - 일관된 간격 적용 */
-  .section-spacing {
-    @apply py-8 md:py-12 lg:py-16;
+  /* === 컴팩트 모드 컴포넌트 === */
+  
+  /* 컴팩트 카드 */
+  .card-compact {
+    @apply p-3 rounded-lg bg-card/50 border border-border/50;
   }
   
-  .content-spacing {
-    @apply space-y-6 md:space-y-8;
+  .card-compact-hover {
+    @apply card-compact hover:bg-card/80 hover:border-border transition-colors cursor-pointer;
   }
   
-  .card-spacing {
-    @apply p-6 md:p-8;
+  /* 컴팩트 테이블 */
+  .table-compact {
+    @apply text-sm;
   }
   
-  /* 세련된 그라데이션 */
+  .table-compact th {
+    @apply px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider;
+  }
+  
+  .table-compact td {
+    @apply px-3 py-2;
+  }
+  
+  .table-compact tr {
+    @apply border-b border-border/50 hover:bg-secondary/30 transition-colors;
+  }
+  
+  /* 컴팩트 배지 */
+  .badge-compact {
+    @apply px-1.5 py-0.5 text-[10px] font-medium rounded;
+  }
+  
+  /* 컴팩트 버튼 */
+  .btn-compact {
+    @apply h-7 px-2 text-xs;
+  }
+  
+  /* 컴팩트 입력 */
+  .input-compact {
+    @apply h-8 text-sm px-2;
+  }
+  
+  /* === 레이아웃 유틸리티 === */
+  
+  /* 패널 레이아웃 */
+  .panel-layout {
+    @apply grid gap-4;
+  }
+  
+  .panel-layout-2 {
+    @apply panel-layout lg:grid-cols-[1fr_320px];
+  }
+  
+  .panel-layout-3 {
+    @apply panel-layout lg:grid-cols-[280px_1fr_320px];
+  }
+  
+  /* 섹션 간격 */
+  .section-gap {
+    @apply space-y-4;
+  }
+  
+  .section-gap-sm {
+    @apply space-y-2;
+  }
+  
+  /* === 기존 스타일 (간소화) === */
+  
+  .glass-card {
+    @apply bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg;
+  }
+  
+  .border-tech {
+    @apply border-border/50;
+  }
+  
+  /* 호버 효과 (간소화) */
+  .hover-lift {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+  }
+  
+  /* 그라데이션 */
   .gradient-tech-primary {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
   }
   
-  .gradient-tech-dark {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  }
-  
-  .gradient-mesh {
-    background: 
-      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.2) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, hsl(var(--accent) / 0.2) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsl(var(--primary) / 0.2) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, hsl(var(--accent) / 0.2) 0px, transparent 50%);
-  }
-  
-  /* 글라스모피즘 - 물흐르는 느낌 */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 
-      0 8px 32px 0 rgba(0, 0, 0, 0.37),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
-  }
-  
-  /* 네온 텍스트 그라데이션 */
-  .text-gradient-neon {
+  .bg-gradient-tech-primary {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 30px hsl(var(--primary) / 0.6));
   }
   
-  /* 고대비 텍스트 */
-  .text-high-contrast {
-    color: hsl(var(--foreground));
-    text-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  /* === 상태 색상 === */
+  
+  .status-active {
+    @apply bg-success/10 text-success border-success/20;
   }
   
-  /* 네온 글로우 효과 */
-  .glow-primary {
-    box-shadow: 
-      0 0 20px hsl(var(--glow-primary) / 0.4),
-      0 0 40px hsl(var(--glow-primary) / 0.2),
-      0 0 60px hsl(var(--glow-primary) / 0.1);
+  .status-pending {
+    @apply bg-warning/10 text-warning border-warning/20;
   }
   
-  .glow-accent {
-    box-shadow: 
-      0 0 20px hsl(var(--glow-accent) / 0.4),
-      0 0 40px hsl(var(--glow-accent) / 0.2),
-      0 0 60px hsl(var(--glow-accent) / 0.1);
+  .status-completed {
+    @apply bg-primary/10 text-primary border-primary/20;
   }
   
-  /* 호버 네온 효과 */
-  .hover-glow-primary {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  .status-error {
+    @apply bg-destructive/10 text-destructive border-destructive/20;
   }
   
-  .hover-glow-primary:hover {
-    box-shadow: 
-      0 0 30px hsl(var(--glow-primary) / 0.6),
-      0 0 60px hsl(var(--glow-primary) / 0.3),
-      0 0 90px hsl(var(--glow-primary) / 0.15);
-    transform: translateY(-2px);
+  /* === 레벨/난이도 색상 === */
+  
+  .level-beginner {
+    @apply bg-emerald-500/10 text-emerald-400 border-emerald-500/20;
   }
   
-  /* 카드 호버 효과 - 물흐르듯 */
-  .card-hover-float {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  .level-intermediate {
+    @apply bg-blue-500/10 text-blue-400 border-blue-500/20;
   }
   
-  .card-hover-float:hover {
-    transform: translateY(-4px) scale(1.01);
-    box-shadow: 
-      0 20px 40px rgba(0, 0, 0, 0.4),
-      0 0 30px hsl(var(--primary) / 0.2);
+  .level-advanced {
+    @apply bg-purple-500/10 text-purple-400 border-purple-500/20;
   }
   
-  /* 버튼 물결 효과 */
-  .btn-ripple {
-    @apply relative overflow-hidden;
+  .level-expert {
+    @apply bg-orange-500/10 text-orange-400 border-orange-500/20;
   }
   
-  .btn-ripple::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
+  /* === 카테고리 색상 === */
+  
+  .category-language {
+    @apply bg-red-500/10 text-red-400 border-red-500/20;
   }
   
-  .btn-ripple:hover::before {
-    width: 300px;
-    height: 300px;
+  .category-framework {
+    @apply bg-blue-500/10 text-blue-400 border-blue-500/20;
   }
   
-  /* 세련된 보더 */
-  .border-tech {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    position: relative;
+  .category-database {
+    @apply bg-green-500/10 text-green-400 border-green-500/20;
   }
   
-  .border-tech::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.5));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
+  .category-devops {
+    @apply bg-purple-500/10 text-purple-400 border-purple-500/20;
   }
   
-  .border-tech:hover::before {
-    opacity: 1;
+  .category-platform {
+    @apply bg-orange-500/10 text-orange-400 border-orange-500/20;
+  }
+  
+  .category-tool {
+    @apply bg-yellow-500/10 text-yellow-400 border-yellow-500/20;
   }
 }
 
 @layer utilities {
-  /* 물흐르는 듯한 애니메이션 */
-  .animate-float-smooth {
-    animation: floatSmooth 6s ease-in-out infinite;
+  /* 텍스트 라인 클램프 */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   
-  @keyframes floatSmooth {
-    0%, 100% {
-      transform: translateY(0px) translateX(0px);
-    }
-    33% {
-      transform: translateY(-8px) translateX(4px);
-    }
-    66% {
-      transform: translateY(-4px) translateX(-4px);
-    }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   
-  .animate-glow-pulse {
-    animation: glowPulse 3s ease-in-out infinite;
+  /* 기본 애니메이션 */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
   }
   
-  @keyframes glowPulse {
-    0%, 100% {
-      box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.4);
-    }
-    50% {
-      box-shadow: 0 0 40px hsl(var(--glow-primary) / 0.6);
-    }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   
-  .animate-slide-up-fluid {
-    animation: slideUpFluid 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
   }
   
-  @keyframes slideUpFluid {
+  @keyframes slideUp {
     from {
       opacity: 0;
-      transform: translateY(30px);
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
@@ -318,27 +310,19 @@
     }
   }
   
-  .animate-fade-in-fluid {
-    animation: fadeInFluid 1s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  
-  @keyframes fadeInFluid {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  /* 레거시 호환 (기존 코드에서 사용) */
+  .animate-slide-up-fluid {
+    animation: slideUp 0.3s ease-out;
   }
   
   .animate-scale-in {
-    animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: scaleIn 0.2s ease-out;
   }
   
   @keyframes scaleIn {
     from {
       opacity: 0;
-      transform: scale(0.95);
+      transform: scale(0.98);
     }
     to {
       opacity: 1;
@@ -346,59 +330,113 @@
     }
   }
   
-  /* 배경 그라데이션 애니메이션 */
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradientFlow 8s ease infinite;
+  .animate-fade-in-fluid {
+    animation: fadeIn 0.3s ease-out;
   }
   
-  @keyframes gradientFlow {
-    0%, 100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
+  .animate-glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite;
   }
   
-  /* 네온 깜빡임 */
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+  }
+  
   .animate-neon-flicker {
-    animation: neonFlicker 4s ease-in-out infinite;
+    animation: neonFlicker 3s ease-in-out infinite;
   }
   
   @keyframes neonFlicker {
-    0%, 100% {
-      opacity: 1;
-      filter: brightness(1);
-    }
-    50% {
-      opacity: 0.9;
-      filter: brightness(1.2);
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
   }
   
-  /* 페이지 트랜지션 - 매우 부드럽게 */
-  .page-transition-fluid {
-    animation: pageInFluid 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  /* 스태거 */
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+  .stagger-7 { animation-delay: 0.35s; }
+  .stagger-8 { animation-delay: 0.4s; }
+  .stagger-9 { animation-delay: 0.45s; }
+  .stagger-10 { animation-delay: 0.5s; }
+  
+  /* 레거시 호환 */
+  .content-spacing {
+    @apply section-gap;
   }
   
-  @keyframes pageInFluid {
-    from {
-      opacity: 0;
-      transform: translateY(20px) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
+  .card-hover-float {
+    @apply hover-lift;
   }
   
-  /* 스태거 애니메이션 */
-  .stagger-1 { animation-delay: 0.1s; }
-  .stagger-2 { animation-delay: 0.2s; }
-  .stagger-3 { animation-delay: 0.3s; }
-  .stagger-4 { animation-delay: 0.4s; }
-  .stagger-5 { animation-delay: 0.5s; }
+  .shadow-neon {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
+  }
+  
+  .shadow-neon-sm {
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.15);
+  }
+  
+  .shadow-tech {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .hover-glow-primary:hover {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  
+  .btn-ripple {
+    @apply relative overflow-hidden;
+  }
+  
+  .gradient-mesh {
+    background: 
+      radial-gradient(at 0% 0%, hsl(var(--primary) / 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsl(var(--accent) / 0.1) 0px, transparent 50%);
+  }
+  
+  .animate-page-fluid {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .transition-fluid {
+    @apply transition-all duration-200;
+  }
+  
+  .duration-fluid {
+    transition-duration: 200ms;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  
+  .shadow-soft {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .shadow-glow-primary {
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+  }
+  
+  .shadow-glow-accent {
+    box-shadow: 0 0 15px hsl(var(--accent) / 0.3);
+  }
+  
+  .btn-glow:hover {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.4);
+  }
+  
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md;
+  }
 }
-
-
