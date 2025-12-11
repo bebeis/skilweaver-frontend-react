@@ -149,166 +149,145 @@ export function Layout() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative selection:bg-primary/20">
+      {/* Background Gradients for modern feel */}
+      <div className="fixed inset-0 -z-10 h-full w-full bg-background [background:radial-gradient(125%_125%_at_50%_10%,#000_40%,#63e_100%)] opacity-20 pointer-events-none" />
+      <div className="fixed top-0 left-0 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+      <div className="fixed bottom-0 right-0 -z-10 h-96 w-96 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+
       {/* Command Palette */}
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
 
-      {/* Compact Sidebar */}
+      {/* Floating Glass Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 z-40 h-screen bg-card/50 backdrop-blur-md border-r border-border transition-all duration-200",
-        sidebarCollapsed ? "w-16" : "w-56"
+        "fixed top-4 left-4 z-40 h-[calc(100vh-2rem)] rounded-2xl border border-white/5 bg-card/20 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 flex flex-col overflow-hidden",
+        sidebarCollapsed ? "w-16" : "w-60"
       )}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className={cn(
-            "flex items-center h-14 px-3 border-b border-border",
-            sidebarCollapsed ? "justify-center" : "justify-between"
-          )}>
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="bg-primary rounded-lg p-1.5">
-                <Zap className="size-4 text-primary-foreground" />
-              </div>
-              {!sidebarCollapsed && (
-                <span className="font-bold text-foreground text-sm">SkillWeaver</span>
-              )}
-            </Link>
+        {/* Logo Area */}
+        <div className={cn(
+          "flex items-center h-16 px-4 border-b border-white/5",
+          sidebarCollapsed ? "justify-center" : "justify-between"
+        )}>
+          <Link to="/dashboard" className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-primary to-purple-600 rounded-lg p-1.5 shadow-lg shadow-primary/20">
+              <Zap className="size-4 text-white" />
+            </div>
             {!sidebarCollapsed && (
-              <button
-                onClick={() => setSidebarCollapsed(true)}
-                className="p-1 rounded hover:bg-secondary/50 text-muted-foreground"
-              >
-                <Menu className="size-4" />
-              </button>
+              <span className="font-bold text-foreground text-sm tracking-tight">SkillWeaver</span>
             )}
-          </div>
+          </Link>
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(true)}
+              className="p-1.5 rounded-md hover:bg-white/5 text-muted-foreground transition-colors"
+            >
+              <Menu className="size-4" />
+            </button>
+          )}
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-            {sidebarCollapsed && (
-              <button
-                onClick={() => setSidebarCollapsed(false)}
-                className="w-full p-2 mb-2 rounded-md hover:bg-secondary/50 text-muted-foreground"
-              >
-                <Menu className="size-4 mx-auto" />
-              </button>
-            )}
-            {navigation.map((item) => {
-              const isActive = location.pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
-                    sidebarCollapsed && "justify-center px-2"
-                  )}
-                  title={sidebarCollapsed ? item.name : undefined}
-                >
-                  <item.icon className="size-4 shrink-0" />
-                  {!sidebarCollapsed && <span>{item.name}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Quick Action */}
-          <div className="px-2 py-2 border-t border-border">
-            <Link to="/learning-plans/new">
-              <Button 
-                size="sm" 
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {sidebarCollapsed && (
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="w-full p-2 mb-4 rounded-xl hover:bg-white/5 text-muted-foreground transition-colors group"
+            >
+              <Menu className="size-5 mx-auto group-hover:text-foreground transition-colors" />
+            </button>
+          )}
+          {navigation.map((item) => {
+            const isActive = location.pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
                 className={cn(
-                  "w-full bg-primary hover:bg-primary/90 text-xs h-8",
-                  sidebarCollapsed && "px-2"
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
+                  isActive 
+                    ? "bg-primary/10 text-primary shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+                  sidebarCollapsed && "justify-center px-2"
                 )}
+                title={sidebarCollapsed ? item.name : undefined}
               >
-                <Sparkles className="size-3.5" />
-                {!sidebarCollapsed && <span className="ml-1.5">새 플랜</span>}
-              </Button>
-            </Link>
-          </div>
+                <item.icon className={cn(
+                  "size-5 shrink-0 transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                )} />
+                {!sidebarCollapsed && <span>{item.name}</span>}
+              </Link>
+            );
+          })}
+        </nav>
 
-          {/* User */}
-          <div className="px-2 py-2 border-t border-border">
-            {sidebarCollapsed ? (
-              <div className="flex flex-col items-center gap-1">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary/20 text-primary text-xs font-medium">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <button
-                  onClick={handleLogout}
-                  className="p-1.5 rounded hover:bg-secondary/50 text-muted-foreground"
-                  title="로그아웃"
-                >
-                  <LogOut className="size-3.5" />
-                </button>
+        {/* Bottom Actions */}
+        <div className="p-3 mt-auto space-y-3 border-t border-white/5 bg-black/5">
+          {/* Quick Action */}
+          <Link to="/learning-plans/new">
+            <Button 
+              className={cn(
+                "w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white border-0 shadow-lg shadow-primary/20 transition-all",
+                sidebarCollapsed ? "h-10 px-0" : "h-10"
+              )}
+            >
+              <Sparkles className="size-4" />
+              {!sidebarCollapsed && <span className="ml-2">새 플랜</span>}
+            </Button>
+          </Link>
+
+          {/* User Profile */}
+          <div className={cn(
+            "flex items-center gap-3 p-2 rounded-xl transition-colors hover:bg-white/5 cursor-pointer",
+            sidebarCollapsed && "justify-center p-0 hover:bg-transparent"
+          )}>
+            <Avatar className="h-8 w-8 ring-2 ring-background">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-xs font-bold">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            {!sidebarCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground truncate">{user?.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">Free Plan</p>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 px-1">
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-primary/20 text-primary text-xs font-medium">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate">{user?.name}</p>
-                </div>
-                <button
-                  onClick={() => navigate('/settings/profile')}
-                  className="p-1 rounded hover:bg-secondary/50 text-muted-foreground"
-                >
-                  <Settings className="size-3.5" />
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="p-1 rounded hover:bg-secondary/50 text-muted-foreground"
-                >
-                  <LogOut className="size-3.5" />
-                </button>
-              </div>
+            )}
+            {!sidebarCollapsed && (
+              <button onClick={handleLogout} className="text-muted-foreground hover:text-destructive transition-colors">
+                <LogOut className="size-4" />
+              </button>
             )}
           </div>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <main className={cn(
-        "transition-all duration-200",
-        sidebarCollapsed ? "ml-16" : "ml-56"
+        "transition-all duration-300 min-h-screen flex flex-col",
+        sidebarCollapsed ? "pl-[5.5rem]" : "pl-[17rem]"
       )}>
-        {/* Compact Header */}
-        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
-          <div className="flex items-center justify-between h-12 px-4">
-            {/* Search Trigger */}
-            <button
+        {/* Invisible Header */}
+        <header className="sticky top-0 z-30 h-20 flex items-center justify-between px-8 bg-transparent pointer-events-none">
+          <div className="flex-1 max-w-xl pointer-events-auto">
+             <button
               onClick={() => setCommandOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary/50 hover:bg-secondary text-sm text-muted-foreground transition-colors w-64"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-card/30 hover:bg-card/50 border border-white/5 backdrop-blur-md text-sm text-muted-foreground transition-all w-full shadow-sm group"
             >
-              <Search className="size-3.5" />
-              <span className="flex-1 text-left">검색...</span>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 text-[10px]">
+              <Search className="size-4 group-hover:text-primary transition-colors" />
+              <span className="flex-1 text-left">무엇을 찾고 계신가요?</span>
+              <kbd className="hidden sm:inline-flex items-center gap-1 rounded px-2 py-0.5 bg-white/5 text-[10px] font-medium text-muted-foreground">
                 <Command className="size-2.5" />K
               </kbd>
             </button>
-
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              <Link to="/learning-plans/new">
-                <Button size="sm" variant="ghost" className="h-8 text-xs gap-1.5">
-                  <Sparkles className="size-3.5" />
-                  <span className="hidden md:inline">새 플랜</span>
-                </Button>
-              </Link>
-            </div>
+          </div>
+          
+          <div className="flex items-center gap-4 pointer-events-auto">
+             {/* Add extra header actions if needed */}
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="p-4 md:p-6">
+        <div className="flex-1 px-8 pb-8">
           <Outlet />
         </div>
       </main>
