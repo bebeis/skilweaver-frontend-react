@@ -500,7 +500,7 @@ export function Technologies() {
                   {/* Actions */}
                   <div className="space-y-2 pt-2">
                     <Link to={`/technologies/${encodeURIComponent(selectedTech.name)}`}>
-                      <Button variant="outline" size="sm" className="w-full h-8 text-xs">
+                      <Button variant="outline" size="sm" className="w-full h-8 text-xs btn-liquid-glass">
                         <BookOpen className="size-3 mr-1.5" />
                         상세 페이지
                       </Button>
@@ -508,7 +508,7 @@ export function Technologies() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full h-8 text-xs"
+                      className="w-full h-8 text-xs btn-liquid-glass"
                       onClick={() => navigate(`/explore?tech=${selectedTech.name}`)}
                     >
                       <Map className="size-3 mr-1.5" />
@@ -517,7 +517,7 @@ export function Technologies() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full h-8 text-xs"
+                      className="w-full h-8 text-xs btn-liquid-glass"
                       onClick={() => navigate(`/explore?tab=gap&target=${selectedTech.name}`)}
                     >
                       <GitCompare className="size-3 mr-1.5" />
