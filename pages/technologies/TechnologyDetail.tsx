@@ -52,6 +52,8 @@ import { toast } from 'sonner';
 import { technologiesApi } from '../../src/lib/api';
 import { cn } from '../../components/ui/utils';
 
+import { LiquidHighlight, useFluidHighlight } from '../../components/ui/fluid-highlight';
+
 const BOOKMARKS_KEY = 'skillweaver_tech_bookmarks';
 const MEMO_KEY_PREFIX = 'skillweaver_memo_';
 
@@ -75,6 +77,42 @@ const difficultyColors: Record<string, string> = {
   ADVANCED: 'level-advanced',
   EXPERT: 'level-expert'
 };
+
+function FluidSearchList({
+  searchResults,
+  handleSelect
+}: {
+  searchResults: any[];
+  handleSelect: (techName: string) => void;
+}) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseLeave={handleMouseLeave}
+      className="space-y-1 relative"
+    >
+      <LiquidHighlight style={highlightStyle} />
+      {searchResults.map((tech) => (
+        <button
+          key={tech.name}
+          onClick={() => handleSelect(tech.name)}
+          onMouseEnter={handleMouseEnter}
+          className="w-full flex items-center justify-between p-2 rounded hover:text-foreground transition-colors text-left relative z-10"
+        >
+          <span className="font-medium">{tech.displayName}</span>
+          <Badge variant="outline" className="text-xs">{tech.category}</Badge>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // Compare Dialog Component
 function CompareDialog({ 
@@ -147,18 +185,10 @@ function CompareDialog({
                 className="pl-9"
               />
             </div>
-            <div className="space-y-1">
-              {searchResults.map((tech) => (
-                <button
-                  key={tech.name}
-                  onClick={() => handleSelect(tech.name)}
-                  className="w-full flex items-center justify-between p-2 rounded hover:bg-secondary/50 transition-colors text-left"
-                >
-                  <span className="font-medium">{tech.displayName}</span>
-                  <Badge variant="outline" className="text-xs">{tech.category}</Badge>
-                </button>
-              ))}
-            </div>
+            <FluidSearchList 
+              searchResults={searchResults} 
+              handleSelect={handleSelect} 
+            />
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 py-4">
@@ -222,6 +252,53 @@ function CompareDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function FluidPrerequisitesList({
+  prerequisites,
+  type
+}: {
+  prerequisites: any[];
+  type: 'required' | 'recommended';
+}) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseLeave={handleMouseLeave}
+      className="space-y-2 relative"
+    >
+      <LiquidHighlight style={highlightStyle} />
+      {prerequisites?.map((req: any) => (
+        <div key={req.name} className="relative z-10">
+          {/* Using a wrapper div to capture mouse enter if Link doesn't span full width or for consistency. 
+              Actually, let's put onMouseEnter on the inner div.
+          */}
+          <div 
+            // key={req.name} // key is on parent
+            onMouseEnter={handleMouseEnter}
+            className="flex items-center justify-between text-xs p-2 rounded transition-colors"
+          >
+            <Link 
+              to={`/technologies/${encodeURIComponent(req.name)}`}
+              className="font-medium hover:text-primary transition-colors flex-1"
+            >
+              {req.displayName}
+            </Link>
+            <Badge variant={type === 'required' ? "destructive" : "secondary"} className="badge-compact">
+              {type === 'required' ? "필수" : "권장"}
+            </Badge>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -473,29 +550,19 @@ export function TechnologyDetail() {
                         <CardTitle className="text-sm font-medium">선행 학습</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4 pt-0">
-                        <div className="space-y-2">
-                          {technology.prerequisites.required?.map((req: any) => (
-                            <div key={req.name} className="flex items-center justify-between text-xs p-2 rounded bg-secondary/30">
-                              <Link 
-                                to={`/technologies/${encodeURIComponent(req.name)}`}
-                                className="font-medium hover:text-primary transition-colors"
-                              >
-                                {req.displayName}
-                              </Link>
-                              <Badge variant="destructive" className="badge-compact">필수</Badge>
-                            </div>
-                          ))}
-                          {technology.prerequisites.recommended?.map((rec: any) => (
-                            <div key={rec.name} className="flex items-center justify-between text-xs p-2 rounded bg-secondary/30">
-                              <Link 
-                                to={`/technologies/${encodeURIComponent(rec.name)}`}
-                                className="font-medium hover:text-primary transition-colors"
-                              >
-                                {rec.displayName}
-                              </Link>
-                              <Badge variant="secondary" className="badge-compact">권장</Badge>
-                            </div>
-                          ))}
+                        <div className="space-y-4">
+                          {technology.prerequisites.required?.length > 0 && (
+                            <FluidPrerequisitesList 
+                              prerequisites={technology.prerequisites.required} 
+                              type="required" 
+                            />
+                          )}
+                          {technology.prerequisites.recommended?.length > 0 && (
+                            <FluidPrerequisitesList 
+                              prerequisites={technology.prerequisites.recommended} 
+                              type="recommended" 
+                            />
+                          )}
                         </div>
                       </CardContent>
                     </Card>

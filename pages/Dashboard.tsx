@@ -27,6 +27,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../com
 import { skillsApi, goalsApi, learningPlansApi, technologiesApi } from '../src/lib/api';
 import { toast } from 'sonner';
 import { cn } from '../components/ui/utils';
+import { LiquidHighlight, useFluidHighlight } from '../components/ui/fluid-highlight';
 
 const levelColors: Record<string, string> = {
   BEGINNER: 'level-beginner',
@@ -40,6 +41,52 @@ const priorityColors: Record<string, string> = {
   MEDIUM: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
   LOW: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
 };
+
+function FluidList({ 
+  children, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  className?: string; 
+}) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseLeave={handleMouseLeave}
+      className={cn("relative", className)}
+    >
+      <LiquidHighlight style={highlightStyle} />
+      {/* Clone children to attach onMouseEnter, or assume children will use context/prop if we passed it? 
+          Actually, we can't easily clone deep children. 
+          Pattern: we need to wrap items.
+          Since we are refactoring existing lists, let's just use the hook in the component or create small wrapper components for each list section.
+          Or, better, provide a wrapper that clones direct children to add onMouseEnter.
+      */}
+      {React.Children.map(children, (child) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child as React.ReactElement<any>, {
+            onMouseEnter: (e: React.MouseEvent) => {
+              handleMouseEnter(e);
+              child.props.onMouseEnter?.(e);
+            },
+            className: cn(child.props.className, "relative z-10")
+          });
+        }
+        return child;
+      })}
+    </div>
+  );
+}
+
+// But wait, React is not imported.
+import React from 'react';
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -287,7 +334,7 @@ export function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
-                  <div className="space-y-1">
+                  <FluidList className="space-y-1">
                     {skills.length === 0 ? (
                       <Link to="/skills/new" className="flex items-center justify-center p-4 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md transition-colors">
                         <Plus className="size-4 mr-2" />
@@ -298,7 +345,7 @@ export function Dashboard() {
                         <Link
                           key={skill.memberSkillId}
                           to={`/technologies/${encodeURIComponent(skill.technologyName)}`}
-                          className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-secondary/50 transition-colors"
+                          className="flex items-center justify-between py-1.5 px-2 rounded hover:text-foreground transition-colors"
                         >
                           <span className="text-sm text-foreground truncate">{skill.technologyName}</span>
                           <Badge className={cn("badge-compact border", levelColors[skill.level])}>
@@ -315,7 +362,7 @@ export function Dashboard() {
                         </Button>
                       </Link>
                     )}
-                  </div>
+                  </FluidList>
                 </CardContent>
               </Card>
 
@@ -335,7 +382,7 @@ export function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
-                  <div className="space-y-1">
+                  <FluidList className="space-y-1">
                     {goals.length === 0 ? (
                       <Link to="/goals" className="flex items-center justify-center p-4 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md transition-colors">
                         <Plus className="size-4 mr-2" />
@@ -345,7 +392,7 @@ export function Dashboard() {
                       goals.map((goal: any) => (
                         <div
                           key={goal.id}
-                          className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-secondary/50 transition-colors"
+                          className="flex items-center justify-between py-1.5 px-2 rounded hover:text-foreground transition-colors"
                         >
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-foreground truncate">{goal.title}</p>
@@ -357,7 +404,7 @@ export function Dashboard() {
                         </div>
                       ))
                     )}
-                  </div>
+                  </FluidList>
                 </CardContent>
               </Card>
             </div>
@@ -375,19 +422,19 @@ export function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
-                  <div className="space-y-1">
+                  <FluidList className="space-y-1">
                     {trendingTechs.map((tech: any, index: number) => (
                       <Link
                         key={tech.name}
                         to={`/technologies/${encodeURIComponent(tech.name)}`}
-                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-secondary/50 transition-colors"
+                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:text-foreground transition-colors"
                       >
                         <span className="text-xs font-medium text-muted-foreground w-4">{index + 1}</span>
                         <span className="text-sm text-foreground flex-1 truncate">{tech.displayName}</span>
                         <span className="text-xs text-orange-500 font-medium">{tech.communityPopularity}/10</span>
                       </Link>
                     ))}
-                  </div>
+                  </FluidList>
                   <Link to="/technologies?sort=popularity">
                     <Button variant="ghost" size="sm" className="w-full h-7 text-xs mt-2">
                       전체 보기 <ChevronRight className="size-3 ml-1" />
@@ -407,19 +454,19 @@ export function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
-                  <div className="space-y-1">
+                  <FluidList className="space-y-1">
                     {highDemandTechs.map((tech: any, index: number) => (
                       <Link
                         key={tech.name}
                         to={`/technologies/${encodeURIComponent(tech.name)}`}
-                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-secondary/50 transition-colors"
+                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:text-foreground transition-colors"
                       >
                         <span className="text-xs font-medium text-muted-foreground w-4">{index + 1}</span>
                         <span className="text-sm text-foreground flex-1 truncate">{tech.displayName}</span>
                         <span className="text-xs text-blue-500 font-medium">{tech.jobMarketDemand}/10</span>
                       </Link>
                     ))}
-                  </div>
+                  </FluidList>
                   <Link to="/technologies?sort=demand">
                     <Button variant="ghost" size="sm" className="w-full h-7 text-xs mt-2">
                       전체 보기 <ChevronRight className="size-3 ml-1" />
@@ -438,29 +485,29 @@ export function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-3 pt-0">
-                <div className="space-y-1.5">
-                  <Link to="/learning-plans/new" className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors">
+                <FluidList className="space-y-1.5">
+                  <Link to="/learning-plans/new" className="flex items-center gap-2 p-2 rounded-md hover:text-foreground transition-colors">
                     <div className="p-1.5 rounded bg-primary/10">
                       <Sparkles className="size-3.5 text-primary" />
                     </div>
                     <span className="text-sm">새 학습 플랜</span>
                     <ChevronRight className="size-3 text-muted-foreground ml-auto" />
                   </Link>
-                  <Link to="/technologies" className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors">
+                  <Link to="/technologies" className="flex items-center gap-2 p-2 rounded-md hover:text-foreground transition-colors">
                     <div className="p-1.5 rounded bg-secondary">
                       <Database className="size-3.5 text-muted-foreground" />
                     </div>
                     <span className="text-sm">기술 둘러보기</span>
                     <ChevronRight className="size-3 text-muted-foreground ml-auto" />
                   </Link>
-                  <Link to="/explore" className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 transition-colors">
+                  <Link to="/explore" className="flex items-center gap-2 p-2 rounded-md hover:text-foreground transition-colors">
                     <div className="p-1.5 rounded bg-secondary">
                       <TrendingUp className="size-3.5 text-muted-foreground" />
                     </div>
                     <span className="text-sm">로드맵 탐색</span>
                     <ChevronRight className="size-3 text-muted-foreground ml-auto" />
                   </Link>
-                </div>
+                </FluidList>
               </CardContent>
             </Card>
           </div>

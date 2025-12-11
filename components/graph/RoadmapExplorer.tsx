@@ -20,6 +20,8 @@ import { RoadmapData, RoadmapTechnology, Difficulty } from '../../src/lib/api/ty
 import { ApiError } from '../../src/lib/api/client';
 import { TechAutocomplete } from './TechAutocomplete';
 
+import { LiquidHighlight, useFluidHighlight } from '../ui/fluid-highlight';
+
 // V4: Difficulty enum 사용
 const difficultyColors: Record<Difficulty, string> = {
   BEGINNER: 'bg-green-50 text-green-700 border-green-200',
@@ -40,15 +42,17 @@ const categoryColors: Record<string, string> = {
   CONCEPT: 'bg-cyan-50 text-cyan-700 border-cyan-200',
 };
 
-function TechNode({ tech, onClick, direction }: {
+function TechNode({ tech, onClick, direction, onMouseEnter }: {
   tech: RoadmapTechnology;
   onClick?: () => void;
   direction: 'prerequisite' | 'next';
+  onMouseEnter?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-secondary/50 hover:border-primary/50 transition-all duration-200 text-left w-full group"
+      onMouseEnter={onMouseEnter}
+      className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card transition-all duration-200 text-left w-full group relative z-10"
     >
       <div className={`p-2 rounded-lg ${direction === 'prerequisite' ? 'bg-amber-100' : 'bg-emerald-100'}`}>
         {direction === 'prerequisite' ? (
@@ -74,6 +78,42 @@ function TechNode({ tech, onClick, direction }: {
       </div>
       <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
     </button>
+  );
+}
+
+function FluidTechList({ 
+  techs, 
+  direction, 
+  onTechClick 
+}: { 
+  techs: RoadmapTechnology[]; 
+  direction: 'prerequisite' | 'next'; 
+  onTechClick: (name: string) => void;
+}) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseLeave={handleMouseLeave}
+      className="space-y-2 relative"
+    >
+      <LiquidHighlight style={highlightStyle} />
+      {techs.map(tech => (
+        <TechNode
+          key={tech.name}
+          tech={tech}
+          direction={direction}
+          onClick={() => onTechClick(tech.name)}
+          onMouseEnter={handleMouseEnter}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -266,14 +306,11 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
                       <Badge variant="destructive" className="text-xs">필수</Badge>
                     </h4>
                     <div className="space-y-2">
-                      {roadmap.prerequisites.required.map(tech => (
-                        <TechNode
-                          key={tech.name}
-                          tech={tech}
-                          direction="prerequisite"
-                          onClick={() => handleTechClick(tech.name)}
-                        />
-                      ))}
+                      <FluidTechList 
+                        techs={roadmap.prerequisites.required} 
+                        direction="prerequisite" 
+                        onTechClick={handleTechClick} 
+                      />
                     </div>
                   </div>
                 )}
@@ -285,14 +322,11 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
                       <Badge variant="secondary" className="text-xs">권장</Badge>
                     </h4>
                     <div className="space-y-2">
-                      {roadmap.prerequisites.recommended.map(tech => (
-                        <TechNode
-                          key={tech.name}
-                          tech={tech}
-                          direction="prerequisite"
-                          onClick={() => handleTechClick(tech.name)}
-                        />
-                      ))}
+                      <FluidTechList 
+                        techs={roadmap.prerequisites.recommended} 
+                        direction="prerequisite" 
+                        onTechClick={handleTechClick} 
+                      />
                     </div>
                   </div>
                 )}
@@ -320,14 +354,11 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
               <CardContent>
                 {roadmap.nextSteps.length > 0 ? (
                   <div className="space-y-2">
-                    {roadmap.nextSteps.map(tech => (
-                      <TechNode
-                        key={tech.name}
-                        tech={tech}
-                        direction="next"
-                        onClick={() => handleTechClick(tech.name)}
-                      />
-                    ))}
+                    <FluidTechList 
+                      techs={roadmap.nextSteps} 
+                      direction="next" 
+                      onTechClick={handleTechClick} 
+                    />
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-4">

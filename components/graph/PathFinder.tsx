@@ -29,6 +29,7 @@ import { ApiError } from '../../src/lib/api/client';
 import { TechAutocomplete } from './TechAutocomplete';
 import { useAuth } from '../../hooks/useAuth';
 import { skillsApi } from '../../src/lib/api/skills';
+import { LiquidHighlight, useFluidHighlight } from '../ui/fluid-highlight';
 
 // V4: TechRelation 사용
 const relationLabels: Record<TechRelation, string> = {
@@ -49,15 +50,24 @@ const relationColors: Record<TechRelation, string> = {
   ALTERNATIVE_TO: 'bg-gray-100 text-gray-700',
 };
 
-function PathStepCard({ step, isLast, totalSteps }: {
+function PathStepCard({ 
+  step, 
+  isLast, 
+  totalSteps,
+  onMouseEnter
+}: {
   step: PathStep;
   isLast: boolean;
   totalSteps: number;
+  onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
   const progress = (step.step / totalSteps) * 100;
 
   return (
-    <div className="flex items-stretch gap-4">
+    <div 
+      className="flex items-stretch gap-4 relative z-10"
+      onMouseEnter={onMouseEnter}
+    >
       {/* Timeline */}
       <div className="flex flex-col items-center">
         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -96,6 +106,54 @@ function PathStepCard({ step, isLast, totalSteps }: {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function FluidPathList({ 
+  pathData 
+}: { 
+  pathData: LearningPathData; 
+}) {
+  const { 
+    containerRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseLeave={handleMouseLeave}
+      className="space-y-0 relative"
+    >
+      <LiquidHighlight style={highlightStyle} />
+      
+      {/* Start Point */}
+      <div className="flex items-center gap-4 mb-4 relative z-10 p-2">
+        <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg">
+          <Flag className="size-5" />
+        </div>
+        <div className="font-semibold text-foreground">
+          시작: <span className="text-green-600">{pathData.from}</span>
+        </div>
+      </div>
+
+      {/* Steps */}
+      {pathData.path.map((step, index) => (
+        <div key={step.step} className="relative"> 
+          {/* Wrapper to ensure correct highlighting per row if needed, but LiquidHighlight tracks items.
+              Actually, PathStepCard is flex container. We need to pass onMouseEnter to the card itself.
+          */}
+          <PathStepCard
+            step={step}
+            isLast={index === pathData.path.length - 1}
+            totalSteps={pathData.totalSteps}
+            onMouseEnter={handleMouseEnter}
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -342,27 +400,7 @@ export function PathFinder() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-0">
-                {/* Start Point */}
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg">
-                    <Flag className="size-5" />
-                  </div>
-                  <div className="font-semibold text-foreground">
-                    시작: <span className="text-green-600">{pathData.from}</span>
-                  </div>
-                </div>
-
-                {/* Steps */}
-                {pathData.path.map((step, index) => (
-                  <PathStepCard
-                    key={step.step}
-                    step={step}
-                    isLast={index === pathData.path.length - 1}
-                    totalSteps={pathData.totalSteps}
-                  />
-                ))}
-              </div>
+              <FluidPathList pathData={pathData} />
             </CardContent>
           </Card>
         </div>
