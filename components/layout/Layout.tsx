@@ -29,6 +29,8 @@ import {
 } from '../ui/dialog';
 import { cn } from '../ui/utils';
 
+import { LiquidHighlight, useFluidHighlight } from '../ui/fluid-highlight';
+
 // Command Palette Component
 function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const navigate = useNavigate();
@@ -120,9 +122,13 @@ export function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   
-  // State for fluid hover effect
-  const [hoverStyle, setHoverStyle] = useState({ top: 0, height: 0, opacity: 0 });
-  const navRef = useRef<HTMLElement>(null);
+  // State for fluid hover effect using the new hook
+  const { 
+    containerRef: navRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLElement>();
 
   const navigation = [
     { name: '대시보드', href: '/dashboard', icon: LayoutDashboard },
@@ -152,22 +158,9 @@ export function Layout() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (navRef.current) {
-      const navRect = navRef.current.getBoundingClientRect();
-      const itemRect = e.currentTarget.getBoundingClientRect();
-      
-      setHoverStyle({
-        top: itemRect.top - navRect.top,
-        height: itemRect.height,
-        opacity: 1
-      });
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setHoverStyle(prev => ({ ...prev, opacity: 0 }));
-  };
+  // handleMouseEnter/Leave are now provided by the hook
+  // const handleMouseEnter = ... (removed)
+  // const handleMouseLeave = ... (removed)
 
   return (
     <div className="min-h-screen bg-background relative selection:bg-primary/20">
@@ -223,56 +216,23 @@ export function Layout() {
           )}
           
           {/* Moving Liquid Glass Highlight - Water Droplet Effect */}
-          {/* {!sidebarCollapsed && ( - Removed check to enable in collapsed mode */}
-          <div
+          <LiquidHighlight 
+            style={highlightStyle}
             className={cn(
-              "absolute rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none z-0 overflow-hidden",
-              sidebarCollapsed ? "left-2 right-2" : "left-3 right-3"
-            )}
-            style={{
-              top: hoverStyle.top,
-              height: hoverStyle.height,
-              opacity: hoverStyle.opacity,
-              // Glass Base: 투명도 높은 유리 질감
-              background: 'rgba(255, 255, 255, 0.02)',
-              boxShadow: `
-                inset 0 0 0 1px rgba(255, 255, 255, 0.15),
-                inset 0 0 15px rgba(255, 255, 255, 0.05),
-                0 8px 20px -4px rgba(0, 0, 0, 0.2)
-              `,
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-            }}
-          >
-            {/* Internal Fluid Animation: 물방울 내부에서 회전하는 빛의 흐름 */}
-            <div 
-              className="absolute inset-[-100%] top-[-50%] left-[-50%] w-[200%] h-[200%] opacity-40 blur-[30px]"
-              style={{
-                background: `conic-gradient(from 0deg at 50% 50%, 
-                  transparent 0deg,
-                  hsl(var(--primary)) 60deg,
-                  #8b5cf6 120deg, 
-                  #3b82f6 180deg,
-                  #06b6d4 240deg,
-                  #d946ef 300deg,
-                  transparent 360deg
-                )`,
-                animation: 'spin 8s linear infinite'
-              }}
-            />
-            
-            {/* Surface Reflection: 유리 표면의 맺힌 광택 */}
-            <div 
-              className="absolute inset-0 z-10 mix-blend-overlay opacity-80"
-              style={{
-                background: 'linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.7) 45%, rgba(255,255,255,0.0) 50%, transparent 60%)',
-              }}
-            />
-
-            {/* Edge Highlight: 물방울 경계의 밝은 빛 */}
-            <div className="absolute inset-0 border border-white/20 rounded-xl" />
-          </div>
-          {/* )} */}
+              // Override or add classes if needed. 
+              // The hook calculates width/left too, so we don't necessarily need explicit left-3 right-3,
+              // BUT the hook calculates based on the item rect relative to container.
+              // If we want to force specific horizontal margins like before (left-3 right-3), 
+              // we might need to adjust or let the item width dictate it.
+              // In the previous implementation, width was not dynamic (it was absolute left-3 right-3).
+              // To maintain the exact previous look where width was fixed to the sidebar padding:
+              // Actually, the previous implementation used `left-3 right-3` to constrain width, 
+              // and `top/height` were dynamic.
+              // The new hook calculates `width` and `left` based on the HOVERED ELEMENT.
+              // So if the hovered element is full width, the highlight will be full width.
+              // We should probably rely on the hook's calculated dimensions for a "true" fluid effect.
+            )} 
+          />
 
           {navigation.map((item) => {
             const isActive = location.pathname.startsWith(item.href);
