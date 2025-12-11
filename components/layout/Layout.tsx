@@ -119,6 +119,10 @@ export function Layout() {
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  
+  // State for fluid hover effect
+  const [hoverStyle, setHoverStyle] = useState({ top: 0, height: 0, opacity: 0 });
+  const navRef = useRef<HTMLElement>(null);
 
   const navigation = [
     { name: '대시보드', href: '/dashboard', icon: LayoutDashboard },
@@ -147,6 +151,23 @@ export function Layout() {
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
   }, []);
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (navRef.current && !sidebarCollapsed) {
+      const navRect = navRef.current.getBoundingClientRect();
+      const itemRect = e.currentTarget.getBoundingClientRect();
+      
+      setHoverStyle({
+        top: itemRect.top - navRect.top,
+        height: itemRect.height,
+        opacity: 1
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoverStyle(prev => ({ ...prev, opacity: 0 }));
+  };
 
   return (
     <div className="min-h-screen bg-background relative selection:bg-primary/20">
@@ -187,7 +208,11 @@ export function Layout() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav 
+          ref={navRef}
+          className="flex-1 px-3 py-4 space-y-1 overflow-y-auto relative"
+          onMouseLeave={handleMouseLeave}
+        >
           {sidebarCollapsed && (
             <button
               onClick={() => setSidebarCollapsed(false)}
@@ -196,24 +221,65 @@ export function Layout() {
               <Menu className="size-5 mx-auto group-hover:text-foreground transition-colors" />
             </button>
           )}
+          
+          {/* Moving Glass Highlight - The "Magic Move" Element */}
+          {!sidebarCollapsed && (
+            <div
+              className="absolute left-3 right-3 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none z-0 overflow-hidden"
+              style={{
+                top: hoverStyle.top,
+                height: hoverStyle.height,
+                opacity: hoverStyle.opacity,
+                // 밝고 영롱한 유색 유리 (Luminous Tint) - Primary 컬러 베이스
+                background: `
+                  linear-gradient(135deg, hsl(var(--primary) / 0.15) 0%, hsl(var(--primary) / 0.05) 100%),
+                  radial-gradient(circle at 0% 0%, rgba(255,255,255,0.4) 0%, transparent 60%)
+                `,
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                // 밝은 화이트 엣지 + 유색 글로우 쉐도우
+                boxShadow: `
+                  inset 0 1px 0 0 rgba(255,255,255,0.5),
+                  inset 1px 0 0 0 rgba(255,255,255,0.3),
+                  inset 0 -1px 0 0 hsl(var(--primary) / 0.1),
+                  0 4px 20px -4px hsl(var(--primary) / 0.3)
+                `,
+              }}
+            >
+              {/* 반사광 (Sheen): 더욱 밝고 선명하게 */}
+              <div 
+                className="absolute inset-0 mix-blend-overlay"
+                style={{
+                  background: 'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.3) 50%, transparent 60%)',
+                  backgroundSize: '200% 200%',
+                  opacity: 0.7,
+                }}
+              />
+              
+              {/* 하단 컬러 틴트: 채도를 높여 생동감 부여 */}
+              <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-primary/20 via-primary/5 to-transparent opacity-60" />
+            </div>
+          )}
+
           {navigation.map((item) => {
             const isActive = location.pathname.startsWith(item.href);
             return (
               <Link
                 key={item.name}
                 to={item.href}
+                onMouseEnter={handleMouseEnter}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative z-10",
                   isActive 
-                    ? "bg-primary/10 text-primary shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/5",
-                  sidebarCollapsed && "justify-center px-2"
+                    ? "text-primary bg-primary/10 shadow-sm" // Active state is distinct
+                    : "text-muted-foreground hover:text-foreground", // Remove default hover bg
+                  sidebarCollapsed && "justify-center px-2 hover:bg-white/5" // Collapsed mode uses simple hover
                 )}
                 title={sidebarCollapsed ? item.name : undefined}
               >
                 <item.icon className={cn(
-                  "size-5 shrink-0 transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                  "size-5 shrink-0 transition-colors duration-300",
+                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground group-hover:scale-110"
                 )} />
                 {!sidebarCollapsed && <span>{item.name}</span>}
               </Link>
@@ -227,7 +293,7 @@ export function Layout() {
           <Link to="/learning-plans/new">
             <Button 
               className={cn(
-                "w-full btn-liquid-glass-primary text-white border-0 transition-all",
+                "w-full btn-liquid-glass-primary text-primary-foreground border-0 transition-all",
                 sidebarCollapsed ? "h-10 px-0" : "h-10 px-4"
               )}
             >
