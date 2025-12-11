@@ -62,7 +62,8 @@ function App() {
             <Route path="skills/:skillId/edit" element={<SkillForm />} />
             <Route path="goals" element={<Goals />} />
             <Route path="technologies" element={<Technologies />} />
-            <Route path="technologies/:technologyId" element={<TechnologyDetail />} />
+            {/* V4: technologyId → name 기반 라우팅 */}
+            <Route path="technologies/:name" element={<TechnologyDetail />} />
             <Route path="explore" element={<TechExplorer />} />
             <Route path="learning-plans" element={<LearningPlans />} />
             <Route path="learning-plans/new" element={<LearningPlanNew />} />

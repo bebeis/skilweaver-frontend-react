@@ -8,14 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/card';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '../../components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { Badge } from '../../components/ui/badge';
+import { Check, ChevronsUpDown, Loader2, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import { skillsApi, technologiesApi } from '../../src/lib/api';
 import { useAuth } from '../../hooks/useAuth';
 
+// V4: Technology는 name 기반
 interface Technology {
-  technologyId: number;
+  name: string;
   displayName: string;
+  category?: string;
+  difficulty?: string;
 }
 
 export function SkillForm() {
@@ -29,10 +33,11 @@ export function SkillForm() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingTechnologies, setLoadingTechnologies] = useState(false);
   const [technologies, setTechnologies] = useState<Technology[]>([]);
+  
+  // V4: technologyId → technologyName
   const [formData, setFormData] = useState({
-    technologyId: '',
-    technologyName: '',
-    customName: '',
+    technologyName: '',       // V4: Neo4j name (예: "spring-boot")
+    displayName: '',          // 화면 표시용
     level: 'BEGINNER',
     yearsOfUse: 0,
     lastUsedAt: new Date().toISOString().split('T')[0],
@@ -44,15 +49,19 @@ export function SkillForm() {
     const loadTechnologies = async () => {
       try {
         setLoadingTechnologies(true);
-        const response = await technologiesApi.getTechnologies({ size: 100 });
+        // V4: limit 파라미터 사용
+        const response = await technologiesApi.getTechnologies({ limit: 200 });
         if (response.success) {
-          // Handle both response formats:
-          // 1. { technologies: [...] } - from API spec
-          // 2. [...] - direct array from actual API
           const techList = Array.isArray(response.data)
             ? response.data
             : response.data?.technologies || [];
-          setTechnologies(techList);
+          // V4: name 기반으로 매핑
+          setTechnologies(techList.map((t: any) => ({
+            name: t.name,
+            displayName: t.displayName,
+            category: t.category,
+            difficulty: t.difficulty
+          })));
         }
       } catch (error) {
         console.error('Failed to load technologies:', error);
@@ -67,25 +76,25 @@ export function SkillForm() {
 
   useEffect(() => {
     // If editing, load existing skill data
-    if (isEdit) {
-      // Mock loading existing skill - TODO: fetch actual skill data from API
+    // TODO: API에서 실제 스킬 데이터 조회 구현
+    if (isEdit && user) {
+      // Mock loading existing skill
       setFormData({
-        technologyId: '1',
-        technologyName: 'Java',
-        customName: '',
+        technologyName: 'java',
+        displayName: 'Java',
         level: 'ADVANCED',
         yearsOfUse: 3,
         lastUsedAt: '2025-11-20',
         note: 'Spring Boot 프로젝트 경험 다수'
       });
     }
-  }, [isEdit]);
+  }, [isEdit, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.technologyName && !formData.customName) {
-      toast.error('기술을 선택하거나 직접 입력해주세요.');
+    if (!formData.technologyName) {
+      toast.error('기술을 선택해주세요.');
       return;
     }
 
@@ -96,18 +105,23 @@ export function SkillForm() {
 
     try {
       setSubmitting(true);
-      // API 스펙: technologyId 또는 customName 중 하나는 반드시 값이 있어야 함
+      // V4: technologyName 기반 요청
       const skillData = {
-        technologyId: formData.technologyId ? Number(formData.technologyId) : null,
-        customName: formData.customName || null,
+        technologyName: formData.technologyName,
         level: formData.level,
         yearsOfUse: formData.yearsOfUse,
         lastUsedAt: formData.lastUsedAt,
-        note: formData.note
+        note: formData.note || undefined
       };
 
       if (isEdit) {
-        await skillsApi.updateSkill(Number(user.id), Number(skillId), skillData);
+        // UpdateSkillRequest는 technologyName 제외
+        await skillsApi.updateSkill(Number(user.id), Number(skillId), {
+          level: skillData.level,
+          yearsOfUse: skillData.yearsOfUse,
+          lastUsedAt: skillData.lastUsedAt,
+          note: skillData.note
+        });
         toast.success('기술이 수정되었습니다.');
       } else {
         await skillsApi.addSkill(Number(user.id), skillData);
@@ -122,20 +136,23 @@ export function SkillForm() {
     }
   };
 
-  const handleTechnologySelect = (techId: number, techName: string) => {
+  // V4: name 기반 선택
+  const handleTechnologySelect = (tech: Technology) => {
     setFormData({
       ...formData,
-      technologyId: String(techId),
-      technologyName: techName,
-      customName: ''
+      technologyName: tech.name,
+      displayName: tech.displayName
     });
     setSearchValue('');
     setOpen(false);
   };
 
   const filteredTechnologies = technologies.filter(tech =>
-    tech.displayName.toLowerCase().includes(searchValue.toLowerCase())
+    tech.displayName.toLowerCase().includes(searchValue.toLowerCase()) ||
+    tech.name.toLowerCase().includes(searchValue.toLowerCase())
   );
+
+  const selectedTech = technologies.find(t => t.name === formData.technologyName);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -152,18 +169,33 @@ export function SkillForm() {
             <CardTitle className="text-foreground">기술 정보</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Technology Selection */}
+            {/* Technology Selection - V4: name 기반 */}
             <div className="space-y-2">
-              <Label className="text-foreground font-semibold">기술 선택</Label>
+              <Label className="text-foreground font-semibold">기술 선택 *</Label>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
                     role="combobox"
                     aria-expanded={open}
-                    className="flex w-full items-center justify-between gap-2 rounded-md border border-input bg-secondary/50 text-foreground px-3 py-2 text-sm transition-[color,box-shadow] outline-none hover:bg-secondary/70 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                    disabled={isEdit}
+                    className="flex w-full items-center justify-between gap-2 rounded-md border border-input bg-secondary/50 text-foreground px-3 py-2 text-sm transition-[color,box-shadow] outline-none hover:bg-secondary/70 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span>{formData.technologyName || "기술 검색..."}</span>
+                    <div className="flex items-center gap-2">
+                      {formData.technologyName ? (
+                        <>
+                          <Database className="size-4 text-primary" />
+                          <span>{formData.displayName || formData.technologyName}</span>
+                          {selectedTech?.category && (
+                            <Badge variant="outline" className="text-xs">
+                              {selectedTech.category}
+                            </Badge>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">기술 검색...</span>
+                      )}
+                    </div>
                     <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                   </button>
                 </PopoverTrigger>
@@ -183,24 +215,36 @@ export function SkillForm() {
                       </div>
                     )}
                     {!loadingTechnologies && filteredTechnologies.length === 0 && (
-                      <CommandEmpty className="text-muted-foreground">
+                      <CommandEmpty className="text-muted-foreground p-4 text-center">
                         {technologies.length === 0 ? '기술을 불러올 수 없습니다.' : '검색 결과가 없습니다.'}
                       </CommandEmpty>
                     )}
                     {!loadingTechnologies && (
-                      <CommandGroup>
+                      <CommandGroup className="max-h-64 overflow-auto">
                         {filteredTechnologies.map((tech) => (
                           <CommandItem
-                            key={tech.technologyId}
+                            key={tech.name}
                             value={tech.displayName}
-                            onSelect={() => handleTechnologySelect(tech.technologyId, tech.displayName)}
+                            onSelect={() => handleTechnologySelect(tech)}
+                            className="flex items-center gap-2"
                           >
                             <Check
-                              className={`mr-2 size-4 ${
-                                formData.technologyId === String(tech.technologyId) ? "opacity-100" : "opacity-0"
+                              className={`size-4 ${
+                                formData.technologyName === tech.name ? "opacity-100" : "opacity-0"
                               }`}
                             />
-                            {tech.displayName}
+                            <Database className="size-4 text-muted-foreground" />
+                            <span className="flex-1">{tech.displayName}</span>
+                            {tech.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {tech.category}
+                              </Badge>
+                            )}
+                            {tech.difficulty && (
+                              <Badge variant="secondary" className="text-xs">
+                                {tech.difficulty}
+                              </Badge>
+                            )}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -208,26 +252,16 @@ export function SkillForm() {
                   </Command>
                 </PopoverContent>
               </Popover>
-              <p className="text-muted-foreground font-medium">
-                또는 아래에 직접 입력하세요
-              </p>
-            </div>
-
-            {/* Custom Name */}
-            <div className="space-y-2">
-              <Label htmlFor="customName" className="text-foreground font-semibold">직접 입력 (선택사항)</Label>
-              <Input
-                id="customName"
-                placeholder="예: 내부 프레임워크 XYZ"
-                value={formData.customName}
-                onChange={(e) => setFormData({ ...formData, customName: e.target.value })}
-                className="bg-secondary/50 border-border text-foreground placeholder:text-muted-foreground"
-              />
+              {isEdit && (
+                <p className="text-sm text-muted-foreground">
+                  수정 시에는 기술을 변경할 수 없습니다.
+                </p>
+              )}
             </div>
 
             {/* Level */}
             <div className="space-y-2">
-              <Label className="text-foreground font-semibold">숙련도</Label>
+              <Label className="text-foreground font-semibold">숙련도 *</Label>
               <Select 
                 value={formData.level}
                 onValueChange={(value) => setFormData({ ...formData, level: value })}
@@ -246,14 +280,15 @@ export function SkillForm() {
 
             {/* Years of Use */}
             <div className="space-y-2">
-              <Label htmlFor="yearsOfUse" className="text-foreground font-semibold">사용 경력 (년)</Label>
+              <Label htmlFor="yearsOfUse" className="text-foreground font-semibold">사용 경력 (년) *</Label>
               <Input
                 id="yearsOfUse"
                 type="number"
                 min="0"
-                step="0.1"
+                max="50"
+                step="0.5"
                 value={formData.yearsOfUse}
-                onChange={(e) => setFormData({ ...formData, yearsOfUse: parseFloat(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, yearsOfUse: parseFloat(e.target.value) || 0 })}
                 className="bg-secondary/50 border-border text-foreground"
               />
             </div>
@@ -287,7 +322,7 @@ export function SkillForm() {
             <Button
               type="submit"
               className="flex-1 relative z-10"
-              disabled={submitting}
+              disabled={submitting || !formData.technologyName}
             >
               {submitting ? (
                 <>

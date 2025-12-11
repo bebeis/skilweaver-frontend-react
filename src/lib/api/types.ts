@@ -14,6 +14,19 @@ export type LearningPlanStatus = 'ACTIVE' | 'COMPLETED' | 'ABANDONED' | 'DRAFT';
 export type StepDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 export type AgentRunStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
 export type KnowledgeSource = 'COMMUNITY' | 'AI_IMPORTED';
+// V4: TechRelation (Graph 관계 타입)
+export type TechRelation =
+  | 'DEPENDS_ON'
+  | 'RECOMMENDED_AFTER'
+  | 'CONTAINS'
+  | 'EXTENDS'
+  | 'USED_WITH'
+  | 'ALTERNATIVE_TO';
+
+// V4: Difficulty 레벨
+export type Difficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+
+// Deprecated: V3 이하
 export type RelationType = 'PREREQUISITE' | 'NEXT_STEP' | 'ALTERNATIVE';
 export type ResourceType = 'DOC' | 'VIDEO' | 'BLOG' | 'COURSE' | 'REPO' | 'DOCUMENTATION' | 'TUTORIAL' | 'ARTICLE' | 'PROJECT';
 
@@ -68,21 +81,19 @@ export interface LoginResponse {
 }
 
 // 기술 스택
+// V4: technologyId, technologyKey, displayName → technologyName 단일 필드로 통합
 export interface MemberSkill {
   memberSkillId: number;
-  technologyId?: number;
-  technologyKey?: string;
-  displayName?: string;
-  customName?: string;
+  technologyName: string;         // V4: Neo4j name으로 직접 참조
   level: SkillLevel;
   yearsOfUse: number;
   lastUsedAt?: string;
   note?: string;
 }
 
+// V4: technologyId → technologyName
 export interface AddSkillRequest {
-  technologyId?: number;
-  customName?: string;
+  technologyName: string;         // V4: Neo4j name (예: "spring-boot")
   level: SkillLevel;
   yearsOfUse: number;
   lastUsedAt?: string;
@@ -186,66 +197,98 @@ export interface UpdatePlanProgressRequest {
   status: LearningPlanStatus;
 }
 
-// 기술 카탈로그
+// V4 기술 카탈로그 (Neo4j Graph 기반)
 export interface Technology {
-  technologyId: number;
-  key: string;
+  name: string;                    // V4: technologyId → name (String PK)
   displayName: string;
   category: SkillCategory;
+  difficulty?: Difficulty;         // V4 신규
   ecosystem?: string;
   officialSite?: string;
   active: boolean;
+  description?: string;            // V4: knowledge.summary → description
+  learningRoadmap?: string;
+  estimatedLearningHours?: number;
+  learningTips?: string;           // V4: knowledge.learningTips → learningTips
+  useCases?: string[];             // V4 신규
+  communityPopularity?: number;    // 1-10
+  jobMarketDemand?: number;        // 1-10
 }
 
+// V4: TechNode (관계에서 사용되는 간략 기술 노드)
+export interface TechNode {
+  name: string;
+  displayName: string;
+  category: SkillCategory;
+  difficulty?: Difficulty;
+}
+
+// V4: 기술 상세 (Prerequisites, RelatedTechnologies 포함)
+export interface TechnologyDetail extends Technology {
+  prerequisites?: {
+    required: TechNode[];
+    recommended: TechNode[];
+  };
+  relatedTechnologies?: TechNode[];
+}
+
+// V4: 기술 관계
+export interface TechRelationship {
+  from: string;
+  to: string;
+  relation: TechRelation;
+  weight: number;
+}
+
+// Deprecated: V3 이하
 export interface TechnologyKnowledge {
   summary?: string;
   learningTips?: string;
   sourceType: KnowledgeSource;
 }
 
-export interface TechnologyDetail extends Technology {
-  knowledge?: TechnologyKnowledge;
-  prerequisites: Array<{
-    prerequisiteKey: string;
-    displayName: string;
-  }>;
-  useCases: string[];
-  // v2 fields - Learning metadata
-  learningRoadmap?: string;
-  estimatedLearningHours?: number;
-  relatedTechnologies: string[];
-  communityPopularity?: number; // 1-10
-  jobMarketDemand?: number; // 1-10
-}
-
-// v2 - Technology Admin Requests
+// V4 - Technology Admin Requests
 export interface CreateTechnologyRequest {
-  key: string;
+  name: string;                   // V4: key → name
   displayName: string;
   category: SkillCategory;
+  difficulty?: Difficulty;        // V4 신규
   ecosystem?: string;
   officialSite?: string;
-  // v2 learning metadata
+  description?: string;           // V4 신규
   learningRoadmap?: string;
   estimatedLearningHours?: number;
-  prerequisites?: string[];
-  relatedTechnologies?: string[];
+  learningTips?: string;          // V4 신규
+  useCases?: string[];            // V4 신규
   communityPopularity?: number;
   jobMarketDemand?: number;
+  relations?: Array<{             // V4 신규: 관계 생성
+    to: string;
+    relation: TechRelation;
+    weight?: number;
+  }>;
 }
 
 export interface UpdateTechnologyRequest {
   displayName?: string;
+  difficulty?: Difficulty;        // V4 신규
   ecosystem?: string;
   officialSite?: string;
   active?: boolean;
-  // v2 learning metadata
+  description?: string;           // V4 신규
   learningRoadmap?: string;
   estimatedLearningHours?: number;
-  prerequisites?: string[];
-  relatedTechnologies?: string[];
+  learningTips?: string;          // V4 신규
+  useCases?: string[];            // V4 신규
   communityPopularity?: number;
   jobMarketDemand?: number;
+}
+
+// V4: 관계 생성 요청
+export interface CreateRelationshipRequest {
+  to: string;
+  relation: TechRelation;
+  weight?: number;
 }
 
 // v2 - Feedback System
@@ -282,26 +325,21 @@ export interface Pagination {
 }
 
 // =============================================================================
-// V3 Graph API Types
+// V4 Graph API Types (Technologies API로 통합)
 // =============================================================================
 
-// Graph relation types
-export type GraphRelationType =
-  | 'PREREQUISITE'
-  | 'RECOMMENDED_AFTER'
-  | 'DEPENDS_ON'
-  | 'CONTAINS'
-  | 'USED_WITH'
-  | 'ALTERNATIVE';
+// V4: GraphRelationType은 TechRelation으로 통합 (위에 정의됨)
+// 호환성을 위해 alias 제공
+export type GraphRelationType = TechRelation;
 
 export type GapPriority = 'HIGH' | 'MEDIUM' | 'LOW';
 
-// Roadmap API
+// V4: Roadmap API (GET /api/v1/technologies/{name}/roadmap)
 export interface RoadmapTechnology {
   name: string;
   displayName: string;
   category: SkillCategory;
-  difficulty: StepDifficulty;
+  difficulty?: Difficulty;
 }
 
 export interface RoadmapPrerequisites {
@@ -316,11 +354,11 @@ export interface RoadmapData {
   nextSteps: RoadmapTechnology[];
 }
 
-// Learning Path API
+// V4: Learning Path API (GET /api/v1/technologies/path)
 export interface PathStep {
   step: number;
   technology: string;
-  relation: GraphRelationType;
+  relation: TechRelation;
 }
 
 export interface LearningPathData {
@@ -330,11 +368,11 @@ export interface LearningPathData {
   path: PathStep[];
 }
 
-// Recommendations API
+// V4: Recommendations API (GET /api/v1/technologies/{name}/recommendations)
 export interface RecommendedTechnology {
   name: string;
   displayName: string;
-  relation: GraphRelationType;
+  relation: TechRelation;
   category: SkillCategory;
 }
 
@@ -343,7 +381,7 @@ export interface RecommendationsData {
   recommendations: RecommendedTechnology[];
 }
 
-// Gap Analysis API
+// V4: Gap Analysis API (POST /api/v1/technologies/gap-analysis)
 export interface MissingTechnology {
   name: string;
   displayName: string;
@@ -364,9 +402,11 @@ export interface GapAnalysisData {
   message: string;
 }
 
-// Graph API Error
+// V4: API Error Codes
 export type GraphErrorCode =
   | 'TECHNOLOGY_NOT_FOUND'
   | 'NO_PATH_FOUND'
-  | 'GRAPH_SERVICE_UNAVAILABLE';
+  | 'GRAPH_SERVICE_UNAVAILABLE'
+  | 'TECHNOLOGY_ALREADY_EXISTS'
+  | 'INVALID_RELATIONSHIP';
 

@@ -23,8 +23,15 @@ import {
   Briefcase,
   Users,
   Map,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Share2,
+  Star,
+  StarOff,
+  GitCompare,
+  Copy,
+  Check
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { Progress } from '../../components/ui/progress';
 import { toast } from 'sonner';
 import { technologiesApi } from '../../src/lib/api';
@@ -39,15 +46,22 @@ const categoryColors = {
   ETC: 'bg-gray-50 text-gray-700 border-gray-200'
 };
 
+// 북마크 로컬스토리지 키
+const BOOKMARKS_KEY = 'skillweaver_tech_bookmarks';
+
 export function TechnologyDetail() {
-  const { technologyId } = useParams();
+  // V4: technologyId → name (String 기반 라우팅)
+  const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [technology, setTechnology] = useState<any>(null);
   const [relationships, setRelationships] = useState<any>({
-    PREREQUISITE: [],
-    NEXT_STEP: [],
-    ALTERNATIVE: []
+    DEPENDS_ON: [],
+    RECOMMENDED_AFTER: [],
+    USED_WITH: [],
+    ALTERNATIVE_TO: [],
+    EXTENDS: [],
+    CONTAINS: []
   });
   const [showEditForm, setShowEditForm] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -55,32 +69,81 @@ export function TechnologyDetail() {
     proposedLearningTips: '',
     proposedPrerequisites: ''
   });
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // Load technology details from API
+  // 북마크 상태 로드
   useEffect(() => {
-    if (!technologyId) return;
+    if (!name) return;
+    const saved = localStorage.getItem(BOOKMARKS_KEY);
+    if (saved) {
+      const bookmarks = new Set(JSON.parse(saved));
+      setIsBookmarked(bookmarks.has(decodeURIComponent(name)));
+    }
+  }, [name]);
+
+  // 북마크 토글
+  const toggleBookmark = () => {
+    if (!name) return;
+    const techName = decodeURIComponent(name);
+    const saved = localStorage.getItem(BOOKMARKS_KEY);
+    const bookmarks = new Set(saved ? JSON.parse(saved) : []);
+    
+    if (bookmarks.has(techName)) {
+      bookmarks.delete(techName);
+      setIsBookmarked(false);
+      toast.success('북마크에서 제거했습니다');
+    } else {
+      bookmarks.add(techName);
+      setIsBookmarked(true);
+      toast.success('북마크에 추가했습니다');
+    }
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify([...bookmarks]));
+  };
+
+  // 페이지 공유
+  const sharePage = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast.success('링크가 클립보드에 복사되었습니다');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('복사에 실패했습니다');
+    }
+  };
+
+  // V4: Load technology details from API using name
+  useEffect(() => {
+    if (!name) return;
     
     const loadTechnology = async () => {
       try {
         setLoading(true);
-        const response = await technologiesApi.getTechnology(Number(technologyId));
+        // V4: getTechnology(name: string)
+        const response = await technologiesApi.getTechnology(decodeURIComponent(name));
         
         if (response.success) {
           setTechnology(response.data);
           
-          // Load relationships
+          // V4: Load relationships using name
           try {
-            const relationshipsResponse = await technologiesApi.getTechnologyRelationships(
-              Number(technologyId)
+            const relationshipsResponse = await technologiesApi.getRelationships(
+              decodeURIComponent(name)
             );
-            if (relationshipsResponse.success) {
+            if (relationshipsResponse.success && relationshipsResponse.data) {
               // Group relationships by type
               const grouped: any = {};
-              relationshipsResponse.data.relationships.forEach((rel: any) => {
-                if (!grouped[rel.relationType]) {
-                  grouped[rel.relationType] = [];
+              relationshipsResponse.data.forEach((rel: any) => {
+                if (!grouped[rel.relation]) {
+                  grouped[rel.relation] = [];
                 }
-                grouped[rel.relationType].push(rel.toTechnology);
+                grouped[rel.relation].push({
+                  name: rel.to,
+                  displayName: rel.to, // API에서 displayName 제공 시 사용
+                  relation: rel.relation
+                });
               });
               setRelationships(grouped);
             }
@@ -97,7 +160,7 @@ export function TechnologyDetail() {
     };
     
     loadTechnology();
-  }, [technologyId, navigate]);
+  }, [name, navigate]);
 
   const handleSubmitEdit = () => {
     if (!editForm.proposedSummary && !editForm.proposedLearningTips && !editForm.proposedPrerequisites) {
@@ -144,6 +207,7 @@ export function TechnologyDetail() {
   }
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       {/* Back Button */}
       <Button variant="ghost" onClick={() => navigate('/technologies')}>
@@ -160,7 +224,46 @@ export function TechnologyDetail() {
                 <Database className="size-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">{technology.displayName}</h1>
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-3xl font-bold text-foreground">{technology.displayName}</h1>
+                  {/* 북마크 & 공유 버튼 */}
+                  <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={toggleBookmark}
+                        >
+                          {isBookmarked ? (
+                            <Star className="size-5 fill-yellow-500 text-yellow-500" />
+                          ) : (
+                            <StarOff className="size-5" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{isBookmarked ? '북마크 제거' : '북마크 추가'}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={sharePage}
+                        >
+                          {copied ? (
+                            <Check className="size-5 text-green-500" />
+                          ) : (
+                            <Share2 className="size-5" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>링크 복사</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge
                     variant="outline"
@@ -168,9 +271,22 @@ export function TechnologyDetail() {
                   >
                     {technology.category}
                   </Badge>
-                  <Badge variant="outline" className="bg-secondary/50 text-muted-foreground border-border">
-                    {technology.ecosystem}
-                  </Badge>
+                  {technology.ecosystem && (
+                    <Badge variant="outline" className="bg-secondary/50 text-muted-foreground border-border">
+                      {technology.ecosystem}
+                    </Badge>
+                  )}
+                  {/* V4: difficulty 필드 표시 */}
+                  {technology.difficulty && (
+                    <Badge variant="outline" className={
+                      technology.difficulty === 'BEGINNER' ? 'bg-green-50 text-green-700 border-green-200' :
+                      technology.difficulty === 'INTERMEDIATE' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                      technology.difficulty === 'ADVANCED' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                      'bg-red-50 text-red-700 border-red-200'
+                    }>
+                      {technology.difficulty}
+                    </Badge>
+                  )}
                   {technology.estimatedLearningHours && (
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                       <Clock className="size-3 mr-1" />
@@ -191,10 +307,23 @@ export function TechnologyDetail() {
                 )}
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/explore?tab=gap&target=${technology.name}`)}
+                    className="relative z-10"
+                  >
+                    <GitCompare className="size-4 mr-2" />
+                    갭 분석
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>현재 실력으로 이 기술을 배울 준비가 되었는지 확인</TooltipContent>
+              </Tooltip>
               <Button
                 variant="outline"
-                onClick={() => navigate(`/explore?tech=${technology.key}`)}
+                onClick={() => navigate(`/explore?tech=${technology.name}`)}
                 className="relative z-10"
               >
                 <Map className="size-4 mr-2" />
@@ -209,8 +338,8 @@ export function TechnologyDetail() {
         </CardContent>
       </Card>
 
-      {/* Summary */}
-      {technology.knowledge?.summary && (
+      {/* V4: Summary (description) */}
+      {technology.description && (
         <Card className="glass-card border-tech">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
@@ -219,13 +348,13 @@ export function TechnologyDetail() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground font-medium">{technology.knowledge.summary}</p>
+            <p className="text-muted-foreground font-medium">{technology.description}</p>
           </CardContent>
         </Card>
       )}
 
-      {/* Learning Tips */}
-      {technology.knowledge?.learningTips && (
+      {/* V4: Learning Tips */}
+      {technology.learningTips && (
         <Card className="glass-card border-tech">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
@@ -234,7 +363,7 @@ export function TechnologyDetail() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground font-medium">{technology.knowledge.learningTips}</p>
+            <p className="text-muted-foreground font-medium">{technology.learningTips}</p>
           </CardContent>
         </Card>
       )}
@@ -308,7 +437,7 @@ export function TechnologyDetail() {
         </Card>
       )}
 
-      {/* v2: Related Technologies */}
+      {/* V4: Related Technologies (TechNode[] 구조 지원) */}
       {technology.relatedTechnologies && technology.relatedTechnologies.length > 0 && (
         <Card className="glass-card border-tech">
           <CardHeader>
@@ -319,41 +448,119 @@ export function TechnologyDetail() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {technology.relatedTechnologies.map((techKey: string, index: number) => (
-                <Badge
-                  key={index}
-                  variant="outline"
-                  className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
-                >
-                  {techKey}
-                </Badge>
-              ))}
+              {technology.relatedTechnologies.map((tech: any, index: number) => {
+                // V4: TechNode 객체 또는 레거시 문자열 지원
+                const techName = typeof tech === 'string' ? tech : tech.name;
+                const displayName = typeof tech === 'string' ? tech : (tech.displayName || tech.name);
+                const category = typeof tech === 'string' ? null : tech.category;
+                
+                return (
+                  <Link key={index} to={`/technologies/${encodeURIComponent(techName)}`}>
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 cursor-pointer transition-colors"
+                    >
+                      {displayName}
+                      {category && (
+                        <span className="ml-1 text-xs opacity-70">({category})</span>
+                      )}
+                    </Badge>
+                  </Link>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Prerequisites & Use Cases */}
+      {/* V4: Prerequisites (required/recommended 구조) & Use Cases */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {technology.prerequisites && technology.prerequisites.length > 0 && (
-          <Card className="glass-card border-tech">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <CheckCircle2 className="size-5 text-success" />
-                선행 학습
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {technology.prerequisites.map((prereq: any, index: number) => (
-                  <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
-                    <div className="size-2 bg-primary rounded-full" />
-                    {typeof prereq === 'string' ? prereq : prereq.displayName}
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+        {/* V4: prerequisites.required / prerequisites.recommended 구조 지원 */}
+        {technology.prerequisites && (
+          (technology.prerequisites.required?.length > 0 || technology.prerequisites.recommended?.length > 0) ? (
+            <Card className="glass-card border-tech">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <CheckCircle2 className="size-5 text-success" />
+                  선행 학습
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* 필수 선행 지식 */}
+                {technology.prerequisites.required?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <Badge variant="destructive" className="text-xs">필수</Badge>
+                    </h4>
+                    <ul className="space-y-2">
+                      {technology.prerequisites.required.map((prereq: any, index: number) => (
+                        <li key={index}>
+                          <Link 
+                            to={`/technologies/${encodeURIComponent(prereq.name)}`}
+                            className="flex items-center gap-2 text-muted-foreground font-medium hover:text-primary transition-colors"
+                          >
+                            <div className="size-2 bg-red-500 rounded-full" />
+                            {prereq.displayName || prereq.name}
+                            {prereq.difficulty && (
+                              <Badge variant="outline" className="text-xs ml-auto">
+                                {prereq.difficulty}
+                              </Badge>
+                            )}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {/* 권장 선행 지식 */}
+                {technology.prerequisites.recommended?.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">권장</Badge>
+                    </h4>
+                    <ul className="space-y-2">
+                      {technology.prerequisites.recommended.map((prereq: any, index: number) => (
+                        <li key={index}>
+                          <Link 
+                            to={`/technologies/${encodeURIComponent(prereq.name)}`}
+                            className="flex items-center gap-2 text-muted-foreground font-medium hover:text-primary transition-colors"
+                          >
+                            <div className="size-2 bg-yellow-500 rounded-full" />
+                            {prereq.displayName || prereq.name}
+                            {prereq.difficulty && (
+                              <Badge variant="outline" className="text-xs ml-auto">
+                                {prereq.difficulty}
+                              </Badge>
+                            )}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : Array.isArray(technology.prerequisites) && technology.prerequisites.length > 0 ? (
+            // 레거시 배열 형식 지원
+            <Card className="glass-card border-tech">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <CheckCircle2 className="size-5 text-success" />
+                  선행 학습
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {technology.prerequisites.map((prereq: any, index: number) => (
+                    <li key={index} className="flex items-center gap-2 text-muted-foreground font-medium">
+                      <div className="size-2 bg-primary rounded-full" />
+                      {typeof prereq === 'string' ? prereq : prereq.displayName}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          ) : null
         )}
 
         {technology.useCases && technology.useCases.length > 0 && (
@@ -378,32 +585,35 @@ export function TechnologyDetail() {
         )}
       </div>
 
-      {/* Relationships */}
-      {(relationships.PREREQUISITE?.length > 0 || relationships.NEXT_STEP?.length > 0 || relationships.ALTERNATIVE?.length > 0) && (
+      {/* V4: Relationships (Graph 기반) */}
+      {(relationships.DEPENDS_ON?.length > 0 || relationships.RECOMMENDED_AFTER?.length > 0 || 
+        relationships.USED_WITH?.length > 0 || relationships.ALTERNATIVE_TO?.length > 0) && (
         <Card className="glass-card border-tech">
           <CardHeader>
             <CardTitle className="text-foreground">관련 기술</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Prerequisites */}
-            {relationships.PREREQUISITE && relationships.PREREQUISITE.length > 0 && (
+            {/* DEPENDS_ON - 선수 지식 */}
+            {relationships.DEPENDS_ON && relationships.DEPENDS_ON.length > 0 && (
               <div>
                 <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
                   <ArrowLeft className="size-4 text-primary" />
-                  먼저 학습하면 좋은 기술
+                  먼저 학습하면 좋은 기술 (의존)
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {relationships.PREREQUISITE.map((tech: any) => (
-                    <Link key={tech.technologyId} to={`/technologies/${tech.technologyId}`}>
+                  {relationships.DEPENDS_ON.map((tech: any) => (
+                    <Link key={tech.name} to={`/technologies/${encodeURIComponent(tech.name)}`}>
                       <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                         <div className="flex items-center justify-between">
-                          <span className="text-foreground font-medium">{tech.displayName}</span>
-                          <Badge
-                            variant="outline"
-                            className={categoryColors[tech.category as keyof typeof categoryColors]}
-                          >
-                            {tech.category}
-                          </Badge>
+                          <span className="text-foreground font-medium">{tech.displayName || tech.name}</span>
+                          {tech.category && (
+                            <Badge
+                              variant="outline"
+                              className={categoryColors[tech.category as keyof typeof categoryColors]}
+                            >
+                              {tech.category}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </Link>
@@ -412,25 +622,27 @@ export function TechnologyDetail() {
               </div>
             )}
 
-            {/* Next Steps */}
-            {relationships.NEXT_STEP && relationships.NEXT_STEP.length > 0 && (
+            {/* RECOMMENDED_AFTER - 권장 학습 순서 */}
+            {relationships.RECOMMENDED_AFTER && relationships.RECOMMENDED_AFTER.length > 0 && (
               <div>
                 <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
                   <ArrowRight className="size-4 text-accent" />
                   다음 단계로 학습할 기술
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {relationships.NEXT_STEP.map((tech: any) => (
-                    <Link key={tech.technologyId} to={`/technologies/${tech.technologyId}`}>
+                  {relationships.RECOMMENDED_AFTER.map((tech: any) => (
+                    <Link key={tech.name} to={`/technologies/${encodeURIComponent(tech.name)}`}>
                       <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                         <div className="flex items-center justify-between">
-                          <span className="text-foreground font-medium">{tech.displayName}</span>
-                          <Badge
-                            variant="outline"
-                            className={categoryColors[tech.category as keyof typeof categoryColors]}
-                          >
-                            {tech.category}
-                          </Badge>
+                          <span className="text-foreground font-medium">{tech.displayName || tech.name}</span>
+                          {tech.category && (
+                            <Badge
+                              variant="outline"
+                              className={categoryColors[tech.category as keyof typeof categoryColors]}
+                            >
+                              {tech.category}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </Link>
@@ -439,25 +651,56 @@ export function TechnologyDetail() {
               </div>
             )}
 
-            {/* Alternatives */}
-            {relationships.ALTERNATIVE && relationships.ALTERNATIVE.length > 0 && (
+            {/* USED_WITH - 함께 사용 */}
+            {relationships.USED_WITH && relationships.USED_WITH.length > 0 && (
+              <div>
+                <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
+                  <LinkIcon className="size-4 text-green-500" />
+                  함께 사용하는 기술
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {relationships.USED_WITH.map((tech: any) => (
+                    <Link key={tech.name} to={`/technologies/${encodeURIComponent(tech.name)}`}>
+                      <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground font-medium">{tech.displayName || tech.name}</span>
+                          {tech.category && (
+                            <Badge
+                              variant="outline"
+                              className={categoryColors[tech.category as keyof typeof categoryColors]}
+                            >
+                              {tech.category}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ALTERNATIVE_TO - 대안 기술 */}
+            {relationships.ALTERNATIVE_TO && relationships.ALTERNATIVE_TO.length > 0 && (
               <div>
                 <h3 className="text-foreground font-bold mb-3 flex items-center gap-2">
                   <GitBranch className="size-4 text-success" />
                   대안 기술
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {relationships.ALTERNATIVE.map((tech: any) => (
-                    <Link key={tech.technologyId} to={`/technologies/${tech.technologyId}`}>
+                  {relationships.ALTERNATIVE_TO.map((tech: any) => (
+                    <Link key={tech.name} to={`/technologies/${encodeURIComponent(tech.name)}`}>
                       <div className="p-3 bg-secondary/30 rounded-lg hover:bg-primary/10 transition-all border border-border hover:border-primary/50">
                         <div className="flex items-center justify-between">
-                          <span className="text-foreground font-medium">{tech.displayName}</span>
-                          <Badge
-                            variant="outline"
-                            className={categoryColors[tech.category as keyof typeof categoryColors]}
-                          >
-                            {tech.category}
-                          </Badge>
+                          <span className="text-foreground font-medium">{tech.displayName || tech.name}</span>
+                          {tech.category && (
+                            <Badge
+                              variant="outline"
+                              className={categoryColors[tech.category as keyof typeof categoryColors]}
+                            >
+                              {tech.category}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </Link>
@@ -554,5 +797,6 @@ export function TechnologyDetail() {
         )}
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

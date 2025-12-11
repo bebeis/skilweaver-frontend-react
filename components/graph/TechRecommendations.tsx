@@ -14,35 +14,36 @@ import {
   GitMerge
 } from 'lucide-react';
 import { fetchRecommendations } from '../../src/lib/api/graph';
-import { RecommendationsData, RecommendedTechnology, GraphRelationType } from '../../src/lib/api/types';
+import { RecommendationsData, RecommendedTechnology, TechRelation } from '../../src/lib/api/types';
 import { ApiError } from '../../src/lib/api/client';
 import { TechAutocomplete } from './TechAutocomplete';
 
-const relationLabels: Record<GraphRelationType, string> = {
-  PREREQUISITE: '선행 지식',
-  RECOMMENDED_AFTER: '다음 단계',
+// V4: TechRelation 사용
+const relationLabels: Record<TechRelation, string> = {
   DEPENDS_ON: '의존',
+  RECOMMENDED_AFTER: '다음 단계',
   CONTAINS: '포함',
+  EXTENDS: '확장',
   USED_WITH: '함께 사용',
-  ALTERNATIVE: '대체 기술',
+  ALTERNATIVE_TO: '대체 기술',
 };
 
-const relationIcons: Record<GraphRelationType, typeof LinkIcon> = {
-  PREREQUISITE: ArrowRight,
-  RECOMMENDED_AFTER: ArrowRight,
+const relationIcons: Record<TechRelation, typeof LinkIcon> = {
   DEPENDS_ON: GitMerge,
+  RECOMMENDED_AFTER: ArrowRight,
   CONTAINS: Layers,
+  EXTENDS: ArrowRight,
   USED_WITH: LinkIcon,
-  ALTERNATIVE: GitMerge,
+  ALTERNATIVE_TO: GitMerge,
 };
 
-const relationColors: Record<GraphRelationType, string> = {
-  PREREQUISITE: 'text-red-500',
-  RECOMMENDED_AFTER: 'text-blue-500',
+const relationColors: Record<TechRelation, string> = {
   DEPENDS_ON: 'text-orange-500',
+  RECOMMENDED_AFTER: 'text-blue-500',
   CONTAINS: 'text-purple-500',
+  EXTENDS: 'text-teal-500',
   USED_WITH: 'text-green-500',
-  ALTERNATIVE: 'text-gray-500',
+  ALTERNATIVE_TO: 'text-gray-500',
 };
 
 const categoryColors: Record<string, string> = {
@@ -140,7 +141,7 @@ export function TechRecommendations() {
     }
     acc[tech.relation].push(tech);
     return acc;
-  }, {} as Record<GraphRelationType, RecommendedTechnology[]>);
+  }, {} as Record<TechRelation, RecommendedTechnology[]>);
 
   return (
     <div className="space-y-6">
@@ -161,8 +162,9 @@ export function TechRecommendations() {
               value={searchQuery}
               onChange={setSearchQuery}
               onSelect={(tech) => {
-                setSearchQuery(tech.key);
-                loadRecommendations(tech.key);
+                // V4: key → name
+                setSearchQuery(tech.name);
+                loadRecommendations(tech.name);
               }}
               placeholder="예: react, spring-boot, kubernetes..."
               className="flex-1"
@@ -224,10 +226,10 @@ export function TechRecommendations() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   {(() => {
-                    const Icon = relationIcons[relation as GraphRelationType];
-                    return <Icon className={`size-5 ${relationColors[relation as GraphRelationType]}`} />;
+                    const Icon = relationIcons[relation as TechRelation];
+                    return Icon ? <Icon className={`size-5 ${relationColors[relation as TechRelation]}`} /> : null;
                   })()}
-                  {relationLabels[relation as GraphRelationType]}
+                  {relationLabels[relation as TechRelation] || relation}
                   <Badge variant="secondary" className="ml-auto">{techs.length}</Badge>
                 </CardTitle>
               </CardHeader>

@@ -8,10 +8,11 @@ import { MemberSkill, AddSkillRequest, UpdateSkillRequest } from './types';
 export const skillsApi = {
   /**
    * 회원 기술 스택 목록 조회
+   * V4: category 파라미터 제거 (Neo4j에서 관리, 프론트엔드에서 필터링)
    */
   async getSkills(
     memberId: number,
-    params?: { category?: string; level?: string }
+    params?: { level?: string }
   ): Promise<ApiResponse<{ skills: MemberSkill[]; totalCount: number }>> {
     // Filter out undefined values to avoid sending "undefined" as string in query params
     const filteredParams = Object.fromEntries(

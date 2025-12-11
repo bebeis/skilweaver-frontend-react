@@ -24,28 +24,29 @@ import {
   DropdownMenuLabel,
 } from '../ui/dropdown-menu';
 import { fetchLearningPath } from '../../src/lib/api/graph';
-import { LearningPathData, PathStep, GraphRelationType, MemberSkill } from '../../src/lib/api/types';
+import { LearningPathData, PathStep, TechRelation, MemberSkill } from '../../src/lib/api/types';
 import { ApiError } from '../../src/lib/api/client';
 import { TechAutocomplete } from './TechAutocomplete';
 import { useAuth } from '../../hooks/useAuth';
 import { skillsApi } from '../../src/lib/api/skills';
 
-const relationLabels: Record<GraphRelationType, string> = {
-  PREREQUISITE: '선행 지식',
-  RECOMMENDED_AFTER: '권장 순서',
+// V4: TechRelation 사용
+const relationLabels: Record<TechRelation, string> = {
   DEPENDS_ON: '의존',
+  RECOMMENDED_AFTER: '권장 순서',
   CONTAINS: '포함',
+  EXTENDS: '확장',
   USED_WITH: '함께 사용',
-  ALTERNATIVE: '대체',
+  ALTERNATIVE_TO: '대체',
 };
 
-const relationColors: Record<GraphRelationType, string> = {
-  PREREQUISITE: 'bg-red-100 text-red-700',
-  RECOMMENDED_AFTER: 'bg-blue-100 text-blue-700',
+const relationColors: Record<TechRelation, string> = {
   DEPENDS_ON: 'bg-orange-100 text-orange-700',
+  RECOMMENDED_AFTER: 'bg-blue-100 text-blue-700',
   CONTAINS: 'bg-purple-100 text-purple-700',
+  EXTENDS: 'bg-teal-100 text-teal-700',
   USED_WITH: 'bg-green-100 text-green-700',
-  ALTERNATIVE: 'bg-gray-100 text-gray-700',
+  ALTERNATIVE_TO: 'bg-gray-100 text-gray-700',
 };
 
 function PathStepCard({ step, isLast, totalSteps }: {
@@ -172,8 +173,8 @@ export function PathFinder() {
   };
 
   const handleSelectUserSkill = (skill: MemberSkill) => {
-    const techKey = skill.technologyKey || skill.customName || '';
-    setFromTech(techKey);
+    // V4: technologyKey → technologyName
+    setFromTech(skill.technologyName);
   };
 
   return (
@@ -222,7 +223,8 @@ export function PathFinder() {
                               className="cursor-pointer"
                             >
                               <div className="flex items-center justify-between w-full">
-                                <span>{skill.displayName || skill.customName}</span>
+                                {/* V4: technologyName 표시 */}
+                                <span>{skill.technologyName}</span>
                                 <Badge variant="secondary" className="text-xs ml-2">
                                   {skill.level}
                                 </Badge>
@@ -242,7 +244,7 @@ export function PathFinder() {
                 <TechAutocomplete
                   value={fromTech}
                   onChange={setFromTech}
-                  onSelect={(tech) => setFromTech(tech.key)}
+                  onSelect={(tech) => setFromTech(tech.name)}
                   placeholder="예: java, python..."
                   icon={<Flag className="size-4 text-green-500" />}
                 />
@@ -253,7 +255,7 @@ export function PathFinder() {
                 <TechAutocomplete
                   value={toTech}
                   onChange={setToTech}
-                  onSelect={(tech) => setToTech(tech.key)}
+                  onSelect={(tech) => setToTech(tech.name)}
                   placeholder="예: kubernetes, mlops..."
                   icon={<Target className="size-4 text-primary" />}
                 />

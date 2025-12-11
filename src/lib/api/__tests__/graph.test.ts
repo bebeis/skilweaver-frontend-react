@@ -1,5 +1,11 @@
 /**
- * V3 Graph API 테스트
+ * V4 Graph API 테스트
+ * 
+ * ⚠️ V4 Breaking Change:
+ * 기존 /api/v1/graph/* 엔드포인트가 /api/v1/technologies/*로 통합되었습니다.
+ * 
+ * 이 테스트 파일은 graph.ts의 함수들을 테스트하며,
+ * 내부적으로 V4 Technologies API 엔드포인트를 호출합니다.
  */
 
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
@@ -16,9 +22,10 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-describe('Graph API', () => {
+describe('Graph API (V4 - Technologies API로 통합)', () => {
   describe('fetchRoadmap', () => {
     it('should fetch roadmap for a technology', async () => {
+      // V4: /technologies/{name}/roadmap
       const response = await fetchRoadmap('spring-boot');
 
       expect(response.success).toBe(true);
@@ -39,6 +46,7 @@ describe('Graph API', () => {
 
   describe('fetchLearningPath', () => {
     it('should fetch learning path between technologies', async () => {
+      // V4: /technologies/path?from=...&to=...
       const response = await fetchLearningPath('java', 'mlops');
 
       expect(response.success).toBe(true);
@@ -59,6 +67,7 @@ describe('Graph API', () => {
 
   describe('fetchRecommendations', () => {
     it('should fetch recommendations for a technology', async () => {
+      // V4: /technologies/{name}/recommendations
       const response = await fetchRecommendations('react');
 
       expect(response.success).toBe(true);
@@ -77,6 +86,7 @@ describe('Graph API', () => {
 
   describe('analyzeGap', () => {
     it('should analyze gap when ready', async () => {
+      // V4: /technologies/gap-analysis
       const response = await analyzeGap({
         knownTechnologies: ['java', 'sql'],
         targetTechnology: 'spring-boot',

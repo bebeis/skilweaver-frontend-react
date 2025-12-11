@@ -55,7 +55,7 @@ export function TechAutocomplete({
     try {
       const response = await technologiesApi.getTechnologies({
         search: query,
-        size: 10,
+        limit: 10,
         active: true,
       });
 
@@ -90,7 +90,8 @@ export function TechAutocomplete({
   }, [value, searchTechnologies]);
 
   const handleSelect = (tech: Technology) => {
-    onChange(tech.key);
+    // V4: key → name
+    onChange(tech.name);
     onSelect?.(tech);
     setOpen(false);
     setSuggestions([]);
@@ -159,8 +160,8 @@ export function TechAutocomplete({
               <CommandGroup heading="검색 결과">
                 {suggestions.map((tech) => (
                   <CommandItem
-                    key={tech.technologyId}
-                    value={tech.key}
+                    key={tech.name}
+                    value={tech.name}
                     onSelect={() => handleSelect(tech)}
                     className="cursor-pointer"
                   >
@@ -170,7 +171,7 @@ export function TechAutocomplete({
                         <div>
                           <span className="font-medium">{tech.displayName}</span>
                           <span className="text-xs text-muted-foreground ml-2">
-                            {tech.key}
+                            {tech.name}
                           </span>
                         </div>
                       </div>

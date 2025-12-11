@@ -17,9 +17,14 @@ import {
   ArrowRight,
   Zap,
   Activity,
-  Loader2
+  Loader2,
+  Flame,
+  Briefcase,
+  Users,
+  Database
 } from 'lucide-react';
-import { skillsApi, goalsApi, learningPlansApi } from '../src/lib/api';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { skillsApi, goalsApi, learningPlansApi, technologiesApi } from '../src/lib/api';
 import { toast } from 'sonner';
 
 const levelColors = {
@@ -41,6 +46,8 @@ export function Dashboard() {
   const [goals, setGoals] = useState<any[]>([]);
   const [activePlan, setActivePlan] = useState<any>(null);
   const [plansCount, setPlansCount] = useState(0);
+  const [trendingTechs, setTrendingTechs] = useState<any[]>([]);
+  const [highDemandTechs, setHighDemandTechs] = useState<any[]>([]);
 
   // Load dashboard data from APIs
   useEffect(() => {
@@ -51,10 +58,11 @@ export function Dashboard() {
         setLoading(true);
         
         // Load all data in parallel
-        const [skillsResponse, goalsResponse, plansResponse] = await Promise.all([
+        const [skillsResponse, goalsResponse, plansResponse, techsResponse] = await Promise.all([
           skillsApi.getSkills(Number(user.id)),
           goalsApi.getGoals(Number(user.id), { status: 'ACTIVE' }),
           learningPlansApi.getPlans(Number(user.id), { status: 'ACTIVE', page: 0, size: 1 }),
+          technologiesApi.getTechnologies({ limit: 50, active: true }),
         ]);
         
         if (skillsResponse.success) {
@@ -95,6 +103,25 @@ export function Dashboard() {
               // Ignore if plan details fail
             }
           }
+        }
+
+        // 인기 기술 및 수요 높은 기술 분류
+        if (techsResponse.success && techsResponse.data?.technologies) {
+          const techs = techsResponse.data.technologies;
+          
+          // 커뮤니티 인기도 기준 상위 5개
+          const trending = [...techs]
+            .filter((t: any) => t.communityPopularity)
+            .sort((a: any, b: any) => (b.communityPopularity || 0) - (a.communityPopularity || 0))
+            .slice(0, 5);
+          setTrendingTechs(trending);
+
+          // 취업 시장 수요 기준 상위 5개
+          const highDemand = [...techs]
+            .filter((t: any) => t.jobMarketDemand)
+            .sort((a: any, b: any) => (b.jobMarketDemand || 0) - (a.jobMarketDemand || 0))
+            .slice(0, 5);
+          setHighDemandTechs(highDemand);
         }
       } catch (error: any) {
         toast.error(error.message || '대시보드 데이터를 불러오는데 실패했습니다.');
@@ -308,7 +335,8 @@ export function Dashboard() {
                       <BookOpen className="size-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{skill.displayName || skill.customName}</p>
+                      {/* V4: technologyName 기반 */}
+                      <p className="font-semibold text-foreground">{skill.technologyName}</p>
                       <p className="text-sm text-muted-foreground">{skill.level}</p>
                     </div>
                   </div>
@@ -375,8 +403,131 @@ export function Dashboard() {
         </Card>
       </div>
 
+      {/* 인기 기술 & 수요 높은 기술 */}
+      {(trendingTechs.length > 0 || highDemandTechs.length > 0) && (
+        <TooltipProvider>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* 인기 기술 */}
+            {trendingTechs.length > 0 && (
+              <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-8">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-orange-500 rounded-lg blur-md opacity-40"></div>
+                        <div className="relative bg-orange-500/20 rounded-lg p-2.5 border border-orange-500/30">
+                          <Flame className="size-5 text-orange-500" />
+                        </div>
+                      </div>
+                      <CardTitle className="text-xl">인기 기술</CardTitle>
+                    </div>
+                    <Link to="/technologies?sort=popularity">
+                      <Button variant="outline" size="sm" className="border-orange-500/30 hover:bg-orange-500/10 transition-fluid">
+                        전체 보기
+                        <ArrowRight className="size-4 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {trendingTechs.map((tech: any, index: number) => (
+                      <Link 
+                        key={tech.name} 
+                        to={`/technologies/${encodeURIComponent(tech.name)}`}
+                        className="flex items-center justify-between p-3 glass-card rounded-lg border-tech hover-glow-primary"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center size-8 rounded-full bg-orange-500/20 text-orange-600 font-bold text-sm">
+                            {index + 1}
+                          </div>
+                          <div className="bg-primary/20 rounded-lg p-2 border border-primary/30">
+                            <Database className="size-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">{tech.displayName}</p>
+                            <p className="text-xs text-muted-foreground">{tech.category}</p>
+                          </div>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div className="flex items-center gap-1 text-orange-600">
+                              <Users className="size-4" />
+                              <span className="font-bold">{tech.communityPopularity}/10</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>커뮤니티 인기도</TooltipContent>
+                        </Tooltip>
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 수요 높은 기술 */}
+            {highDemandTechs.length > 0 && (
+              <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-9">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-blue-500 rounded-lg blur-md opacity-40"></div>
+                        <div className="relative bg-blue-500/20 rounded-lg p-2.5 border border-blue-500/30">
+                          <Briefcase className="size-5 text-blue-500" />
+                        </div>
+                      </div>
+                      <CardTitle className="text-xl">취업 수요 높은 기술</CardTitle>
+                    </div>
+                    <Link to="/technologies?sort=demand">
+                      <Button variant="outline" size="sm" className="border-blue-500/30 hover:bg-blue-500/10 transition-fluid">
+                        전체 보기
+                        <ArrowRight className="size-4 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {highDemandTechs.map((tech: any, index: number) => (
+                      <Link 
+                        key={tech.name} 
+                        to={`/technologies/${encodeURIComponent(tech.name)}`}
+                        className="flex items-center justify-between p-3 glass-card rounded-lg border-tech hover-glow-primary"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center size-8 rounded-full bg-blue-500/20 text-blue-600 font-bold text-sm">
+                            {index + 1}
+                          </div>
+                          <div className="bg-primary/20 rounded-lg p-2 border border-primary/30">
+                            <Database className="size-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">{tech.displayName}</p>
+                            <p className="text-xs text-muted-foreground">{tech.category}</p>
+                          </div>
+                        </div>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div className="flex items-center gap-1 text-blue-600">
+                              <TrendingUp className="size-4" />
+                              <span className="font-bold">{tech.jobMarketDemand}/10</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>취업 시장 수요</TooltipContent>
+                        </Tooltip>
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TooltipProvider>
+      )}
+
       {/* 빠른 작업 */}
-      <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-8">
+      <Card className="glass-card border-tech shadow-tech animate-slide-up-fluid stagger-10">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="relative">

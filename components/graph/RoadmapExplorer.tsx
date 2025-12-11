@@ -16,14 +16,16 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { fetchRoadmap } from '../../src/lib/api/graph';
-import { RoadmapData, RoadmapTechnology, StepDifficulty } from '../../src/lib/api/types';
+import { RoadmapData, RoadmapTechnology, Difficulty } from '../../src/lib/api/types';
 import { ApiError } from '../../src/lib/api/client';
 import { TechAutocomplete } from './TechAutocomplete';
 
-const difficultyColors: Record<StepDifficulty, string> = {
-  EASY: 'bg-green-50 text-green-700 border-green-200',
-  MEDIUM: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  HARD: 'bg-red-50 text-red-700 border-red-200',
+// V4: Difficulty enum 사용
+const difficultyColors: Record<Difficulty, string> = {
+  BEGINNER: 'bg-green-50 text-green-700 border-green-200',
+  INTERMEDIATE: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  ADVANCED: 'bg-orange-50 text-orange-700 border-orange-200',
+  EXPERT: 'bg-red-50 text-red-700 border-red-200',
 };
 
 const categoryColors: Record<string, string> = {
@@ -63,9 +65,11 @@ function TechNode({ tech, onClick, direction }: {
           <Badge variant="outline" className={`text-xs ${categoryColors[tech.category] || 'bg-gray-50 text-gray-700'}`}>
             {tech.category}
           </Badge>
-          <Badge variant="outline" className={`text-xs ${difficultyColors[tech.difficulty]}`}>
-            {tech.difficulty}
-          </Badge>
+          {tech.difficulty && (
+            <Badge variant="outline" className={`text-xs ${difficultyColors[tech.difficulty] || 'bg-gray-50 text-gray-700'}`}>
+              {tech.difficulty}
+            </Badge>
+          )}
         </div>
       </div>
       <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -166,8 +170,9 @@ export function RoadmapExplorer({ initialTechnology = '' }: RoadmapExplorerProps
               value={searchQuery}
               onChange={setSearchQuery}
               onSelect={(tech) => {
-                setSearchQuery(tech.key);
-                loadRoadmap(tech.key);
+                // V4: key → name
+                setSearchQuery(tech.name);
+                loadRoadmap(tech.name);
               }}
               placeholder="예: spring-boot, react, kubernetes..."
               className="flex-1"

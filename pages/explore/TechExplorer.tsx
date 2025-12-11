@@ -16,12 +16,16 @@ export function TechExplorer() {
   // URL에서 초기 기술 파라미터 가져오기
   const initialTech = searchParams.get('tech') || '';
   const initialTab = searchParams.get('tab');
+  const initialTarget = searchParams.get('target'); // 갭 분석용
 
   useEffect(() => {
     if (initialTab && ['roadmap', 'path', 'recommendations', 'gap'].includes(initialTab)) {
       setActiveTab(initialTab);
+    } else if (initialTarget) {
+      // target 파라미터가 있으면 갭 분석 탭으로 이동
+      setActiveTab('gap');
     }
-  }, [initialTab]);
+  }, [initialTab, initialTarget]);
 
   return (
     <div className="space-y-6">

@@ -140,7 +140,7 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  // 3. 기술 스택 API
+  // 3. 기술 스택 API - V4: technologyName 기반
   http.get(`${BASE_URL}/members/:memberId/skills`, () => {
     return HttpResponse.json({
       success: true,
@@ -148,17 +148,22 @@ export const handlers = [
         skills: [
           {
             memberSkillId: 1,
-            technologyId: 10,
-            technologyKey: 'java',
-            displayName: 'Java',
-            customName: null,
+            technologyName: 'java',  // V4: 단일 필드
             level: 'ADVANCED',
             yearsOfUse: 2.5,
             lastUsedAt: '2025-11-20',
             note: '주로 Spring Boot 개발에 사용',
           },
+          {
+            memberSkillId: 2,
+            technologyName: 'spring-boot',
+            level: 'INTERMEDIATE',
+            yearsOfUse: 1.5,
+            lastUsedAt: '2025-11-20',
+            note: 'REST API 개발',
+          },
         ],
-        totalCount: 1,
+        totalCount: 2,
       },
       timestamp: new Date().toISOString(),
     });
@@ -169,10 +174,8 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       data: {
-        memberSkillId: 2,
-        technologyId: body.technologyId,
-        technologyKey: 'spring-boot',
-        displayName: 'Spring Boot',
+        memberSkillId: 3,
+        technologyName: body.technologyName,  // V4: technologyName 사용
         level: body.level,
         yearsOfUse: body.yearsOfUse,
         lastUsedAt: body.lastUsedAt,
@@ -183,12 +186,13 @@ export const handlers = [
     }, { status: 201 });
   }),
 
-  http.put(`${BASE_URL}/members/:memberId/skills/:skillId`, async ({ request }) => {
+  http.put(`${BASE_URL}/members/:memberId/skills/:skillId`, async ({ request, params }) => {
     const body = await request.json() as any;
     return HttpResponse.json({
       success: true,
       data: {
-        memberSkillId: 1,
+        memberSkillId: Number(params.skillId),
+        technologyName: 'java',  // V4: 수정 시 technologyName 유지
         level: body.level,
         yearsOfUse: body.yearsOfUse,
         lastUsedAt: body.lastUsedAt,
@@ -417,119 +421,137 @@ export const handlers = [
     });
   }),
 
-  // 6. 기술 카탈로그 API
+  // 6. V4 기술 카탈로그 API (name 기반)
   http.get(`${BASE_URL}/technologies`, () => {
     return HttpResponse.json({
       success: true,
       data: {
         technologies: [
           {
-            technologyId: 1,
-            key: 'spring-boot',
+            name: 'spring-boot',
             displayName: 'Spring Boot',
             category: 'FRAMEWORK',
+            difficulty: 'INTERMEDIATE',
             ecosystem: 'JVM',
             officialSite: 'https://spring.io/projects/spring-boot',
             active: true,
+            description: 'Spring 기반 애플리케이션을 빠르게 개발할 수 있는 프레임워크',
+            learningRoadmap: '1단계: Spring 기초 → 2단계: Spring Boot 자동 설정 → 3단계: REST API 개발',
+            estimatedLearningHours: 80,
+            learningTips: '공식 문서와 예제를 따라하세요',
+            useCases: ['REST API', 'Microservices'],
+            communityPopularity: 9,
+            jobMarketDemand: 10,
           },
         ],
-        pagination: {
-          page: 0,
-          size: 20,
-          totalElements: 1,
-          totalPages: 1,
-        },
+        totalCount: 1,
       },
       timestamp: new Date().toISOString(),
     });
   }),
 
-  http.get(`${BASE_URL}/technologies/:technologyId`, () => {
+  // V4: name 기반 기술 상세 조회
+  http.get(`${BASE_URL}/technologies/:name`, ({ params }) => {
+    const name = params.name as string;
+    
+    if (name === 'unknown-tech') {
+      return HttpResponse.json({
+        success: false,
+        data: null,
+        message: `Technology '${name}' not found`,
+        errorCode: 'TECHNOLOGY_NOT_FOUND',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
     return HttpResponse.json({
       success: true,
       data: {
-        technologyId: 1,
-        key: 'spring-boot',
-        displayName: 'Spring Boot',
+        name: name,
+        displayName: name === 'spring-boot' ? 'Spring Boot' : name,
         category: 'FRAMEWORK',
+        difficulty: 'INTERMEDIATE',
         ecosystem: 'JVM',
         officialSite: 'https://spring.io/projects/spring-boot',
         active: true,
-        knowledge: {
-          summary: 'Spring Boot는 Spring 기반 애플리케이션을 빠르고 쉽게 개발할 수 있도록 도와주는 프레임워크입니다.',
-          learningTips: '공식 문서와 예제 프로젝트를 따라하며 학습하는 것이 효과적입니다.',
-          sourceType: 'COMMUNITY',
-        },
-        prerequisites: [
-          {
-            prerequisiteKey: 'java',
-            displayName: 'Java',
-          },
-        ],
-        useCases: ['REST API 서버 개발', '마이크로서비스 아키텍처'],
-        // v2 fields
+        description: 'Spring Boot는 Spring 기반 애플리케이션을 빠르고 쉽게 개발할 수 있도록 도와주는 프레임워크입니다.',
         learningRoadmap: '1단계: Spring 기초 → 2단계: Spring Boot 자동 설정 → 3단계: REST API 개발 → 4단계: 데이터 연동',
         estimatedLearningHours: 60,
-        relatedTechnologies: ['spring-framework', 'java', 'gradle'],
+        learningTips: '공식 문서와 예제 프로젝트를 따라하며 학습하는 것이 효과적입니다.',
+        useCases: ['REST API 서버 개발', '마이크로서비스 아키텍처'],
         communityPopularity: 9,
         jobMarketDemand: 10,
+        prerequisites: {
+          required: [
+            { name: 'java', displayName: 'Java', category: 'LANGUAGE', difficulty: 'BEGINNER' },
+          ],
+          recommended: [
+            { name: 'spring-framework', displayName: 'Spring Framework', category: 'FRAMEWORK', difficulty: 'INTERMEDIATE' },
+          ],
+        },
+        relatedTechnologies: [
+          { name: 'kotlin', displayName: 'Kotlin', category: 'LANGUAGE', difficulty: 'INTERMEDIATE' },
+        ],
       },
       timestamp: new Date().toISOString(),
     });
   }),
 
-  // v2: 기술 생성 (관리자)
+  // V4: 기술 생성 (관리자)
   http.post(`${BASE_URL}/technologies`, async ({ request }) => {
     const body = await request.json() as any;
     return HttpResponse.json({
       success: true,
       data: {
-        technologyId: 100,
-        key: body.key,
+        name: body.name,
         displayName: body.displayName,
         category: body.category,
+        difficulty: body.difficulty || 'INTERMEDIATE',
         ecosystem: body.ecosystem,
         officialSite: body.officialSite,
         active: true,
-        knowledge: null,
-        prerequisites: [],
-        useCases: [],
+        description: body.description,
         learningRoadmap: body.learningRoadmap,
         estimatedLearningHours: body.estimatedLearningHours,
-        relatedTechnologies: body.relatedTechnologies || [],
+        learningTips: body.learningTips,
+        useCases: body.useCases || [],
         communityPopularity: body.communityPopularity,
         jobMarketDemand: body.jobMarketDemand,
       },
-      message: '기술이 생성되었습니다.',
+      message: '기술이 등록되었습니다',
       timestamp: new Date().toISOString(),
     }, { status: 201 });
   }),
 
-  // v2: 기술 수정 (관리자)
-  http.put(`${BASE_URL}/technologies/:technologyId`, async ({ request, params }) => {
+  // V4: 기술 수정 (관리자) - name 기반
+  http.put(`${BASE_URL}/technologies/:name`, async ({ request, params }) => {
     const body = await request.json() as any;
     return HttpResponse.json({
       success: true,
       data: {
-        technologyId: Number(params.technologyId),
-        key: 'spring-boot',
+        name: params.name,
         displayName: body.displayName || 'Spring Boot',
         category: 'FRAMEWORK',
+        difficulty: body.difficulty || 'INTERMEDIATE',
         ecosystem: body.ecosystem || 'JVM',
         officialSite: body.officialSite,
         active: body.active !== undefined ? body.active : true,
-        knowledge: null,
-        prerequisites: [],
-        useCases: [],
+        description: body.description,
         learningRoadmap: body.learningRoadmap,
         estimatedLearningHours: body.estimatedLearningHours,
-        relatedTechnologies: body.relatedTechnologies || [],
+        learningTips: body.learningTips,
+        useCases: body.useCases || [],
         communityPopularity: body.communityPopularity,
         jobMarketDemand: body.jobMarketDemand,
       },
-      message: '기술이 수정되었습니다.',
+      message: '기술 정보가 수정되었습니다',
       timestamp: new Date().toISOString(),
     });
+  }),
+
+  // V4: 기술 삭제 (관리자)
+  http.delete(`${BASE_URL}/technologies/:name`, () => {
+    return new HttpResponse(null, { status: 204 });
   }),
 
   // ==================== v2 Feedback APIs ====================
@@ -600,11 +622,11 @@ export const handlers = [
     });
   }),
 
-  // ==================== V3 Graph APIs ====================
+  // ==================== V4 Graph APIs (Technologies API로 통합) ====================
 
-  // 기술 로드맵 조회
-  http.get(`${BASE_URL}/graph/roadmap/:technology`, ({ params }) => {
-    const tech = params.technology as string;
+  // V4: 기술 로드맵 조회 (GET /api/v1/technologies/{name}/roadmap)
+  http.get(`${BASE_URL}/technologies/:name/roadmap`, ({ params }) => {
+    const tech = params.name as string;
 
     // 알 수 없는 기술 처리
     if (tech === 'unknown-tech') {
@@ -639,8 +661,8 @@ export const handlers = [
     });
   }),
 
-  // 학습 경로 탐색
-  http.get(`${BASE_URL}/graph/path`, ({ request }) => {
+  // V4: 학습 경로 탐색 (GET /api/v1/technologies/path)
+  http.get(`${BASE_URL}/technologies/path`, ({ request }) => {
     const url = new URL(request.url);
     const from = url.searchParams.get('from');
     const to = url.searchParams.get('to');
@@ -673,9 +695,9 @@ export const handlers = [
     });
   }),
 
-  // 연관 기술 추천
-  http.get(`${BASE_URL}/graph/recommendations/:technology`, ({ params }) => {
-    const tech = params.technology as string;
+  // V4: 연관 기술 추천 (GET /api/v1/technologies/{name}/recommendations)
+  http.get(`${BASE_URL}/technologies/:name/recommendations`, ({ params }) => {
+    const tech = params.name as string;
 
     if (tech === 'unknown-tech') {
       return HttpResponse.json({
@@ -701,8 +723,8 @@ export const handlers = [
     });
   }),
 
-  // 갭 분석
-  http.post(`${BASE_URL}/graph/gap-analysis`, async ({ request }) => {
+  // V4: 갭 분석 (POST /api/v1/technologies/gap-analysis)
+  http.post(`${BASE_URL}/technologies/gap-analysis`, async ({ request }) => {
     const body = await request.json() as any;
     const { knownTechnologies, targetTechnology } = body;
 
@@ -710,7 +732,7 @@ export const handlers = [
       return HttpResponse.json({
         success: false,
         data: null,
-        message: `Technology '${targetTechnology}' not found in graph`,
+        message: `Target technology '${targetTechnology}' not found in graph`,
         errorCode: 'TECHNOLOGY_NOT_FOUND',
         timestamp: new Date().toISOString(),
       }, { status: 404 });
@@ -733,10 +755,55 @@ export const handlers = [
         readinessScore,
         message: ready
           ? `${knownTechnologies.join(', ')} 지식이 있으므로 ${targetTechnology} 학습이 가능합니다.`
-          : `${targetTechnology} 학습을 위해 먼저 Java를 학습하세요.`,
+          : `다음 기술을 먼저 학습하면 더 효과적입니다: java`,
       },
       timestamp: new Date().toISOString(),
     });
+  }),
+
+  // V4: 기술 관계 조회 (GET /api/v1/technologies/{name}/relationships)
+  http.get(`${BASE_URL}/technologies/:name/relationships`, ({ params }) => {
+    const tech = params.name as string;
+
+    if (tech === 'unknown-tech') {
+      return HttpResponse.json({
+        success: false,
+        data: null,
+        message: `Technology '${tech}' not found`,
+        errorCode: 'TECHNOLOGY_NOT_FOUND',
+        timestamp: new Date().toISOString(),
+      }, { status: 404 });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: [
+        { from: tech, to: 'java', relation: 'DEPENDS_ON', weight: 1.0 },
+        { from: tech, to: 'kotlin', relation: 'USED_WITH', weight: 1.0 },
+      ],
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  // V4: 관계 생성 (POST /api/v1/technologies/{name}/relationships)
+  http.post(`${BASE_URL}/technologies/:name/relationships`, async ({ request, params }) => {
+    const body = await request.json() as any;
+    return HttpResponse.json({
+      success: true,
+      data: {
+        from: params.name,
+        to: body.to,
+        relation: body.relation,
+        weight: body.weight || 1.0,
+      },
+      message: '관계가 생성되었습니다',
+      timestamp: new Date().toISOString(),
+    }, { status: 201 });
+  }),
+
+  // V4: 관계 삭제 (DELETE /api/v1/technologies/{from}/relationships/{to})
+  http.delete(`${BASE_URL}/technologies/:from/relationships/:to`, () => {
+    return new HttpResponse(null, { status: 204 });
   }),
 ];
 
