@@ -71,6 +71,13 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
     onOpenChange(false);
   };
 
+  const { 
+    containerRef: listRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 gap-0 max-w-lg overflow-hidden bg-card/95 backdrop-blur-xl border-border/50">
@@ -87,15 +94,22 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
             ESC
           </kbd>
         </div>
-        <div className="max-h-[300px] overflow-y-auto p-2">
+        <div 
+          ref={listRef} 
+          onMouseLeave={handleMouseLeave}
+          className="max-h-[300px] overflow-y-auto p-2 relative"
+        >
+          <LiquidHighlight style={highlightStyle} />
+
           {Object.entries(groupedCommands).map(([category, items]) => (
-            <div key={category} className="mb-2">
+            <div key={category} className="mb-2 relative z-10">
               <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">{category}</div>
               {items.map((cmd) => (
                 <button
                   key={cmd.id}
                   onClick={() => handleSelect(cmd.href)}
-                  className="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-secondary/80 text-sm text-foreground transition-colors"
+                  onMouseEnter={handleMouseEnter}
+                  className="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:text-foreground text-sm text-muted-foreground transition-colors relative z-10"
                 >
                   <cmd.icon className="size-4 text-muted-foreground" />
                   <span>{cmd.label}</span>
@@ -105,7 +119,7 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
             </div>
           ))}
           {filteredCommands.length === 0 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
+            <div className="py-6 text-center text-sm text-muted-foreground relative z-10">
               결과가 없습니다
             </div>
           )}

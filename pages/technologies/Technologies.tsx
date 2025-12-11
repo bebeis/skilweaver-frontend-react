@@ -32,6 +32,8 @@ import { technologiesApi } from '../../src/lib/api/technologies';
 import { toast } from 'sonner';
 import { cn } from '../../components/ui/utils';
 
+import { LiquidHighlight, useFluidHighlight } from '../../components/ui/fluid-highlight';
+
 const categoryColors: Record<string, string> = {
   LANGUAGE: 'category-language',
   FRAMEWORK: 'category-framework',
@@ -107,6 +109,13 @@ export function Technologies() {
     setBookmarks(newBookmarks);
     localStorage.setItem(BOOKMARKS_KEY, JSON.stringify([...newBookmarks]));
   };
+
+  const { 
+    containerRef: listRef, 
+    highlightStyle, 
+    handleMouseEnter, 
+    handleMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
 
   // Load technologies
   useEffect(() => {
@@ -324,7 +333,13 @@ export function Technologies() {
 
           {/* Tech List */}
           <ScrollArea className="flex-1 -mx-1 px-1">
-            <div className="space-y-1">
+            <div 
+              ref={listRef} 
+              onMouseLeave={handleMouseLeave}
+              className="space-y-1 relative"
+            >
+              <LiquidHighlight style={highlightStyle} />
+              
               {filteredTechnologies.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <Database className="size-8 mb-2 opacity-50" />
@@ -335,11 +350,12 @@ export function Technologies() {
                   <button
                     key={tech.name}
                     onClick={() => setSelectedTech(tech)}
+                    onMouseEnter={handleMouseEnter}
                     className={cn(
-                      "w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors",
+                      "w-full flex items-center gap-3 p-2.5 rounded-md text-left transition-colors relative z-10",
                       selectedTech?.name === tech.name
                         ? "bg-primary/10 border border-primary/20"
-                        : "hover:bg-secondary/50"
+                        : "hover:text-foreground" // Removed hover:bg-secondary/50
                     )}
                   >
                     <div className="p-1.5 rounded bg-secondary shrink-0">
