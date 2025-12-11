@@ -153,7 +153,7 @@ export function Layout() {
   }, []);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (navRef.current && !sidebarCollapsed) {
+    if (navRef.current) {
       const navRect = navRef.current.getBoundingClientRect();
       const itemRect = e.currentTarget.getBoundingClientRect();
       
@@ -222,44 +222,57 @@ export function Layout() {
             </button>
           )}
           
-          {/* Moving Glass Highlight - The "Magic Move" Element */}
-          {!sidebarCollapsed && (
-            <div
-              className="absolute left-3 right-3 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none z-0 overflow-hidden"
+          {/* Moving Liquid Glass Highlight - Water Droplet Effect */}
+          {/* {!sidebarCollapsed && ( - Removed check to enable in collapsed mode */}
+          <div
+            className={cn(
+              "absolute rounded-xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none z-0 overflow-hidden",
+              sidebarCollapsed ? "left-2 right-2" : "left-3 right-3"
+            )}
+            style={{
+              top: hoverStyle.top,
+              height: hoverStyle.height,
+              opacity: hoverStyle.opacity,
+              // Glass Base: 투명도 높은 유리 질감
+              background: 'rgba(255, 255, 255, 0.02)',
+              boxShadow: `
+                inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+                inset 0 0 15px rgba(255, 255, 255, 0.05),
+                0 8px 20px -4px rgba(0, 0, 0, 0.2)
+              `,
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+            }}
+          >
+            {/* Internal Fluid Animation: 물방울 내부에서 회전하는 빛의 흐름 */}
+            <div 
+              className="absolute inset-[-100%] top-[-50%] left-[-50%] w-[200%] h-[200%] opacity-40 blur-[30px]"
               style={{
-                top: hoverStyle.top,
-                height: hoverStyle.height,
-                opacity: hoverStyle.opacity,
-                // 밝고 영롱한 유색 유리 (Luminous Tint) - Primary 컬러 베이스
-                background: `
-                  linear-gradient(135deg, hsl(var(--primary) / 0.15) 0%, hsl(var(--primary) / 0.05) 100%),
-                  radial-gradient(circle at 0% 0%, rgba(255,255,255,0.4) 0%, transparent 60%)
-                `,
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                // 밝은 화이트 엣지 + 유색 글로우 쉐도우
-                boxShadow: `
-                  inset 0 1px 0 0 rgba(255,255,255,0.5),
-                  inset 1px 0 0 0 rgba(255,255,255,0.3),
-                  inset 0 -1px 0 0 hsl(var(--primary) / 0.1),
-                  0 4px 20px -4px hsl(var(--primary) / 0.3)
-                `,
+                background: `conic-gradient(from 0deg at 50% 50%, 
+                  transparent 0deg,
+                  hsl(var(--primary)) 60deg,
+                  #8b5cf6 120deg, 
+                  #3b82f6 180deg,
+                  #06b6d4 240deg,
+                  #d946ef 300deg,
+                  transparent 360deg
+                )`,
+                animation: 'spin 8s linear infinite'
               }}
-            >
-              {/* 반사광 (Sheen): 더욱 밝고 선명하게 */}
-              <div 
-                className="absolute inset-0 mix-blend-overlay"
-                style={{
-                  background: 'linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.3) 50%, transparent 60%)',
-                  backgroundSize: '200% 200%',
-                  opacity: 0.7,
-                }}
-              />
-              
-              {/* 하단 컬러 틴트: 채도를 높여 생동감 부여 */}
-              <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-primary/20 via-primary/5 to-transparent opacity-60" />
-            </div>
-          )}
+            />
+            
+            {/* Surface Reflection: 유리 표면의 맺힌 광택 */}
+            <div 
+              className="absolute inset-0 z-10 mix-blend-overlay opacity-80"
+              style={{
+                background: 'linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.7) 45%, rgba(255,255,255,0.0) 50%, transparent 60%)',
+              }}
+            />
+
+            {/* Edge Highlight: 물방울 경계의 밝은 빛 */}
+            <div className="absolute inset-0 border border-white/20 rounded-xl" />
+          </div>
+          {/* )} */}
 
           {navigation.map((item) => {
             const isActive = location.pathname.startsWith(item.href);
@@ -273,7 +286,7 @@ export function Layout() {
                   isActive 
                     ? "text-primary bg-primary/10 shadow-sm" // Active state is distinct
                     : "text-muted-foreground hover:text-foreground", // Remove default hover bg
-                  sidebarCollapsed && "justify-center px-2 hover:bg-white/5" // Collapsed mode uses simple hover
+                  sidebarCollapsed && "justify-center px-2" // Removed hover:bg-white/5 for collapsed mode
                 )}
                 title={sidebarCollapsed ? item.name : undefined}
               >
