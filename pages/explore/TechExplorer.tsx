@@ -9,9 +9,18 @@ import { PathFinder } from '../../components/graph/PathFinder';
 import { GapAnalysis } from '../../components/graph/GapAnalysis';
 import { TechRecommendations } from '../../components/graph/TechRecommendations';
 
+import { LiquidHighlight, useFluidHighlight } from '../../components/ui/fluid-highlight';
+
 export function TechExplorer() {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('roadmap');
+
+  const { 
+    containerRef: tabsRef, 
+    highlightStyle: tabsStyle, 
+    handleMouseEnter: handleTabsMouseEnter, 
+    handleMouseLeave: handleTabsMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
 
   const initialTech = searchParams.get('tech') || '';
   const initialTab = searchParams.get('tab');
@@ -66,36 +75,43 @@ export function TechExplorer() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="h-9 p-1 bg-secondary/50">
-          <TabsTrigger
-            value="roadmap"
-            className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <Map className="size-3.5 mr-1.5" />
-            로드맵
-          </TabsTrigger>
-          <TabsTrigger
-            value="path"
-            className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <Route className="size-3.5 mr-1.5" />
-            경로 탐색
-          </TabsTrigger>
-          <TabsTrigger
-            value="recommendations"
-            className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <Sparkles className="size-3.5 mr-1.5" />
-            추천
-          </TabsTrigger>
-          <TabsTrigger
-            value="gap"
-            className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <GitCompare className="size-3.5 mr-1.5" />
-            갭 분석
-          </TabsTrigger>
-        </TabsList>
+        <div ref={tabsRef} onMouseLeave={handleTabsMouseLeave} className="relative inline-block">
+          <TabsList className="h-9 p-1 bg-secondary/50 relative z-10">
+            <LiquidHighlight style={tabsStyle} />
+            <TabsTrigger
+              value="roadmap"
+              className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative z-20"
+              onMouseEnter={handleTabsMouseEnter}
+            >
+              <Map className="size-3.5 mr-1.5" />
+              로드맵
+            </TabsTrigger>
+            <TabsTrigger
+              value="path"
+              className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative z-20"
+              onMouseEnter={handleTabsMouseEnter}
+            >
+              <Route className="size-3.5 mr-1.5" />
+              경로 탐색
+            </TabsTrigger>
+            <TabsTrigger
+              value="recommendations"
+              className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative z-20"
+              onMouseEnter={handleTabsMouseEnter}
+            >
+              <Sparkles className="size-3.5 mr-1.5" />
+              추천
+            </TabsTrigger>
+            <TabsTrigger
+              value="gap"
+              className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative z-20"
+              onMouseEnter={handleTabsMouseEnter}
+            >
+              <GitCompare className="size-3.5 mr-1.5" />
+              갭 분석
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <div className="mt-4">
           <TabsContent value="roadmap" className="mt-0">

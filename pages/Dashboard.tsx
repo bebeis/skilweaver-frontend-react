@@ -98,6 +98,13 @@ export function Dashboard() {
   const [trendingTechs, setTrendingTechs] = useState<any[]>([]);
   const [highDemandTechs, setHighDemandTechs] = useState<any[]>([]);
 
+  const { 
+    containerRef: statsGridRef, 
+    highlightStyle: statsGridStyle, 
+    handleMouseEnter: handleStatsMouseEnter, 
+    handleMouseLeave: handleStatsMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
   useEffect(() => {
     if (!user) return;
     
@@ -201,8 +208,18 @@ export function Dashboard() {
         </div>
 
         {/* Stats Grid - Compact */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Link to="/skills" className="card-compact-hover">
+        <div 
+          ref={statsGridRef}
+          onMouseLeave={handleStatsMouseLeave}
+          className="grid grid-cols-2 md:grid-cols-4 gap-3 relative"
+        >
+          <LiquidHighlight style={statsGridStyle} />
+          
+          <Link 
+            to="/skills" 
+            className="card-compact relative z-10"
+            onMouseEnter={handleStatsMouseEnter}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">기술 스택</p>
@@ -214,7 +231,11 @@ export function Dashboard() {
             </div>
           </Link>
 
-          <Link to="/goals" className="card-compact-hover">
+          <Link 
+            to="/goals" 
+            className="card-compact relative z-10"
+            onMouseEnter={handleStatsMouseEnter}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">활성 목표</p>
@@ -226,7 +247,11 @@ export function Dashboard() {
             </div>
           </Link>
 
-          <Link to="/learning-plans" className="card-compact-hover">
+          <Link 
+            to="/learning-plans" 
+            className="card-compact relative z-10"
+            onMouseEnter={handleStatsMouseEnter}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">학습 플랜</p>
@@ -238,7 +263,7 @@ export function Dashboard() {
             </div>
           </Link>
 
-          <div className="card-compact">
+          <div className="card-compact relative z-10">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">목표 트랙</p>

@@ -191,6 +191,13 @@ export function LearningPlanDetail() {
   const [completingStep, setCompletingStep] = useState<number | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
 
+  const { 
+    containerRef: tabsRef, 
+    highlightStyle: tabsStyle, 
+    handleMouseEnter: handleTabsMouseEnter, 
+    handleMouseLeave: handleTabsMouseLeave 
+  } = useFluidHighlight<HTMLDivElement>();
+
   const toggleStep = (stepId: number) => {
     setExpandedSteps(prev => 
       prev.includes(stepId) 
@@ -479,11 +486,32 @@ export function LearningPlanDetail() {
 
           {/* Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full justify-start h-12 p-1 bg-secondary/30 rounded-xl mb-6">
-              <TabsTrigger value="curriculum" className="flex-1 h-10 text-sm">커리큘럼</TabsTrigger>
-              <TabsTrigger value="schedule" className="flex-1 h-10 text-sm">일정</TabsTrigger>
-              <TabsTrigger value="analysis" className="flex-1 h-10 text-sm">분석</TabsTrigger>
-            </TabsList>
+            <div ref={tabsRef} onMouseLeave={handleTabsMouseLeave} className="relative w-full">
+              <TabsList className="w-full justify-start h-12 p-1 bg-secondary/30 rounded-xl mb-6 relative z-10">
+                <LiquidHighlight style={tabsStyle} />
+                <TabsTrigger 
+                  value="curriculum" 
+                  className="flex-1 h-10 text-sm relative z-20"
+                  onMouseEnter={handleTabsMouseEnter}
+                >
+                  커리큘럼
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="schedule" 
+                  className="flex-1 h-10 text-sm relative z-20"
+                  onMouseEnter={handleTabsMouseEnter}
+                >
+                  일정
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="analysis" 
+                  className="flex-1 h-10 text-sm relative z-20"
+                  onMouseEnter={handleTabsMouseEnter}
+                >
+                  분석
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="curriculum" className="mt-0">
               <div className="relative border-l-2 border-border/50 ml-4 space-y-8 pb-4">
