@@ -21,9 +21,9 @@ import {
   Copy,
   RotateCcw
 } from 'lucide-react';
-import { analyzeGapWithResources } from '../../lib/api/search';
-import { GapAnalysisWithResources, MissingTechV6, GapPriority } from '../../lib/api/types';
-import { ApiError } from '../../lib/api/client';
+import { analyzeGapWithResources } from '@/lib/api/search';
+import { GapAnalysisWithResources, MissingTechV6, GapPriority } from '@/lib/api/types';
+import { ApiError } from '@/lib/api/client';
 import { useAuth } from '../../hooks/useAuth';
 import { skillsApi } from '../../src/lib/api/skills';
 import { TechAutocomplete } from './TechAutocomplete';
