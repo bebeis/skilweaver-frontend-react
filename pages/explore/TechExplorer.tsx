@@ -3,17 +3,18 @@ import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
-import { Map, Route, Sparkles, GitCompare, Zap } from 'lucide-react';
+import { Map, Route, Sparkles, GitCompare, Zap, Search } from 'lucide-react';
 import { RoadmapExplorer } from '../../components/graph/RoadmapExplorer';
 import { PathFinder } from '../../components/graph/PathFinder';
 import { GapAnalysis } from '../../components/graph/GapAnalysis';
 import { TechRecommendations } from '../../components/graph/TechRecommendations';
+import { HybridSearch } from '../../components/graph/HybridSearch';
 
 import { LiquidHighlight, useFluidHighlight } from '../../components/ui/fluid-highlight';
 
 export function TechExplorer() {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('roadmap');
+  const [activeTab, setActiveTab] = useState('hybrid');
 
   const { 
     containerRef: tabsRef, 
@@ -27,7 +28,7 @@ export function TechExplorer() {
   const initialTarget = searchParams.get('target');
 
   useEffect(() => {
-    if (initialTab && ['roadmap', 'path', 'recommendations', 'gap'].includes(initialTab)) {
+    if (initialTab && ['hybrid', 'roadmap', 'path', 'recommendations', 'gap'].includes(initialTab)) {
       setActiveTab(initialTab);
     } else if (initialTarget) {
       setActiveTab('gap');
@@ -79,6 +80,14 @@ export function TechExplorer() {
           <TabsList className="h-9 p-1 bg-secondary/50 relative z-10">
             <LiquidHighlight style={tabsStyle} />
             <TabsTrigger
+              value="hybrid"
+              className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative z-20"
+              onMouseEnter={handleTabsMouseEnter}
+            >
+              <Search className="size-3.5 mr-1.5" />
+              통합 검색
+            </TabsTrigger>
+            <TabsTrigger
               value="roadmap"
               className="text-xs h-7 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative z-20"
               onMouseEnter={handleTabsMouseEnter}
@@ -114,6 +123,10 @@ export function TechExplorer() {
         </div>
 
         <div className="mt-4">
+          <TabsContent value="hybrid" className="mt-0">
+            <HybridSearch />
+          </TabsContent>
+
           <TabsContent value="roadmap" className="mt-0">
             <RoadmapExplorer initialTechnology={initialTech} />
           </TabsContent>

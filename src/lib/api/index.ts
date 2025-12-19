@@ -13,4 +13,5 @@ export * from './agent-runs';
 export * from './technologies';
 export * from './feedback';
 export * from './graph';
+export * from './search';
 

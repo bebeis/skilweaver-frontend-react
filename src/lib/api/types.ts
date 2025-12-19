@@ -442,3 +442,97 @@ export type GraphErrorCode =
   | 'TECHNOLOGY_ALREADY_EXISTS'
   | 'INVALID_RELATIONSHIP';
 
+// =============================================================================
+// V6 Hybrid RAG API Types
+// =============================================================================
+
+export interface TechSummary {
+  name: string;
+  displayName: string;
+  category?: string;
+  difficulty?: string;
+}
+
+export interface DocumentResult {
+  type: string;     // "ROADMAP", "BEST_PRACTICE"
+  content: string;
+  source: string;
+  relevanceScore: number;
+}
+
+export interface LearningPathStepV6 {
+  step: number;
+  technology: TechSummary;
+  relation: TechRelation | "TARGET";
+  distance: number;
+  documents: DocumentResult[];
+}
+
+export interface HybridSearchRequest {
+  query: string;
+  targetTechnology?: string;
+  maxGraphDepth?: number;
+  maxVectorResults?: number;
+  includeDocuments?: boolean;
+}
+
+export interface HybridSearchResponse {
+  query: string;
+  targetTechnology: TechSummary;
+  learningPath: LearningPathStepV6[];
+  relatedTechnologies: TechSummary[]; 
+  summary: string;
+  estimatedTotalHours: number;
+  metadata: {
+    graphNodesTraversed: number;
+    vectorDocumentsSearched: number;
+    processingTimeMs: number;
+  };
+}
+
+export interface TechWithDocs {
+  name: string;
+  displayName: string;
+  category: string;
+  difficulty: string;
+  documents: DocumentResult[];
+}
+
+export interface LearningPathWithDocs {
+  technology: string;
+  displayName: string;
+  prerequisites: {
+    required: TechWithDocs[];
+    recommended: TechWithDocs[];
+  };
+  nextSteps: TechWithDocs[];
+  targetDocuments: DocumentResult[];
+}
+
+export interface Resource {
+  type: string;
+  title: string;
+  estimatedHours: number | null;
+}
+
+export interface MissingTechV6 {
+  name: string;
+  displayName: string;
+  priority: "HIGH" | "MEDIUM" | "LOW";
+  recommendedResources: Resource[];
+}
+
+export interface GapAnalysisWithResources {
+  target: string;
+  known: string[];
+  missing: MissingTechV6[];
+  ready: boolean;
+  readinessScore: number;
+  message: string;
+}
+
+export interface GapAnalysisRequestV6 {
+  known: string[];
+  target: string;
+}
+

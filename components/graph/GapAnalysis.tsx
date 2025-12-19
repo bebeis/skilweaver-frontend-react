@@ -21,9 +21,9 @@ import {
   Copy,
   RotateCcw
 } from 'lucide-react';
-import { analyzeGap } from '../../src/lib/api/graph';
-import { GapAnalysisData, MissingTechnology, GapPriority } from '../../src/lib/api/types';
-import { ApiError } from '../../src/lib/api/client';
+import { analyzeGapWithResources } from '../../lib/api/search';
+import { GapAnalysisWithResources, MissingTechV6, GapPriority } from '../../lib/api/types';
+import { ApiError } from '../../lib/api/client';
 import { useAuth } from '../../hooks/useAuth';
 import { skillsApi } from '../../src/lib/api/skills';
 import { TechAutocomplete } from './TechAutocomplete';
@@ -55,7 +55,7 @@ function MissingTechCard({
   onAddToKnown,
   onMouseEnter 
 }: { 
-  tech: MissingTechnology; 
+  tech: MissingTechV6; 
   onAddToKnown: (name: string) => void;
   onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
@@ -63,39 +63,65 @@ function MissingTechCard({
   
   return (
     <div 
-      className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card/50 transition-colors relative z-10 hover:border-border/50"
+      className="flex flex-col gap-3 p-3 rounded-lg border border-border bg-card/50 transition-colors relative z-10 hover:border-border/50"
       onMouseEnter={onMouseEnter}
     >
-      <div className="p-2 rounded-lg bg-red-500/10">
-        <AlertCircle className="size-4 text-red-500" />
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-red-500/10">
+          <AlertCircle className="size-4 text-red-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <button
+            className="font-semibold text-foreground hover:text-primary transition-colors text-left"
+            onClick={() => navigate(`/technologies/${encodeURIComponent(tech.name)}`)}
+          >
+            {tech.displayName}
+          </button>
+          <div className="text-sm text-muted-foreground">{tech.name}</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                onClick={() => onAddToKnown(tech.name)}
+              >
+                <Plus className="size-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>보유 기술에 추가</TooltipContent>
+          </Tooltip>
+          <Badge variant="outline" className={priorityColors[tech.priority] ? priorityColors[tech.priority].replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'text-opacity-90 text-').replace('border-', 'border-opacity-20 border-') : ''}>
+            {priorityLabels[tech.priority]}
+          </Badge>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <button
-          className="font-semibold text-foreground hover:text-primary transition-colors text-left"
-          onClick={() => navigate(`/technologies/${encodeURIComponent(tech.name)}`)}
-        >
-          {tech.displayName}
-        </button>
-        <div className="text-sm text-muted-foreground">{tech.name}</div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              onClick={() => onAddToKnown(tech.name)}
-            >
-              <Plus className="size-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>보유 기술에 추가</TooltipContent>
-        </Tooltip>
-        <Badge variant="outline" className={priorityColors[tech.priority] ? priorityColors[tech.priority].replace('bg-', 'bg-opacity-10 bg-').replace('text-', 'text-opacity-90 text-').replace('border-', 'border-opacity-20 border-') : ''}>
-          {priorityLabels[tech.priority]}
-        </Badge>
-      </div>
+      
+      {/* Resources Section */}
+      {tech.recommendedResources && tech.recommendedResources.length > 0 && (
+        <div className="mt-2 pl-11">
+          <p className="text-xs font-medium text-muted-foreground mb-2">추천 학습 자료:</p>
+          <div className="space-y-2">
+            {tech.recommendedResources.map((resource, idx) => (
+              <div key={idx} className="flex items-center justify-between text-sm bg-secondary/20 p-2 rounded">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px] h-4 px-1">
+                    {resource.type}
+                  </Badge>
+                  <span className="truncate max-w-[200px]">{resource.title}</span>
+                </div>
+                {resource.estimatedHours && (
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {resource.estimatedHours}h
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -104,7 +130,7 @@ function MissingTechList({
   techs, 
   onAddToKnown 
 }: { 
-  techs: MissingTechnology[]; 
+  techs: MissingTechV6[]; 
   onAddToKnown: (name: string) => void;
 }) {
   const { 
@@ -148,7 +174,7 @@ export function GapAnalysis() {
   const [loading, setLoading] = useState(false);
   const [loadingSkills, setLoadingSkills] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<GapAnalysisData | null>(null);
+  const [result, setResult] = useState<GapAnalysisWithResources | null>(null);
   const [analysisHistory, setAnalysisHistory] = useState<Array<{ target: string; score: number; timestamp: Date }>>([]);
 
   // URL 초기값이 있으면 자동 분석 실행
@@ -244,27 +270,32 @@ export function GapAnalysis() {
     setError(null);
 
     try {
-      const response = await analyzeGap({
-        knownTechnologies: knownTechs,
-        targetTechnology: targetTech.trim().toLowerCase(),
+      const response = await analyzeGapWithResources({
+        known: knownTechs,
+        target: targetTech.trim().toLowerCase(),
       });
-      setResult(response.data);
       
-      // 히스토리에 추가
-      const newHistory = [
-        { target: targetTech, score: response.data.readinessScore, timestamp: new Date() },
-        ...analysisHistory.filter(h => h.target !== targetTech).slice(0, 9)
-      ];
-      setAnalysisHistory(newHistory);
-      localStorage.setItem('gap_analysis_history', JSON.stringify(newHistory));
-      
-      // URL 업데이트
-      const params = new URLSearchParams(searchParams);
-      params.set('target', targetTech);
-      if (knownTechs.length > 0) {
-        params.set('known', knownTechs.join(','));
+      if (response.success && response.data) {
+        setResult(response.data);
+        
+        // 히스토리에 추가
+        const newHistory = [
+          { target: targetTech, score: response.data.readinessScore, timestamp: new Date() },
+          ...analysisHistory.filter(h => h.target !== targetTech).slice(0, 9)
+        ];
+        setAnalysisHistory(newHistory);
+        localStorage.setItem('gap_analysis_history', JSON.stringify(newHistory));
+        
+        // URL 업데이트
+        const params = new URLSearchParams(searchParams);
+        params.set('target', targetTech);
+        if (knownTechs.length > 0) {
+          params.set('known', knownTechs.join(','));
+        }
+        setSearchParams(params, { replace: true });
+      } else {
+        setError(response.message || '분석에 실패했습니다');
       }
-      setSearchParams(params, { replace: true });
       
     } catch (err) {
       const apiError = err as ApiError;
